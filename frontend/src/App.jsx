@@ -6,6 +6,7 @@ import PillarWorkspace from './components/PillarWorkspace';
 import SettingsModal from './components/SettingsModal';
 import { generatePillarsFromIdea, evaluateDecisions } from './services/agentService';
 import { generateBlueprintZip } from './services/exportService';
+import { saveStateToBackend } from './services/apiService';
 
 function App() {
   const [messages, setMessages] = useState([
@@ -38,6 +39,9 @@ function App() {
     setMessages([...newMessages, { role: 'agent', content: "I've analyzed your idea and extracted the core pillars. Click on a pillar in the sidebar to begin making architectural decisions." }]);
     setPillars(generatedPillars);
     setIsWaiting(false);
+
+    // Persist to MySQL database through backend API
+    await saveStateToBackend(content, generatedPillars);
   };
 
   const handleUpdateDecision = async (pillarId, decisionId, answer) => {
