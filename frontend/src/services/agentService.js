@@ -1,10 +1,10 @@
 // src/services/agentService.js
 
 const SYSTEM_PROMPT = `You are the Cartograph Agent, an expert software architect. 
-Analyze the application idea and break it down into high-level architectural Pillars (e.g., Frontend, Backend, Data, Security, Infrastructure). 
-For each pillar, provide specific architectural Decision points. The initial pillars should be asking VERY high-level, abstract questions that an architect needs to know to get started, thinking chronologically to build context from there. The questions must inspire natural language discussion. Do NOT provide predefined options.
-You can optionally define "subcategories" within each pillar to recursively break down larger architectural domains.
-You MUST respond with ONLY a valid JSON array of pillar objects! NO markdown wrappers like \`\`\`json. Just the raw array.
+Analyze the application idea and break it down into top-level architectural Pillars (e.g., Frontend, Backend, Data, Security, Infrastructure). 
+You MUST respond with ONLY a valid JSON array of these top-level pillar objects! 
+Do NOT generate subcategories or decisions at this stage. Keep the payload extremely small and fast.
+NO markdown wrappers like \`\`\`json. Just the raw array.
 
 Format MUST match exactly:
 [
@@ -12,17 +12,40 @@ Format MUST match exactly:
     "id": "pillar_id_string",
     "title": "Pillar Title",
     "description": "Short explanation of this pillar.",
-    "subcategories": [], // Optional array of recursive category objects using this exact same schema
-    "decisions": [
-      {
-        "id": "decision_id_string",
-        "question": "What is the specific high-level architectural question?",
-        "context": "Why is this decision important?",
-        "answer": null
-      }
-    ]
+    "subcategories": [],
+    "decisions": []
   }
 ]
+`;
+
+const SUBCATEGORY_SYSTEM_PROMPT = `You are a specialized Sub-Agent architect focusing exclusively on a single architectural pillar.
+Analyze the user's application idea and generate the specific categories and pending architectural decisions required for your assigned pillar.
+The initial decisions should ask VERY high-level, abstract questions that an architect needs to know to get started, thinking chronologically to build context.
+You can optionally define "subcategories" to recursively break down larger architectural domains.
+You MUST respond with ONLY a valid JSON object! NO markdown wrappers like \`\`\`json. Just the raw object.
+
+Format MUST match exactly:
+{
+  "subcategories": [
+    {
+      "id": "cat_id_string",
+      "title": "Category Title",
+      "description": "Short explanation.",
+      "subcategories": [], // Optional recursive array
+      "decisions": [
+        {
+          "id": "decision_id_string",
+          "question": "What is the specific high-level architectural question?",
+          "context": "Why is this decision important?",
+          "answer": null
+        }
+      ]
+    }
+  ],
+  "decisions": [
+    // Decisions that belong directly to the root pillar, matching the decision schema above
+  ]
+}
 `;
 
 const CHAT_SYSTEM_PROMPT = `You are the Cartograph Agent, an expert software architect.
@@ -162,34 +185,62 @@ const mockGenerate = async () => {
                     id: 'pillar-frontend',
                     title: 'Frontend & UI',
                     description: 'The user-facing application interface.',
-                    subcategories: [
-                        {
-                            id: 'cat-fe-state',
-                            title: 'State Management',
-                            description: 'How client state is managed.',
-                            subcategories: [],
-                            decisions: [
-                                {
-                                    id: 'd-fe-state',
-                                    question: 'Do we need a global state store or highly localized state?',
-                                    context: 'Impacts performance and component complexity.',
-                                    answer: null
-                                }
-                            ]
-                        }
-                    ],
-                    decisions: [
-                        {
-                            id: 'd-fe-fw',
-                            question: 'What is the primary mode of interaction expected from the user, and how does that influence our client architecture?',
-                            context: 'Understanding user interaction drives the separation of concerns and the choice between complex SPAs or static sites.',
-                            answer: null
-                        }
-                    ]
+                    subcategories: [],
+                    decisions: []
                 }
             ]);
-        }, 1500);
+        }, 500);
     });
+};
+
+export const generateCategoriesForPillar = async (ideaDescription, pillar, config) => {
+    const { provider, keys } = config;
+
+    if (provider === 'mock') {
+        return new Promise((resolve) => {
+            setTimeout(() => resolve({
+                subcategories: [{ id: 'cat-fe-state', title: 'State Management', description: 'How client state is managed.', subcategories: [], decisions: [{ id: 'd-fe-state', question: 'Global state or local?', context: 'Impacts perf', answer: null }] }],
+                decisions: [{ id: 'd-fe-fw', question: 'Primary mode of interaction?', context: 'SPA vs Static', answer: null }]
+            }), 1500);
+        });
+    }
+
+    const prompt = `Application Idea:\n${ideaDescription}\n\nAssigned Pillar to expand:\n${pillar.title}\n${pillar.description}`;
+
+    try {
+        if (provider === 'openai') {
+            const res = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${keys.openai}` },
+                body: JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'system', content: SUBCATEGORY_SYSTEM_PROMPT }, { role: 'user', content: prompt }] })
+            });
+            const data = await res.json();
+            return parseLLMResponse(data.choices[0].message.content);
+        }
+
+        if (provider === 'anthropic') {
+            const res = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-api-key': keys.anthropic, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+                body: JSON.stringify({ model: 'claude-3-5-sonnet-20240620', max_tokens: 4000, system: SUBCATEGORY_SYSTEM_PROMPT, messages: [{ role: 'user', content: prompt }] })
+            });
+            const data = await res.json();
+            return parseLLMResponse(data.content[0].text);
+        }
+
+        if (provider === 'gemini') {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${keys.gemini}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ systemInstruction: { parts: [{ text: SUBCATEGORY_SYSTEM_PROMPT }] }, contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
+            });
+            const data = await res.json();
+            return parseLLMResponse(data.candidates[0].content.parts[0].text);
+        }
+    } catch (err) {
+        console.error("LLM Sub-Agent Error:", err);
+        return { subcategories: [], decisions: [] };
+    }
 };
 
 export const processChatTurn = async (chatHistory, currentPillars, config) => {

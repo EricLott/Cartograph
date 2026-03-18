@@ -4,7 +4,7 @@ import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
 import PillarWorkspace from './components/PillarWorkspace';
 import SettingsModal from './components/SettingsModal';
-import { generatePillarsFromIdea, evaluateDecisions, processChatTurn } from './services/agentService';
+import { generatePillarsFromIdea, evaluateDecisions, processChatTurn, generateCategoriesForPillar } from './services/agentService';
 import { generateBlueprintZip } from './services/exportService';
 import { saveStateToBackend } from './services/apiService';
 
@@ -37,9 +37,30 @@ function App() {
 
     if (pillars.length === 0) {
       const generatedPillars = await generatePillarsFromIdea(content, llmConfig);
-      setMessages([...newMessages, { role: 'agent', content: "I've analyzed your idea and extracted the core pillars. Click on a pillar in the sidebar to review the technical questions, or just continue chatting with me here to make decisions naturally!" }]);
+      setMessages([...newMessages, { role: 'agent', content: "I've extracted the top-level pillars rapidly. I am now deploying sub-agents in parallel to draft the specific categories and decisions..." }]);
       setPillars(generatedPillars);
-      await saveStateToBackend(content, generatedPillars);
+      setIsWaiting(false); // Release the lock so UI updates
+
+      const parallelPromises = generatedPillars.map(async (pillar) => {
+        const subData = await generateCategoriesForPillar(content, pillar, llmConfig);
+        setPillars(current => current.map(p => {
+          if (p.id === pillar.id) {
+            return { ...p, subcategories: subData.subcategories || [], decisions: subData.decisions || [] };
+          }
+          return p;
+        }));
+        return subData;
+      });
+
+      await Promise.all(parallelPromises);
+
+      setMessages(msgs => [...msgs, { role: 'agent', content: "All sub-agents have reported back. The architectural framework is fully staged! Which area would you like to discuss first?" }]);
+
+      const finalPillars = await Promise.all(generatedPillars.map(async (p, idx) => {
+        const subData = await parallelPromises[idx];
+        return { ...p, subcategories: subData.subcategories || [], decisions: subData.decisions || [] };
+      }));
+      await saveStateToBackend(content, finalPillars);
     } else {
       const result = await processChatTurn(newMessages, pillars, llmConfig);
 
