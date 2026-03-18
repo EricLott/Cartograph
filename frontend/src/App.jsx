@@ -60,6 +60,12 @@ function App() {
       setActivePillar(nextPillars.find(p => p.id === pillarId));
     }
 
+    // Persist to MySQL 
+    const ideaMsg = messages.find(m => m.role === 'user');
+    if (ideaMsg) {
+      await saveStateToBackend(ideaMsg.content, nextPillars);
+    }
+
     const feedback = await evaluateDecisions(nextPillars, llmConfig);
     setAgentFeedback(feedback);
   };
