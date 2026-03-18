@@ -1,4 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
+
+const PillarNode = ({ node, activePillar, onSelectPillar, depth = 0 }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const hasChildren = node.subcategories && node.subcategories.length > 0;
+
+    return (
+        <div className="pillar-node-container" style={{ marginLeft: `${depth * 12}px`, marginTop: '4px' }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+                {hasChildren ? (
+                    <button
+                        onClick={() => setIsExpanded(!isExpanded)}
+                        style={{ padding: '0.2rem', background: 'transparent', border: 'none', color: 'white', cursor: 'pointer', opacity: 0.7, width: '20px' }}
+                    >
+                        {isExpanded ? '▼' : '▶'}
+                    </button>
+                ) : (
+                    <span style={{ width: '20px', display: 'inline-block' }}></span>
+                )}
+                <button
+                    className={`pillar-btn ${activePillar?.id === node.id ? 'active' : ''}`}
+                    onClick={() => onSelectPillar(node)}
+                    style={{ flexGrow: 1, textAlign: 'left', background: activePillar?.id === node.id ? 'rgba(255,255,255,0.1)' : 'transparent', border: 'none', color: 'white', cursor: 'pointer', borderRadius: '4px', padding: '0.5rem' }}
+                >
+                    {node.title}
+                </button>
+            </div>
+            {isExpanded && hasChildren && (
+                <div className="pillar-children">
+                    {node.subcategories.map(child => (
+                        <PillarNode key={child.id} node={child} activePillar={activePillar} onSelectPillar={onSelectPillar} depth={depth + 1} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 export default function Sidebar({ pillars, activePillar, onSelectPillar, onOpenSettings }) {
     return (
@@ -8,15 +44,9 @@ export default function Sidebar({ pillars, activePillar, onSelectPillar, onOpenS
             </div>
             <div className="sidebar-content">
                 {pillars && pillars.length > 0 ? (
-                    <nav className="pillar-nav">
+                    <nav className="pillar-nav" style={{ display: 'flex', flexDirection: 'column' }}>
                         {pillars.map(p => (
-                            <button
-                                key={p.id}
-                                className={`pillar-btn ${activePillar?.id === p.id ? 'active' : ''}`}
-                                onClick={() => onSelectPillar(p)}
-                            >
-                                {p.title}
-                            </button>
+                            <PillarNode key={p.id} node={p} activePillar={activePillar} onSelectPillar={onSelectPillar} />
                         ))}
                     </nav>
                 ) : (

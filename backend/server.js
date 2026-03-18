@@ -31,7 +31,6 @@ const Decision = sequelize.define('Decision', {
     decisionId: { type: DataTypes.STRING },
     question: { type: DataTypes.STRING, allowNull: false },
     context: { type: DataTypes.TEXT },
-    options: { type: DataTypes.JSON },
     answer: { type: DataTypes.STRING }
 });
 
@@ -39,6 +38,8 @@ Project.hasMany(Pillar);
 Pillar.belongsTo(Project);
 Pillar.hasMany(Decision);
 Decision.belongsTo(Pillar);
+Pillar.hasMany(Pillar, { as: 'subcategories', foreignKey: 'parentId' });
+Pillar.belongsTo(Pillar, { as: 'parent', foreignKey: 'parentId' });
 
 sequelize.sync({ alter: true }).then(() => console.log('Database synced')).catch(console.error);
 
@@ -51,24 +52,36 @@ app.post('/api/save-state', async (req, res) => {
 
         const project = await Project.create({ idea });
 
-        for (const p of pillars) {
-            const pillar = await Pillar.create({
-                pillarId: p.id,
-                title: p.title,
-                description: p.description,
-                ProjectId: project.id
-            });
-            for (const d of p.decisions) {
-                await Decision.create({
-                    decisionId: d.id,
-                    question: d.question,
-                    context: d.context,
-                    options: d.options,
-                    answer: d.answer,
-                    PillarId: pillar.id
+        const savePillars = async (pillarsArray, parentId = null) => {
+            if (!pillarsArray) return;
+            for (const p of pillarsArray) {
+                const pillar = await Pillar.create({
+                    pillarId: p.id,
+                    title: p.title,
+                    description: p.description,
+                    ProjectId: project.id,
+                    parentId: parentId
                 });
+
+                if (p.decisions) {
+                    for (const d of p.decisions) {
+                        await Decision.create({
+                            decisionId: d.id,
+                            question: d.question,
+                            context: d.context,
+                            answer: d.answer,
+                            PillarId: pillar.id
+                        });
+                    }
+                }
+
+                if (p.subcategories && p.subcategories.length > 0) {
+                    await savePillars(p.subcategories, pillar.id);
+                }
             }
-        }
+        };
+
+        await savePillars(pillars);
         res.json({ success: true, projectId: project.id });
     } catch (err) {
         res.status(500).json({ error: err.message });

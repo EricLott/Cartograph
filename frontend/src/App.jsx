@@ -4,13 +4,13 @@ import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
 import PillarWorkspace from './components/PillarWorkspace';
 import SettingsModal from './components/SettingsModal';
-import { generatePillarsFromIdea, evaluateDecisions } from './services/agentService';
+import { generatePillarsFromIdea, evaluateDecisions, processChatTurn } from './services/agentService';
 import { generateBlueprintZip } from './services/exportService';
 import { saveStateToBackend } from './services/apiService';
 
 function App() {
   const [messages, setMessages] = useState([
-    { role: 'agent', content: "Hello! I'm your Cartograph Agent. Describe the application you want to build, and I'll generate the architectural pillars and decision points for us to work through." }
+    { role: 'agent', content: "Hello! I'm your Cartograph Agent. Describe the application you want to build, and I'll generate the architectural pillars for us to work through. We can chat about decisions, or you can supply them directly." }
   ]);
   const [isWaiting, setIsWaiting] = useState(false);
   const [pillars, setPillars] = useState([]);
@@ -35,46 +35,98 @@ function App() {
     setMessages(newMessages);
     setIsWaiting(true);
 
-    const generatedPillars = await generatePillarsFromIdea(content, llmConfig);
-    setMessages([...newMessages, { role: 'agent', content: "I've analyzed your idea and extracted the core pillars. Click on a pillar in the sidebar to begin making architectural decisions." }]);
-    setPillars(generatedPillars);
-    setIsWaiting(false);
+    if (pillars.length === 0) {
+      const generatedPillars = await generatePillarsFromIdea(content, llmConfig);
+      setMessages([...newMessages, { role: 'agent', content: "I've analyzed your idea and extracted the core pillars. Click on a pillar in the sidebar to review the technical questions, or just continue chatting with me here to make decisions naturally!" }]);
+      setPillars(generatedPillars);
+      await saveStateToBackend(content, generatedPillars);
+    } else {
+      const result = await processChatTurn(newMessages, pillars, llmConfig);
 
-    // Persist to MySQL database through backend API
-    await saveStateToBackend(content, generatedPillars);
+      let nextPillars = [...pillars];
+      if (result.newCategories && result.newCategories.length > 0) {
+        nextPillars = [...nextPillars, ...result.newCategories];
+      }
+
+      if (result.updatedDecisions && result.updatedDecisions.length > 0) {
+        const updateNodeDecisions = (nodes) => {
+          return nodes.map(node => {
+            let newNode = { ...node };
+            if (newNode.decisions) {
+              newNode.decisions = newNode.decisions.map(d => {
+                const update = result.updatedDecisions.find(u => u.id === d.id);
+                return update ? { ...d, answer: update.answer } : d;
+              });
+            }
+            if (newNode.subcategories && newNode.subcategories.length > 0) {
+              newNode.subcategories = updateNodeDecisions(newNode.subcategories);
+            }
+            return newNode;
+          });
+        };
+        nextPillars = updateNodeDecisions(nextPillars);
+      }
+
+      setPillars(nextPillars);
+      setMessages([...newMessages, { role: 'agent', content: result.reply }]);
+
+      if (result.conflicts && result.conflicts.length > 0) {
+        setAgentFeedback(result.conflicts.map(c => `Conflict: ${c.description}`));
+      } else {
+        setAgentFeedback([]);
+      }
+
+      const ideaMsg = newMessages.find(m => m.role === 'user');
+      if (ideaMsg) await saveStateToBackend(ideaMsg.content, nextPillars);
+    }
+
+    setIsWaiting(false);
   };
 
   const handleUpdateDecision = async (pillarId, decisionId, answer) => {
-    const nextPillars = pillars.map(p => {
-      if (p.id !== pillarId) return p;
-      return {
-        ...p,
-        decisions: p.decisions.map(d =>
-          d.id === decisionId ? { ...d, answer } : d
-        )
-      };
-    });
+    const updateNodeDecisions = (nodes) => {
+      return nodes.map(node => {
+        let newNode = { ...node };
+        if (newNode.decisions) {
+          newNode.decisions = newNode.decisions.map(d =>
+            d.id === decisionId ? { ...d, answer } : d
+          );
+        }
+        if (newNode.subcategories && newNode.subcategories.length > 0) {
+          newNode.subcategories = updateNodeDecisions(newNode.subcategories);
+        }
+        return newNode;
+      });
+    };
 
+    const nextPillars = updateNodeDecisions(pillars);
     setPillars(nextPillars);
-    if (activePillar && activePillar.id === pillarId) {
-      setActivePillar(nextPillars.find(p => p.id === pillarId));
-    }
 
-    // Persist to MySQL 
+    // activePillar might be deeply nested, we don't strictly re-find it right now 
+    // but React's state linkage works down safely as long as object ref passes correctly, 
+    // actually we should just reset activePillar to null or let it be stale, but it's simpler to just let React re-render.
+    // For now we just close the activePillar.
+    setActivePillar(null);
+
     const ideaMsg = messages.find(m => m.role === 'user');
-    if (ideaMsg) {
-      await saveStateToBackend(ideaMsg.content, nextPillars);
-    }
+    if (ideaMsg) await saveStateToBackend(ideaMsg.content, nextPillars);
 
-    const feedback = await evaluateDecisions(nextPillars, llmConfig);
-    setAgentFeedback(feedback);
+    setAgentFeedback([]);
   };
 
   const handleExport = async () => {
     await generateBlueprintZip(pillars);
   };
 
-  const isExportReady = pillars.length > 0 && pillars.every(p => p.decisions.every(d => d.answer !== null));
+  const checkAllAnswered = (nodes) => {
+    return nodes.every(p => {
+      const parentAns = p.decisions ? p.decisions.every(d => d.answer !== null && d.answer !== "") : true;
+      const childAns = (p.subcategories && p.subcategories.length > 0) ? checkAllAnswered(p.subcategories) : true;
+      return parentAns && childAns;
+    });
+  };
+
+  const isExportReady = pillars.length > 0 && checkAllAnswered(pillars);
 
   return (
     <div className="app-layout">
@@ -114,19 +166,29 @@ function App() {
           </div>
         )}
 
-        {activePillar ? (
-          <PillarWorkspace
-            pillar={activePillar}
-            onUpdateDecision={handleUpdateDecision}
-            onBack={() => setActivePillar(null)}
-          />
-        ) : (
-          <ChatInterface
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            isWaiting={isWaiting}
-          />
-        )}
+        <div className="workspace-content" style={{ display: 'flex', gap: '1rem', height: 'calc(100vh - 120px)' }}>
+          <div className="pillar-details-pane" style={{ flex: 1, overflowY: 'auto' }}>
+            {activePillar ? (
+              <PillarWorkspace
+                pillar={activePillar}
+                onUpdateDecision={handleUpdateDecision}
+                onBack={() => setActivePillar(null)}
+              />
+            ) : (
+              <div className="glass-panel" style={{ padding: '2rem', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', opacity: 0.7 }}>
+                <h2>Blueprint Overview</h2>
+                <p>Select a node from the sidebar to view its extracted details.</p>
+              </div>
+            )}
+          </div>
+          <div className="chat-pane" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'hidden' }}>
+            <ChatInterface
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              isWaiting={isWaiting}
+            />
+          </div>
+        </div>
       </main>
     </div>
   );
