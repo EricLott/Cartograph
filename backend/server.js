@@ -34,23 +34,32 @@ const Decision = sequelize.define('Decision', {
     answer: { type: DataTypes.STRING }
 });
 
-Project.hasMany(Pillar);
+Project.hasMany(Pillar, { onDelete: 'CASCADE' });
 Pillar.belongsTo(Project);
-Pillar.hasMany(Decision);
+Pillar.hasMany(Decision, { onDelete: 'CASCADE' });
 Decision.belongsTo(Pillar);
-Pillar.hasMany(Pillar, { as: 'subcategories', foreignKey: 'parentId' });
+Pillar.hasMany(Pillar, { as: 'subcategories', foreignKey: 'parentId', onDelete: 'CASCADE' });
 Pillar.belongsTo(Pillar, { as: 'parent', foreignKey: 'parentId' });
 
 sequelize.sync({ alter: true }).then(() => console.log('Database synced')).catch(console.error);
 
 app.post('/api/save-state', async (req, res) => {
     try {
-        const { idea, pillars } = req.body;
+        const { idea, pillars, projectId } = req.body;
 
-        // Simple overwrite for prototyping: clear old data
-        await Project.destroy({ where: {} });
+        let project;
+        if (projectId) {
+            project = await Project.findByPk(projectId);
+            if (project) {
+                await project.update({ idea });
+                // Targeted clear of project-specific children to rebuild from snapshot
+                await Pillar.destroy({ where: { ProjectId: project.id } });
+            }
+        }
 
-        const project = await Project.create({ idea });
+        if (!project) {
+            project = await Project.create({ idea });
+        }
 
         const savePillars = async (pillarsArray, parentId = null) => {
             if (!pillarsArray) return;
