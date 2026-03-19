@@ -2,21 +2,22 @@
 id: task-013
 title: Rebuild export service to generate full agent-pack zip structure
 type: task
-status: todo
+status: pull_requested
 priority: P0
-owner: unassigned
-claim_owner: unassigned
-claim_status: unclaimed
-claim_expires_at: null
-sla_due_at: 2026-04-20T23:59:00Z
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-20T21:18:23.858Z"
+sla_due_at: "2026-04-20T23:59:00Z"
 depends_on:
   - task-004
 acceptance_criteria:
   - Zip includes full expected folder and file structure.
-  - Exported core files contain meaningful content, not empty placeholders.
+  - "Exported core files contain meaningful content, not empty placeholders."
   - Generated output is consumable by coding agents following AGENTS contract.
 last_updated: 2026-03-19
 ---
+
 
 # Task: Rebuild export service to generate full agent-pack zip structure
 
