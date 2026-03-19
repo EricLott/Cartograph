@@ -2,12 +2,12 @@
 id: task-005
 title: Add backend health and readiness endpoint
 type: task
-status: pull_requested
+status: completed
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-20T22:17:25.127Z"
+claim_status: released
+claim_expires_at: null
 sla_due_at: "2026-04-08T23:59:00Z"
 depends_on:
   - task-001
