@@ -34,6 +34,13 @@ function parseArgs(argv) {
             options.dryRun = true;
         } else if (arg === '--force') {
             options.force = true;
+        } else if (arg === '--commit') {
+            options.commit = true;
+        } else if (arg === '--push') {
+            options.push = true;
+            options.commit = true; // Push implies commit
+        } else if (arg === '--stage-all') {
+            options.stageAll = true;
         } else if (arg === '--help' || arg === '-h') {
             options.help = true;
         } else {
@@ -71,7 +78,7 @@ function todayDateString() {
 }
 
 function printHelp() {
-    console.log(`cartograph-closeout\n\nUsage:\n  node scripts/cartograph-closeout.mjs [options]\n\nOptions:\n  --task <task-###>           Target task ID (defaults to current branch ID)\n  --base <branch>             Base branch for validation (default: main)\n  --dry-run                   Preview actions without mutating files/git\n  --force                     Skip validation checks\n  --help                      Show this help\n`);
+    console.log(`cartograph-closeout\n\nUsage:\n  node scripts/cartograph-closeout.mjs [options]\n\nOptions:\n  --task <task-###>           Target task ID (defaults to current branch ID)\n  --base <branch>             Base branch for validation (default: main)\n  --stage-all                 git add -A before validation/closeout\n  --commit                    git commit after successful transition\n  --push                      git pull --rebase and git push after commit\n  --dry-run                   Preview actions without mutating files/git\n  --force                     Skip validation checks\n  --help                      Show this help\n`);
 }
 
 async function main() {
@@ -94,6 +101,12 @@ async function main() {
     }
 
     console.log(`\n[CLOSEOUT] Preparing to close out ${taskId} on branch ${branch}...`);
+
+    // 0. Stage changes if requested
+    if (options.stageAll && !options.dryRun) {
+        console.log(`- Staging all changes (--stage-all)...`);
+        runGit(['add', '-A']);
+    }
 
     // 1. Preflight Validation
     if (!options.force) {
@@ -155,11 +168,24 @@ async function main() {
             console.log(`- Moved to: ${path.relative(rootDir, targetPath)}`);
         }
 
-        // 4. Git staging
+        // 4. Git staging (specific files)
         console.log(`- Staging closeout changes...`);
         runGit(['add', targetPath]);
         if (targetPath !== task) {
             runGit(['add', task], { allowFailure: true }); // Catch the deletion if original was in git
+        }
+
+        // 5. Commit and Push
+        if (options.commit) {
+            console.log(`- Committing closeout changes...`);
+            runGit(['commit', '-m', `[${taskId}] Closeout: completion of task goal`]);
+        }
+
+        if (options.push) {
+            console.log(`- Syncing with remote (origin ${branch})...`);
+            runGit(['pull', '--rebase', 'origin', branch], { allowFailure: true });
+            console.log(`- Pushing to origin...`);
+            runGit(['push', 'origin', branch]);
         }
     }
 
@@ -167,13 +193,16 @@ async function main() {
     console.log(`\nSummary:`);
     console.log(`- Task file moved to completed/ bucket.`);
     console.log(`- Frontmatter updated (status: completed, claim_status: released).`);
-    console.log(`- Changes staged for commit.`);
+    if (options.commit) console.log(`- Changes committed.`);
+    if (options.push) console.log(`- Branch pushed to origin.`);
 
     console.log(`\nNext steps:`);
-    console.log(`1. Review staged changes: git status`);
-    console.log(`2. Commit work: git commit -m "[${taskId}] Closeout: completion of task goal"`);
-    console.log(`3. Push branch: git push origin ${branch}`);
-    console.log(`4. Re-run node scripts/cartograph-contribute.mjs --auto to start next task.`);
+    if (!options.push) {
+        console.log(`1. Review staged changes: git status`);
+        console.log(`2. Commit work: git commit -m "[${taskId}] Closeout: completion of task goal"`);
+        console.log(`3. Push branch: git push origin ${branch}`);
+    }
+    console.log(`${options.push ? '1' : '4'}. Re-run node scripts/cartograph-contribute.mjs --auto to start next task.`);
 }
 
 main().catch((error) => {

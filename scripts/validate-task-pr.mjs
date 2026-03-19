@@ -539,6 +539,12 @@ function main() {
       const ids = extractIdsFromText(line).filter((id) => id !== primaryId);
       if (ids.length === 0) continue;
       if (relatedItemsLineIndexes.has(index)) continue;
+
+      // Relax: ignore IDs if the line looks like a log entry header
+      // e.g. - 2026-03-19T13:10:00-05:00 | task-002 | done | ...
+      const isHeader = /^[-*]\s+\d{4}-\d{2}-\d{2}T.*\|.*(task|bug|spike|feature)-\d+.*\|/.test(line.trim());
+      if (isHeader) continue;
+
       outsideRelatedIds.push(...ids);
     }
 
