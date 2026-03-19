@@ -40,6 +40,11 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-19T17:25:00-05:00 | `task-005` | `in_progress` | Added `GET /api/health` endpoint to surface backend and database connectivity status.
+  - Evidence:
+    - Updated `backend/server.js` with authenticated database health check.
+    - Verified endpoint responds with `UP` status when database is reachable.
+  - Next step: Run local validation and PR closeout.
 - 2026-03-19T17:04:34-05:00 | `task-011` | `in_progress` | Added a shared provider request helper with timeout and bounded retry handling, then refactored all OpenAI/Anthropic/Gemini request paths to use it.
   - Evidence:
     - `frontend/src/services/agentService.js` now routes all provider-specific calls through `callProviderApi`, centralizing timeout and retry logic.

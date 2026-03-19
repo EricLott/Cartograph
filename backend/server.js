@@ -17,6 +17,25 @@ const sequelize = new Sequelize(
     }
 );
 
+app.get('/api/health', async (req, res) => {
+    try {
+        await sequelize.authenticate();
+        res.status(200).json({
+            status: 'UP',
+            database: 'CONNECTED',
+            timestamp: new Date().toISOString()
+        });
+    } catch (err) {
+        res.status(503).json({
+            status: 'DOWN',
+            database: 'DISCONNECTED',
+            error: err.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+
 const Project = sequelize.define('Project', {
     idea: { type: DataTypes.TEXT, allowNull: false },
 });

@@ -2,13 +2,13 @@
 id: task-005
 title: Add backend health and readiness endpoint
 type: task
-status: todo
+status: pull_requested
 priority: P1
-owner: unassigned
-claim_owner: unassigned
-claim_status: unclaimed
-claim_expires_at: null
-sla_due_at: 2026-04-08T23:59:00Z
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-20T22:17:25.127Z"
+sla_due_at: "2026-04-08T23:59:00Z"
 depends_on:
   - task-001
 acceptance_criteria:
@@ -16,6 +16,7 @@ acceptance_criteria:
   - Failure mode is explicit when DB is unavailable.
 last_updated: 2026-03-19
 ---
+
 
 # Task: Add backend health and readiness endpoint
 
