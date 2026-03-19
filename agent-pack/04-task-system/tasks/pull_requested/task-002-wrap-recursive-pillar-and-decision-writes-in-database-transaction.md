@@ -2,11 +2,11 @@
 id: task-002
 title: Wrap recursive pillar and decision writes in database transaction
 type: task
-status: completed
+status: pull_requested
 priority: P0
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: released
+claim_status: claimed
 claim_expires_at: null
 sla_due_at: "2026-04-06T23:59:00Z"
 depends_on:
