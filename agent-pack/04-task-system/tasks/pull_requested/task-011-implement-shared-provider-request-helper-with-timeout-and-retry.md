@@ -2,19 +2,20 @@
 id: task-011
 title: Implement shared provider request helper with timeout and retry
 type: task
-status: todo
+status: pull_requested
 priority: P1
-owner: unassigned
-claim_owner: unassigned
-claim_status: unclaimed
-claim_expires_at: null
-sla_due_at: 2026-04-13T23:59:00Z
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-20T21:58:57.279Z"
+sla_due_at: "2026-04-13T23:59:00Z"
 depends_on: []
 acceptance_criteria:
   - All provider request paths use shared helper.
   - Transient failures retry within defined bounds and surface clear errors when exhausted.
 last_updated: 2026-03-19
 ---
+
 
 # Task: Implement shared provider request helper with timeout and retry
 

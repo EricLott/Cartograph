@@ -1,5 +1,10 @@
 // src/services/agentService.js
 
+const PROVIDER_REQUEST_TIMEOUT_MS = 20000;
+const PROVIDER_MAX_RETRIES = 2;
+const PROVIDER_RETRY_BASE_DELAY_MS = 600;
+const RETRYABLE_HTTP_STATUS_CODES = new Set([408, 425, 429, 500, 502, 503, 504]);
+
 const SYSTEM_PROMPT = `You are the Cartograph Agent, an expert software architect. 
 Analyze the application idea and break it down into top-level architectural Pillars (e.g., Frontend, Backend, Data, Security, Infrastructure). 
 You MUST respond with ONLY a valid JSON array of these top-level pillar objects! 
@@ -74,6 +79,92 @@ You MUST respond with ONLY a valid JSON object matching this schema exactly! NO 
 }
 `;
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const readJsonSafely = async (response) => {
+    try {
+        return await response.json();
+    } catch {
+        return null;
+    }
+};
+
+const extractProviderErrorDetail = (data) => {
+    if (!data) return '';
+    if (typeof data === 'string') return data;
+    if (typeof data.message === 'string' && data.message.trim()) return data.message;
+    if (typeof data.error === 'string' && data.error.trim()) return data.error;
+    if (data.error && typeof data.error.message === 'string' && data.error.message.trim()) {
+        return data.error.message;
+    }
+    return '';
+};
+
+const callProviderApi = async ({ providerName, url, requestInit }) => {
+    const maxAttempts = PROVIDER_MAX_RETRIES + 1;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), PROVIDER_REQUEST_TIMEOUT_MS);
+
+        try {
+            const response = await fetch(url, {
+                ...requestInit,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            const data = await readJsonSafely(response);
+
+            if (!response.ok) {
+                const detail = extractProviderErrorDetail(data) || response.statusText || 'Request failed.';
+                if (attempt < maxAttempts && RETRYABLE_HTTP_STATUS_CODES.has(response.status)) {
+                    await wait(PROVIDER_RETRY_BASE_DELAY_MS * attempt);
+                    continue;
+                }
+
+                throw new Error(
+                    `${providerName} request failed after ${attempt} attempt${attempt === 1 ? '' : 's'} (status ${response.status}): ${detail}`
+                );
+            }
+
+            return data;
+        } catch (error) {
+            clearTimeout(timeoutId);
+
+            const isTimeout = error?.name === 'AbortError';
+            const isNetwork = error instanceof TypeError;
+
+            if (attempt < maxAttempts && (isTimeout || isNetwork)) {
+                await wait(PROVIDER_RETRY_BASE_DELAY_MS * attempt);
+                continue;
+            }
+
+            if (isTimeout) {
+                throw new Error(
+                    `${providerName} request timed out after ${maxAttempts} attempts (${PROVIDER_REQUEST_TIMEOUT_MS}ms each).`
+                );
+            }
+
+            if (isNetwork) {
+                throw new Error(
+                    `${providerName} request failed after ${maxAttempts} attempts due to network issues: ${error.message}`
+                );
+            }
+
+            if (error instanceof Error) {
+                throw error;
+            }
+
+            throw new Error(
+                `${providerName} request failed after ${maxAttempts} attempts: Unknown error.`
+            );
+        }
+    }
+
+    throw new Error(`${providerName} request failed after ${PROVIDER_MAX_RETRIES + 1} attempts.`);
+};
+
 const parseLLMResponse = (text) => {
     try {
         let cleanText = text.trim();
@@ -87,6 +178,69 @@ const parseLLMResponse = (text) => {
     }
 };
 
+const requestProviderCompletion = async ({ provider, keys, openaiPayload, anthropicPayload, geminiPayload }) => {
+    if (provider === 'openai') {
+        const data = await callProviderApi({
+            providerName: 'OpenAI',
+            url: 'https://api.openai.com/v1/chat/completions',
+            requestInit: {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${keys.openai}`
+                },
+                body: JSON.stringify(openaiPayload)
+            }
+        });
+
+        if (data?.error) throw new Error(data.error.message || 'OpenAI returned an error.');
+        const content = data?.choices?.[0]?.message?.content;
+        if (typeof content !== 'string') throw new Error('OpenAI response was missing completion content.');
+        return content;
+    }
+
+    if (provider === 'anthropic') {
+        const data = await callProviderApi({
+            providerName: 'Anthropic',
+            url: 'https://api.anthropic.com/v1/messages',
+            requestInit: {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': keys.anthropic,
+                    'anthropic-version': '2023-06-01',
+                    'anthropic-dangerous-direct-browser-access': 'true'
+                },
+                body: JSON.stringify(anthropicPayload)
+            }
+        });
+
+        if (data?.error) throw new Error(data.error.message || 'Anthropic returned an error.');
+        const content = data?.content?.[0]?.text;
+        if (typeof content !== 'string') throw new Error('Anthropic response was missing completion content.');
+        return content;
+    }
+
+    if (provider === 'gemini') {
+        const data = await callProviderApi({
+            providerName: 'Gemini',
+            url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${keys.gemini}`,
+            requestInit: {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(geminiPayload)
+            }
+        });
+
+        if (data?.error) throw new Error(data.error.message || 'Gemini returned an error.');
+        const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (typeof content !== 'string') throw new Error('Gemini response was missing completion content.');
+        return content;
+    }
+
+    throw new Error(`Unsupported provider: ${provider}`);
+};
+
 export const generatePillarsFromIdea = async (ideaDescription, config) => {
     const { provider, keys } = config;
 
@@ -95,67 +249,30 @@ export const generatePillarsFromIdea = async (ideaDescription, config) => {
     const prompt = `Application Idea:\n${ideaDescription}`;
 
     try {
-        // OpenAI JSON mode requires the output to be an object, but our schema is an Array. We'll disable response_format and rely on the prompt instructing raw JSON.
-    } catch {
-        // Fallback or retry logic handled below
-    }
+        const completion = await requestProviderCompletion({
+            provider,
+            keys,
+            openaiPayload: {
+                model: 'gpt-4o',
+                messages: [
+                    { role: 'system', content: SYSTEM_PROMPT + "\nRemember, return ONLY the raw JSON array." },
+                    { role: 'user', content: prompt }
+                ]
+            },
+            anthropicPayload: {
+                model: 'claude-3-5-sonnet-20240620',
+                max_tokens: 4000,
+                system: SYSTEM_PROMPT,
+                messages: [{ role: 'user', content: prompt }]
+            },
+            geminiPayload: {
+                systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: 'application/json' }
+            }
+        });
 
-    try {
-        if (provider === 'openai') {
-            const res = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${keys.openai}`
-                },
-                body: JSON.stringify({
-                    model: 'gpt-4o',
-                    messages: [
-                        { role: 'system', content: SYSTEM_PROMPT + "\nRemember, return ONLY the raw JSON array." },
-                        { role: 'user', content: prompt }
-                    ]
-                })
-            });
-            const data = await res.json();
-            if (data.error) throw new Error(data.error.message);
-            return parseLLMResponse(data.choices[0].message.content);
-        }
-
-        if (provider === 'anthropic') {
-            const res = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': keys.anthropic,
-                    'anthropic-version': '2023-06-01',
-                    'anthropic-dangerous-direct-browser-access': 'true'
-                },
-                body: JSON.stringify({
-                    model: 'claude-3-5-sonnet-20240620',
-                    max_tokens: 4000,
-                    system: SYSTEM_PROMPT,
-                    messages: [{ role: 'user', content: prompt }]
-                })
-            });
-            const data = await res.json();
-            if (data.error) throw new Error(data.error.message);
-            return parseLLMResponse(data.content[0].text);
-        }
-
-        if (provider === 'gemini') {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${keys.gemini}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
-            });
-            const data = await res.json();
-            if (data.error) throw new Error(data.error.message);
-            return parseLLMResponse(data.candidates[0].content.parts[0].text);
-        }
+        return parseLLMResponse(completion);
     } catch (err) {
         console.error("LLM Error:", err);
         return [{ id: 'err', title: 'Error Generation', description: err.message, decisions: [] }];
@@ -193,35 +310,30 @@ export const generateCategoriesForPillar = async (ideaDescription, pillar, confi
     const prompt = `Application Idea:\n${ideaDescription}\n\nAssigned Pillar to expand:\n${pillar.title}\n${pillar.description}`;
 
     try {
-        if (provider === 'openai') {
-            const res = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${keys.openai}` },
-                body: JSON.stringify({ model: 'gpt-4o', messages: [{ role: 'system', content: SUBCATEGORY_SYSTEM_PROMPT }, { role: 'user', content: prompt }] })
-            });
-            const data = await res.json();
-            return parseLLMResponse(data.choices[0].message.content);
-        }
+        const completion = await requestProviderCompletion({
+            provider,
+            keys,
+            openaiPayload: {
+                model: 'gpt-4o',
+                messages: [
+                    { role: 'system', content: SUBCATEGORY_SYSTEM_PROMPT },
+                    { role: 'user', content: prompt }
+                ]
+            },
+            anthropicPayload: {
+                model: 'claude-3-5-sonnet-20240620',
+                max_tokens: 4000,
+                system: SUBCATEGORY_SYSTEM_PROMPT,
+                messages: [{ role: 'user', content: prompt }]
+            },
+            geminiPayload: {
+                systemInstruction: { parts: [{ text: SUBCATEGORY_SYSTEM_PROMPT }] },
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: 'application/json' }
+            }
+        });
 
-        if (provider === 'anthropic') {
-            const res = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-api-key': keys.anthropic, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-                body: JSON.stringify({ model: 'claude-3-5-sonnet-20240620', max_tokens: 4000, system: SUBCATEGORY_SYSTEM_PROMPT, messages: [{ role: 'user', content: prompt }] })
-            });
-            const data = await res.json();
-            return parseLLMResponse(data.content[0].text);
-        }
-
-        if (provider === 'gemini') {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${keys.gemini}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ systemInstruction: { parts: [{ text: SUBCATEGORY_SYSTEM_PROMPT }] }, contents: [{ parts: [{ text: prompt }] }], generationConfig: { responseMimeType: "application/json" } })
-            });
-            const data = await res.json();
-            return parseLLMResponse(data.candidates[0].content.parts[0].text);
-        }
+        return parseLLMResponse(completion);
     } catch (err) {
         console.error("LLM Sub-Agent Error:", err);
         return { subcategories: [], decisions: [] };
@@ -246,49 +358,31 @@ export const processChatTurn = async (chatHistory, currentPillars, config) => {
     }
 
     try {
-        if (provider === 'openai') {
-            const res = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${keys.openai}` },
-                body: JSON.stringify({
-                    model: 'gpt-4o',
-                    messages: [
-                        { role: 'system', content: CHAT_SYSTEM_PROMPT },
-                        ...chatHistory.slice(1, -1), // skip system and current user msg
-                        { role: 'user', content: prompt }
-                    ]
-                })
-            });
-            const data = await res.json();
-            return parseLLMResponse(data.choices[0].message.content);
-        }
+        const completion = await requestProviderCompletion({
+            provider,
+            keys,
+            openaiPayload: {
+                model: 'gpt-4o',
+                messages: [
+                    { role: 'system', content: CHAT_SYSTEM_PROMPT },
+                    ...chatHistory.slice(1, -1),
+                    { role: 'user', content: prompt }
+                ]
+            },
+            anthropicPayload: {
+                model: 'claude-3-5-sonnet-20240620',
+                max_tokens: 4000,
+                system: CHAT_SYSTEM_PROMPT,
+                messages: [{ role: 'user', content: prompt }]
+            },
+            geminiPayload: {
+                systemInstruction: { parts: [{ text: CHAT_SYSTEM_PROMPT }] },
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: 'application/json' }
+            }
+        });
 
-        if (provider === 'anthropic') {
-            const res = await fetch('https://api.anthropic.com/v1/messages', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-api-key': keys.anthropic, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-                body: JSON.stringify({
-                    model: 'claude-3-5-sonnet-20240620', max_tokens: 4000, system: CHAT_SYSTEM_PROMPT,
-                    messages: [{ role: 'user', content: prompt }]
-                })
-            });
-            const data = await res.json();
-            return parseLLMResponse(data.content[0].text);
-        }
-
-        if (provider === 'gemini') {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${keys.gemini}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    systemInstruction: { parts: [{ text: CHAT_SYSTEM_PROMPT }] },
-                    contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json" }
-                })
-            });
-            const data = await res.json();
-            return parseLLMResponse(data.candidates[0].content.parts[0].text);
-        }
+        return parseLLMResponse(completion);
     } catch (err) {
         console.error("LLM Chat Error:", err);
         return { reply: "I encountered an error trying to process that thought: " + err.message, updatedDecisions: [], newCategories: [], conflicts: [] };

@@ -40,6 +40,16 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-19T17:04:34-05:00 | `task-011` | `in_progress` | Added a shared provider request helper with timeout and bounded retry handling, then refactored all OpenAI/Anthropic/Gemini request paths to use it.
+  - Evidence:
+    - `frontend/src/services/agentService.js` now routes all provider-specific calls through `callProviderApi`, centralizing timeout and retry logic.
+    - Retry bounds are explicit (`PROVIDER_MAX_RETRIES = 2`) with retryable transient statuses (`408`, `425`, `429`, `500`, `502`, `503`, `504`).
+    - Clear exhausted-error messages are surfaced for timeout, network failures, and non-retryable HTTP failures.
+    - Validation checks passed:
+      - `node scripts/validate-task-pr.mjs --self-check --task-id task-011`
+      - `npm run lint` (frontend)
+      - `npm run build` (frontend)
+  - Next step: Run closeout for `task-011` once final review is complete.
 - 2026-03-19T16:35:00-05:00 | `task-013` | `done` | Rebuilt export service to generate full agent-pack zip structure.
   - Evidence:
     - Updated `exportService.js` to generate a recursive directory structure from `00-context` through `07-artifacts`.
