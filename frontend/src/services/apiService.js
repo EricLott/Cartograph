@@ -13,3 +13,15 @@ export const saveStateToBackend = async (idea, pillars, projectId = null) => {
         return null;
     }
 };
+
+export const fetchLatestProject = async () => {
+    try {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+        const response = await fetch(`${apiUrl}/api/projects/latest`);
+        const data = await response.json();
+        return data;
+    } catch (err) {
+        console.error("Failed to fetch latest project from backend:", err);
+        return null;
+    }
+};

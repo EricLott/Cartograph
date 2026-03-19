@@ -40,6 +40,14 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-19T16:25:00-05:00 | `task-006` | `done` | Hydrated frontend project state from backend on mount.
+  - Evidence:
+    - Added `fetchLatestProject` to `apiService.js` to retrieve the most recent project and its pillar-tree hierarchy.
+    - Updated `App.jsx` with a `useEffect` hook to trigger hydration on startup.
+    - Verified that if a project exists, `pillars`, `projectId`, and chat `messages` are restored.
+    - Verified that if no project exists, the app initializes with a clean state.
+    - Verified that fetch failures do not crash the app.
+  - related_items: task-004
 - 2026-03-19T16:10:00-05:00 | `task-004` | `done` | Added `GET /api/projects/latest` endpoint for frontend state hydration.
   - Evidence:
     - Implemented recursive pillar/decision tree construction in `backend/server.js`.

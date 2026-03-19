@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './App.css';
 import Sidebar from './components/Sidebar';
 import ChatInterface from './components/ChatInterface';
@@ -6,7 +6,7 @@ import PillarWorkspace from './components/PillarWorkspace';
 import SettingsModal from './components/SettingsModal';
 import { generatePillarsFromIdea, processChatTurn, generateCategoriesForPillar } from './services/agentService';
 import { generateBlueprintZip } from './services/exportService';
-import { saveStateToBackend } from './services/apiService';
+import { saveStateToBackend, fetchLatestProject } from './services/apiService';
 
 function App() {
   const [messages, setMessages] = useState([
@@ -17,6 +17,29 @@ function App() {
   const [activePillar, setActivePillar] = useState(null);
   const [agentFeedback, setAgentFeedback] = useState([]);
   const [projectId, setProjectId] = useState(null);
+
+  useEffect(() => {
+    async function hydrate() {
+      setIsWaiting(true);
+      try {
+        const data = await fetchLatestProject();
+        if (data && data.projectId) {
+          setProjectId(data.projectId);
+          setPillars(data.pillars || []);
+          setMessages([
+            { role: 'agent', content: "Hello! I'm your Cartograph Agent. Describe the application you want to build, and I'll generate the architectural pillars for us to work through. We can chat about decisions, or you can supply them directly." },
+            { role: 'user', content: data.idea },
+            { role: 'agent', content: "I've restored your latest session. The architectural framework is fully staged! Which area would you like to discuss first?" }
+          ]);
+        }
+      } catch (err) {
+        console.error("Hydration failed:", err);
+      } finally {
+        setIsWaiting(false);
+      }
+    }
+    hydrate();
+  }, []);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [llmConfig, setLlmConfig] = useState(() => {
