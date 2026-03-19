@@ -1,17 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 export default function SettingsModal({ onClose, onSave }) {
-    const [keys, setKeys] = useState({ openai: '', anthropic: '', gemini: '' });
-    const [provider, setProvider] = useState('mock');
-
-    useEffect(() => {
-        const saved = localStorage.getItem('cartograph_keys');
-        if (saved) {
-            setKeys(JSON.parse(saved));
+    const [keys, setKeys] = useState(() => {
+        try {
+            const saved = localStorage.getItem('cartograph_keys');
+            return saved ? JSON.parse(saved) : { openai: '', anthropic: '', gemini: '' };
+        } catch {
+            return { openai: '', anthropic: '', gemini: '' };
         }
-        const savedProvider = localStorage.getItem('cartograph_provider');
-        if (savedProvider) setProvider(savedProvider);
-    }, []);
+    });
+    const [provider, setProvider] = useState(() => localStorage.getItem('cartograph_provider') || 'mock');
 
     const handleSave = () => {
         localStorage.setItem('cartograph_keys', JSON.stringify(keys));

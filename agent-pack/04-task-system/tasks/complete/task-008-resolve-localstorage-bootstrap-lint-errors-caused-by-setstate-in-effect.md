@@ -2,19 +2,20 @@
 id: task-008
 title: Resolve localStorage bootstrap lint errors caused by setState in effect
 type: task
-status: todo
+status: done
 priority: P0
-owner: unassigned
+owner: codex
 claim_owner: unassigned
-claim_status: unclaimed
+claim_status: released
 claim_expires_at: null
-sla_due_at: 2026-04-07T23:59:00Z
+sla_due_at: "2026-04-07T23:59:00Z"
 depends_on: []
 acceptance_criteria:
   - Lint errors for setState-in-effect are removed.
   - Settings still load saved keys and provider correctly.
 last_updated: 2026-03-19
 ---
+
 
 # Task: Resolve localStorage bootstrap lint errors caused by setState in effect
 

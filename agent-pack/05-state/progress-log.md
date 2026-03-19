@@ -40,6 +40,13 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-19T10:20:00-05:00 | `task-008` | `done` | Removed synchronous `setState` calls from mount effects in config bootstrap flows.
+  - Evidence:
+    - `frontend/src/App.jsx` now initializes `llmConfig` from localStorage using lazy `useState` initializer instead of `useEffect` + `setState`.
+    - `frontend/src/components/SettingsModal.jsx` now initializes `keys` and `provider` from localStorage via lazy `useState` initializers.
+    - `npx eslint src/App.jsx src/components/SettingsModal.jsx` (pass).
+    - `npm run build` (in `frontend/`) (pass).
+  - Next step: Continue with the next eligible priority task.
 - 2026-03-19T08:20:00-05:00 | `task-000` | `done` | Seeded foundational agent-pack contracts and contributor workflow docs.
 - 2026-03-19T08:55:00-05:00 | `task-000` | `done` | Completed codebase review (`frontend`, `backend`, export pipeline) and baseline lint/build checks.
 - 2026-03-19T09:30:00-05:00 | `task-000` | `done` | Replaced placeholder strategy docs with codebase-grounded architecture and execution content.
