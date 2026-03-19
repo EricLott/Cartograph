@@ -2,7 +2,7 @@
 id: task-011
 title: Implement shared provider request helper with timeout and retry
 type: task
-status: in_progress
+status: pull_requested
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
