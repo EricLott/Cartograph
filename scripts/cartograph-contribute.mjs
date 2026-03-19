@@ -127,7 +127,8 @@ function isDependencySatisfied(taskMap, dependencyId) {
   if (!dependencyId.startsWith('task-')) return true;
   const dependencyTask = taskMap.get(dependencyId);
   if (!dependencyTask) return false;
-  return dependencyTask.frontmatter.status === 'done';
+  const status = String(dependencyTask.frontmatter.status || '').toLowerCase();
+  return status === 'done' || status === 'completed';
 }
 
 function getEligibility(task, taskMap) {

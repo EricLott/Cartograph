@@ -22,7 +22,6 @@ const REQUIRED_PR_FIELDS = [
   'Blockers Encountered',
   'Out-of-Scope Changes',
 ];
-
 function parseArgs(argv) {
   const options = {
     selfCheck: false,
@@ -460,17 +459,21 @@ function main() {
       const newClaim = String(newFm.claim_status || '').toLowerCase();
       const newClaimExpiry = newFm.claim_expires_at;
 
-      if (newStatus === 'done') {
+      if (newStatus === 'completed' || newStatus === 'done') {
         if (newClaim !== 'released') {
-          addError(errors, `${primaryPath}: status=done requires claim_status=released.`);
+          addError(errors, `${primaryPath}: status=${newStatus} requires claim_status=released.`);
         }
         if (!(newClaimExpiry === null || String(newClaimExpiry).toLowerCase() === 'null' || String(newClaimExpiry).trim() === '')) {
-          addError(errors, `${primaryPath}: status=done requires claim_expires_at=null.`);
+          addError(errors, `${primaryPath}: status=${newStatus} requires claim_expires_at=null.`);
         }
       }
 
       if (newStatus === 'in_progress' && newClaim !== 'claimed') {
         addError(errors, `${primaryPath}: status=in_progress requires claim_status=claimed.`);
+      }
+
+      if (newStatus === 'pull_requested' && newClaim !== 'claimed') {
+        addError(errors, `${primaryPath}: status=pull_requested requires claim_status=claimed.`);
       }
     }
   }

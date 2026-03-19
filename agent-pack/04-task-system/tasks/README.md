@@ -65,7 +65,8 @@ last_updated: 2026-03-19
 ## Pull Request Requirement
 - Every pull request must include the task file under `agent-pack/04-task-system/tasks/<status>/` for each task ID it implements.
 - If code changes do not map to an existing task file, create the task file in the same PR.
-- Before marking task `done`, release claim ownership by setting `claim_status` to `released` and `claim_expires_at` to `null`.
+- On PR open/sync/reopen, task status must move to `pull_requested` and live in `tasks/pull_requested/`.
+- On PR approval, task status must move to `completed` and live in `tasks/completed/` with released claim metadata.
 - PR title must include the same task ID as the selected task file.
 - Use PR template fields for task linkage, evidence, and out-of-scope disclosure.
 
@@ -77,11 +78,14 @@ last_updated: 2026-03-19
 - Resume an existing task branch:
   - `node scripts/cartograph-contribute.mjs --task task-### --resume`
 - This command claims one eligible task and prepares branch/context for single-task execution.
+- Task status sync automation:
+  - `node scripts/task-status-sync.mjs --to pull_requested --branch task/task-###-slug`
+  - `node scripts/task-status-sync.mjs --to completed --branch task/task-###-slug`
 
 ## Atomic Transition Helper
 - Use `node scripts/task-transition.mjs --task-id task-### --to <state>` for metadata + folder moves in one command.
 - Supported targets:
-  - `claimed`, `in_progress`, `done`, `blocked`, `expired`, `cancelled`
+  - `claimed`, `in_progress`, `pull_requested`, `completed`, `blocked`, `expired`, `cancelled`
 - This helper enforces legal status/claim transitions before writing files.
 
 ## Atomicity Rules
@@ -94,17 +98,18 @@ Store task files in one of these folders under `agent-pack/04-task-system/tasks/
 - `todo/`: `status` is `backlog|todo` and `claim_status` is `unclaimed|released`.
 - `claimed/`: `status` is `backlog|todo` and `claim_status` is `claimed`.
 - `in_progress/`: `status` is `in_progress` and claim is active.
+- `pull_requested/`: `status` is `pull_requested` with active claim while PR review is pending.
 - `claim_expired/`: `claim_status` is `expired`.
 - `blocked/`: `status` is `blocked`.
-- `complete/`: `status` is `done` and `claim_status` is `released`.
+- `completed/`: `status` is `completed` and `claim_status` is `released`.
 - `cancelled/`: `status` is `cancelled`.
 
 When metadata changes, move the file to the matching folder in the same commit.
 
 ## Status Lifecycle
-`todo -> claimed -> in_progress -> blocked -> in_progress -> complete`
+`todo -> claimed -> in_progress -> blocked -> in_progress -> pull_requested -> completed`
 `claimed|in_progress -> claim_expired -> todo`
-`todo|claimed|in_progress|blocked -> cancelled`
+`todo|claimed|in_progress|pull_requested|blocked -> cancelled`
 
 ## Claim Lifecycle
 `unclaimed -> claimed -> released`
@@ -121,6 +126,7 @@ When metadata changes, move the file to the matching folder in the same commit.
   - `node scripts/validate-task-pr.mjs --self-check --task-id task-### --strict-task-paths`
 - CI enforcement:
   - `.github/workflows/task-pr-validation.yml`
+  - `.github/workflows/task-status-sync.yml`
 
 ## State Log Convention
 - State log updates must include the primary task ID in added lines.

@@ -84,7 +84,7 @@ Use this mode when executable tasks already exist.
 
 Eligibility rules:
 - `status` is `todo` or `backlog`.
-- All `depends_on` items are `done` or not required.
+- All `depends_on` items are `completed` (or legacy `done`) or not required.
 - No active blocker prevents safe execution.
 - `claim_status` is `unclaimed` or `expired`.
 
@@ -99,8 +99,8 @@ Execution rules:
 3. Implement only what is required by task acceptance criteria.
 4. Validate per quality docs.
 5. Record evidence in `../05-state/progress-log.md`.
-6. Move task to `done` only after Definition of Done gates pass.
-7. Release claim (`claim_status: released`, `claim_expires_at: null`) when task is done.
+6. Move task to `pull_requested` when PR is submitted, then `completed` after PR approval.
+7. Release claim (`claim_status: released`, `claim_expires_at: null`) when task is `completed`.
 
 ### Single-Task PR Boundary
 - One PR must map to exactly one primary task ID.
@@ -162,7 +162,7 @@ All work-item files must include YAML frontmatter keys:
 
 Enums:
 - `type`: `epic | feature | task | bug | spike`
-- `status`: `backlog | todo | in_progress | blocked | done | cancelled`
+- `status`: `backlog | todo | in_progress | pull_requested | blocked | completed | cancelled`
 - `priority`: `P0 | P1 | P2 | P3`
 
 State log entry schemas:
@@ -175,7 +175,7 @@ State log reference rule:
 - References to additional task IDs are allowed only inside a dedicated `related_items:` line.
 
 ## Validation and Definition of Done Gates
-A task can move to `done` only when:
+A task can move to `completed` only when:
 1. Acceptance criteria are fully satisfied.
 2. Required checks pass per `../06-quality/testing-strategy.md`.
 3. Security and reliability requirements for scope are met.

@@ -19,10 +19,10 @@ Define objective completion gates for tasks, features, and milestones in Cartogr
 - Exception and Rollback Rules
 
 ## Task-Level Done Criteria
-A task is `done` only when all are true:
+A task is `completed` only when all are true:
 1. Acceptance criteria in the task file are satisfied.
 2. Required commands for scope pass (lint/build/tests/manual checks as applicable).
-3. Task metadata is updated (`status: done`, claim released).
+3. Task metadata is updated (`status: completed`, claim released).
 4. Evidence recorded in `../05-state/progress-log.md`.
 5. No unresolved blocker is linked to task ID.
 

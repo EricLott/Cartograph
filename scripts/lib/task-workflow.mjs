@@ -20,9 +20,11 @@ export const TASK_KEY_ORDER = [
 export const STATUS_TRANSITIONS = {
   backlog: new Set(['backlog', 'todo', 'in_progress', 'blocked', 'cancelled']),
   todo: new Set(['todo', 'in_progress', 'blocked', 'cancelled']),
-  in_progress: new Set(['in_progress', 'blocked', 'todo', 'done', 'cancelled']),
-  blocked: new Set(['blocked', 'in_progress', 'todo', 'cancelled']),
-  done: new Set(['done']),
+  in_progress: new Set(['in_progress', 'blocked', 'todo', 'pull_requested', 'cancelled']),
+  pull_requested: new Set(['pull_requested', 'in_progress', 'blocked', 'completed', 'cancelled']),
+  blocked: new Set(['blocked', 'in_progress', 'todo', 'pull_requested', 'cancelled']),
+  completed: new Set(['completed']),
+  done: new Set(['done', 'completed']),
   cancelled: new Set(['cancelled']),
 };
 
@@ -57,9 +59,11 @@ export function getTaskStatusBucket(frontmatter) {
   const status = String(frontmatter.status || '').toLowerCase();
   const claimStatus = String(frontmatter.claim_status || '').toLowerCase();
 
+  if (status === 'completed') return 'completed';
   if (status === 'done') return 'complete';
   if (status === 'cancelled') return 'cancelled';
   if (claimStatus === 'expired') return 'claim_expired';
+  if (status === 'pull_requested') return 'pull_requested';
   if (status === 'blocked') return 'blocked';
   if (status === 'in_progress') return 'in_progress';
   if (claimStatus === 'claimed') return 'claimed';

@@ -70,6 +70,7 @@ For all item types, file name remains stable (`<type>-###-slug.md`); only the co
 - If no matching task exists, create one in the same PR before or alongside implementation changes.
 - If a PR spans multiple tasks, include all corresponding task files and keep dependency links accurate.
 - PR summaries should reference task IDs directly for traceability and review speed.
+- Task files move to `tasks/pull_requested/` when a PR is submitted and to `tasks/completed/` when that PR is approved.
 
 ## Branch Naming Rules
 - Branch names must encode one primary item ID.
