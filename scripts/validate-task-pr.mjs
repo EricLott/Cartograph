@@ -178,7 +178,9 @@ function getExpectedDirectoryForType(type) {
 
 function getBacklogItemFileId(filePath) {
   const normalized = normalizePath(filePath);
-  const match = normalized.match(/^agent-pack\/04-task-system\/(tasks|bugs|spikes|features|epics)\/((task|bug|spike|feature|epic)-[^/]+)\.md$/);
+  const match = normalized.match(
+    /^agent-pack\/04-task-system\/(tasks|bugs|spikes|features|epics)(?:\/[^/]+)?\/((task|bug|spike|feature|epic)-[^/]+)\.md$/,
+  );
   if (!match) return null;
   const itemName = match[2];
   const idMatch = itemName.match(/^(task|bug|spike|feature|epic)-\d+/);
@@ -188,8 +190,9 @@ function getBacklogItemFileId(filePath) {
 function getPrimaryPathCandidates(changedFiles, primaryId, primaryType) {
   const expectedDir = getExpectedDirectoryForType(primaryType);
   if (!expectedDir) return [];
-  const prefix = `${expectedDir}/${primaryId}-`;
-  return changedFiles.filter((file) => file.startsWith(prefix) && file.endsWith('.md'));
+  const nestedPattern = new RegExp(`^${expectedDir}/[^/]+/${primaryId}-.+\\.md$`);
+  const flatPattern = new RegExp(`^${expectedDir}/${primaryId}-.+\\.md$`);
+  return changedFiles.filter((file) => nestedPattern.test(file) || flatPattern.test(file));
 }
 
 function extractIdsFromText(text) {
@@ -341,8 +344,12 @@ function main() {
     const taskFileField = normalizePath(fields['Task File Path'] || '');
     if (taskFileField) {
       primaryPath = taskFileField;
-      if (!taskFileField.startsWith(`${expectedDir}/${primaryId}-`) || !taskFileField.endsWith('.md')) {
-        addError(errors, `Task File Path must point to ${expectedDir}/${primaryId}-*.md`);
+      const isValidTaskPath = new RegExp(`^${expectedDir}/[^/]+/${primaryId}-.+\\.md$`).test(taskFileField)
+        || new RegExp(`^${expectedDir}/${primaryId}-.+\\.md$`).test(taskFileField);
+
+      if (!isValidTaskPath) {
+        const expectedPattern = `${expectedDir}/<status>/${primaryId}-*.md`;
+        addError(errors, `Task File Path must point to ${expectedPattern}`);
       }
     }
   }

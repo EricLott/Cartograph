@@ -57,7 +57,7 @@ last_updated: 2026-03-19
 - To prevent overlap, do not implement a task while another active claim is unexpired.
 
 ## Pull Request Requirement
-- Every pull request must include the `agent-pack/04-task-system/tasks/` file for each task ID it implements.
+- Every pull request must include the task file under `agent-pack/04-task-system/tasks/<status>/` for each task ID it implements.
 - If code changes do not map to an existing task file, create the task file in the same PR.
 - Before marking task `done`, release claim ownership by setting `claim_status` to `released` and `claim_expires_at` to `null`.
 - PR title must include the same task ID as the selected task file.
@@ -73,8 +73,22 @@ last_updated: 2026-03-19
 - Target effort is approximately 0.5 to 1 day.
 - If a task needs multiple independent deliverables, split it.
 
+## Status Folder Placement
+Store task files in one of these folders under `agent-pack/04-task-system/tasks/`:
+- `todo/`: `status` is `backlog|todo` and `claim_status` is `unclaimed|released`.
+- `claimed/`: `status` is `backlog|todo` and `claim_status` is `claimed`.
+- `in_progress/`: `status` is `in_progress` and claim is active.
+- `claim_expired/`: `claim_status` is `expired`.
+- `blocked/`: `status` is `blocked`.
+- `complete/`: `status` is `done` and `claim_status` is `released`.
+- `cancelled/`: `status` is `cancelled`.
+
+When metadata changes, move the file to the matching folder in the same commit.
+
 ## Status Lifecycle
-`backlog -> todo -> in_progress -> blocked -> in_progress -> done`
+`todo -> claimed -> in_progress -> blocked -> in_progress -> complete`
+`claimed|in_progress -> claim_expired -> todo`
+`todo|claimed|in_progress|blocked -> cancelled`
 
 ## Claim Lifecycle
 `unclaimed -> claimed -> released`
@@ -91,6 +105,7 @@ last_updated: 2026-03-19
 
 ## Naming Rules
 - File name: `task-###-short-name.md`
+- Directory: `agent-pack/04-task-system/tasks/<status>/`
 - Task IDs remain stable even if title changes.
 
 ## Update Cadence

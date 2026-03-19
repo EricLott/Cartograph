@@ -45,7 +45,7 @@ Click the **Settings (⚙️)** icon in the sidebar to configure your preferred 
 
 ### Single-Task PR Contract
 - Every PR is scoped to exactly one primary task.
-- The PR must include the primary task file under `agent-pack/04-task-system/tasks/`.
+- The PR must include the primary task file under `agent-pack/04-task-system/tasks/<status>/`.
 - PRs that drift into multiple backlog items fail automated validation.
 - Progress/blocker/decision log updates must reference the same primary task ID.
 

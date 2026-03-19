@@ -24,6 +24,35 @@ Define how work items are represented, named, and progressed across epics, featu
 - Branch Naming Rules
 - Validation Rules
 
+## Status Folder System (All Backlog Types)
+Backlog item files now live under status buckets and must be moved when `status` (or task claim state) changes.
+
+### Tasks
+- Base path: `./tasks/<status>/`
+- `./tasks/todo/`: `status: backlog|todo` and `claim_status: unclaimed|released`
+- `./tasks/claimed/`: `status: backlog|todo` and `claim_status: claimed`
+- `./tasks/in_progress/`: `status: in_progress` with active claim
+- `./tasks/claim_expired/`: `claim_status: expired`
+- `./tasks/blocked/`: `status: blocked`
+- `./tasks/complete/`: `status: done` and claim released
+- `./tasks/cancelled/`: `status: cancelled`
+
+### Epics, Features, Bugs, Spikes
+- Base paths:
+  - `./epics/<status>/`
+  - `./features/<status>/`
+  - `./bugs/<status>/`
+  - `./spikes/<status>/`
+- Standard status buckets:
+  - `backlog/`
+  - `todo/`
+  - `in_progress/`
+  - `blocked/`
+  - `complete/` (`status: done`)
+  - `cancelled/`
+
+For all item types, file name remains stable (`<type>-###-slug.md`); only the containing status folder changes.
+
 ## Claim Rules
 - Tasks are claimable work items. A contributor must claim a task before implementation begins.
 - Claims are recorded in the task file metadata and expire automatically.
@@ -31,7 +60,7 @@ Define how work items are represented, named, and progressed across epics, featu
 - If a claim expires, the task becomes claimable again and work can be reassigned without overlap.
 
 ## PR Contribution Rules
-- Every pull request that changes behavior must include the task file(s) in `./tasks/` associated with that change.
+- Every pull request that changes behavior must include the primary backlog item file(s) in `./<type>/<status>/` associated with that change.
 - If no matching task exists, create one in the same PR before or alongside implementation changes.
 - If a PR spans multiple tasks, include all corresponding task files and keep dependency links accurate.
 - PR summaries should reference task IDs directly for traceability and review speed.

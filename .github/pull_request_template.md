@@ -3,7 +3,7 @@
 <!-- Example: task-001 -->
 
 ### Task File Path
-<!-- Example: agent-pack/04-task-system/tasks/task-001-example.md -->
+<!-- Example: agent-pack/04-task-system/tasks/todo/task-001-example.md -->
 
 ### Task Title
 

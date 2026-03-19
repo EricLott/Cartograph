@@ -38,8 +38,20 @@ acceptance_criteria:
 last_updated: 2026-03-19
 ```
 
+## Status Folder Placement
+Store bug files in `agent-pack/04-task-system/bugs/<status>/`:
+- `backlog/` for `status: backlog`
+- `todo/` for `status: todo`
+- `in_progress/` for `status: in_progress`
+- `blocked/` for `status: blocked`
+- `complete/` for `status: done`
+- `cancelled/` for `status: cancelled`
+
+When status changes, move the file to the matching folder in the same commit.
+
 ## Naming Rules
 - File name: `bug-###-short-name.md`
+- Directory: `bugs/<status>/`
 - Severity should align with `priority` and documented impact.
 
 ## Update Cadence

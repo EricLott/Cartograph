@@ -91,12 +91,47 @@ function todayDateString() {
   return new Date().toISOString().slice(0, 10);
 }
 
+function collectTaskFilesRecursively(directoryPath) {
+  const entries = fs.readdirSync(directoryPath, { withFileTypes: true });
+  const files = [];
+
+  for (const entry of entries) {
+    const fullPath = path.join(directoryPath, entry.name);
+
+    if (entry.isDirectory()) {
+      files.push(...collectTaskFilesRecursively(fullPath));
+      continue;
+    }
+
+    if (entry.isFile() && entry.name.endsWith('.md') && entry.name !== 'README.md' && entry.name.startsWith('task-')) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+function getTaskStatusBucket(frontmatter) {
+  const status = String(frontmatter.status || '').toLowerCase();
+  const claimStatus = String(frontmatter.claim_status || '').toLowerCase();
+
+  if (status === 'done') return 'complete';
+  if (status === 'cancelled') return 'cancelled';
+  if (claimStatus === 'expired') return 'claim_expired';
+  if (status === 'blocked') return 'blocked';
+  if (status === 'in_progress') return 'in_progress';
+  if (claimStatus === 'claimed') return 'claimed';
+  return 'todo';
+}
+
+function getTaskTargetPath(tasksDir, filePath, frontmatter) {
+  const targetDir = path.join(tasksDir, getTaskStatusBucket(frontmatter));
+  return path.join(targetDir, path.basename(filePath));
+}
+
 function loadTasks(rootDir) {
   const tasksDir = path.join(rootDir, 'agent-pack', '04-task-system', 'tasks');
-  const files = fs
-    .readdirSync(tasksDir)
-    .filter((name) => name.endsWith('.md') && name !== 'README.md' && name.startsWith('task-'))
-    .map((name) => path.join(tasksDir, name));
+  const files = collectTaskFilesRecursively(tasksDir);
 
   const tasks = files.map((filePath) => {
     const { frontmatter, body } = readMarkdownWithFrontmatter(filePath);
@@ -311,7 +346,18 @@ async function main() {
     updated.status = 'in_progress';
     updated.last_updated = todayDateString();
 
-    writeMarkdownWithFrontmatter(selectedTask.filePath, updated, selectedTask.body, TASK_KEY_ORDER);
+    const tasksDir = path.join(rootDir, 'agent-pack', '04-task-system', 'tasks');
+    const targetPath = getTaskTargetPath(tasksDir, selectedTask.filePath, updated);
+    fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+    writeMarkdownWithFrontmatter(targetPath, updated, selectedTask.body, TASK_KEY_ORDER);
+
+    if (targetPath !== selectedTask.filePath && fs.existsSync(selectedTask.filePath)) {
+      fs.unlinkSync(selectedTask.filePath);
+    }
+
+    selectedTask.filePath = targetPath;
+    selectedTask.relativePath = path.relative(rootDir, targetPath).replace(/\\/g, '/');
+    selectedTask.frontmatter = updated;
   }
 
   const bundleDir = path.join(rootDir, '.cartograph', 'context');

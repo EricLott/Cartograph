@@ -39,8 +39,20 @@ acceptance_criteria:
 last_updated: 2026-03-19
 ```
 
+## Status Folder Placement
+Store spike files in `agent-pack/04-task-system/spikes/<status>/`:
+- `backlog/` for `status: backlog`
+- `todo/` for `status: todo`
+- `in_progress/` for `status: in_progress`
+- `blocked/` for `status: blocked`
+- `complete/` for `status: done`
+- `cancelled/` for `status: cancelled`
+
+When status changes, move the file to the matching folder in the same commit.
+
 ## Naming Rules
 - File name: `spike-###-short-name.md`
+- Directory: `spikes/<status>/`
 - Spikes should not directly ship production behavior.
 
 ## Update Cadence
