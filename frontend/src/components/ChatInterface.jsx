@@ -21,6 +21,17 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting }) {
         setInput('');
     };
 
+    const renderMessageContent = (content) => {
+        const safeContent = typeof content === 'string' ? content : String(content ?? '');
+        const lines = safeContent.split('\n');
+        return lines.map((line, lineIndex) => (
+            <React.Fragment key={lineIndex}>
+                {line}
+                {lineIndex < lines.length - 1 ? <br /> : null}
+            </React.Fragment>
+        ));
+    };
+
     return (
         <div className="chat-container glass-panel" style={{ boxShadow: 'var(--shadow-xl)' }}>
             <div className="chat-history">
@@ -33,7 +44,7 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting }) {
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                             )}
                         </div>
-                        <div className="bubble" dangerouslySetInnerHTML={{ __html: msg.content.replace(/\n/g, '<br/>') }}></div>
+                        <div className="bubble">{renderMessageContent(msg.content)}</div>
                     </div>
                 ))}
                 {isWaiting && (

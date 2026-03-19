@@ -2,20 +2,21 @@
 id: task-007
 title: Replace unsafe chat HTML rendering with safe text rendering
 type: task
-status: todo
+status: done
 priority: P0
-owner: unassigned
+owner: codex
 claim_owner: unassigned
-claim_status: unclaimed
+claim_status: released
 claim_expires_at: null
-sla_due_at: 2026-04-09T23:59:00Z
+sla_due_at: "2026-04-09T23:59:00Z"
 depends_on: []
 acceptance_criteria:
-  - Chat rendering no longer uses `dangerouslySetInnerHTML`.
+  - "Chat rendering no longer uses `dangerouslySetInnerHTML`."
   - Messages still support multiline display in both roles.
   - No visual regression for basic chat history display.
 last_updated: 2026-03-19
 ---
+
 
 # Task: Replace unsafe chat HTML rendering with safe text rendering
 
