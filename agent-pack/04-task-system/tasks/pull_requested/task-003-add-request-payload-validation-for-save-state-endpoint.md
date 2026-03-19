@@ -2,21 +2,23 @@
 id: task-003
 title: Add request payload validation for save-state endpoint
 type: task
-status: todo
+status: pull_requested
 priority: P0
-owner: unassigned
-claim_owner: unassigned
-claim_status: unclaimed
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
 claim_expires_at: null
-sla_due_at: 2026-04-06T23:59:00Z
+sla_due_at: "2026-04-06T23:59:00Z"
 depends_on:
   - task-001
 acceptance_criteria:
   - Invalid payloads do not trigger DB writes.
-  - Validation errors return clear response body with status code in `4xx` range.
+  - "Validation errors return clear response body with status code in `4xx` range."
   - Valid payloads continue to save successfully.
 last_updated: 2026-03-19
 ---
+
+
 
 # Task: Add request payload validation for save-state endpoint
 
