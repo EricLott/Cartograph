@@ -39,9 +39,13 @@ impact: What behavior or plan changed.
 - 2026-03-19 | `chg-003` | Added concrete command-driven setup/testing guidance in environment and quality docs.
 - 2026-03-19 | `chg-004` | Seeded real backlog artifacts: 2 epics, 6 features, and 17 atomic tasks with claim metadata.
 - 2026-03-19 | `chg-005` | Introduced manifest-governed workflow path contract (`.cartograph/workflow.json`) and enforcement checks for script path usage.
+- 2026-03-19 | `chg-006` | Implemented atomic database transactions for recursive pillar and decision save-state operations.
+  - Linked items: `task-002`, `dec-001`.
+  - Evidence: `backend/test-transaction.mjs` verifies rollback on failure.
 
 ## Impact Summary
 - Agent contributors now have concrete implementation direction and actionable task queue.
+- Database persistence for recursive structures is now atomic and provides rollback guarantees.
 - Project is ready for autonomous task creation and task execution against explicit dependencies.
 
 ## Update Cadence
