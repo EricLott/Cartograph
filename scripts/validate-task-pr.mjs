@@ -189,20 +189,47 @@ function loadChangedFiles(options) {
 
   const base = options.base || process.env.PR_BASE_SHA;
   const head = options.head || process.env.PR_HEAD_SHA || 'HEAD';
+  const files = new Set();
 
   if (base) {
-    const result = runGit(['diff', '--name-only', `${base}...${head}`]);
-    return result.stdout
+    // 1. Files changed in commits on this branch relative to base
+    // Use 'log' instead of 'diff' to get everything added/modified in the branch
+    const logResult = runGit(['log', `${base}..${head}`, '--name-only', '--pretty=format:'], { allowFailure: true });
+    logResult.stdout
       .split(/\r?\n/)
       .map((line) => normalizePath(line))
-      .filter(Boolean);
+      .filter(Boolean)
+      .forEach((f) => files.add(f));
+
+    // 2. Diff between base and head (standard)
+    const diffResult = runGit(['diff', '--name-only', `${base}...${head}`], { allowFailure: true });
+    diffResult.stdout
+      .split(/\r?\n/)
+      .map((line) => normalizePath(line))
+      .filter(Boolean)
+      .forEach((f) => files.add(f));
   }
 
-  const result = runGit(['diff', '--name-only']);
-  return result.stdout
-    .split(/\r?\n/)
-    .map((line) => normalizePath(line))
-    .filter(Boolean);
+  // In self-check mode or when no base is provided, include working tree changes
+  if (options.selfCheck || !base) {
+    // Staged changes
+    const staged = runGit(['diff', '--cached', '--name-only'], { allowFailure: true });
+    staged.stdout
+      .split(/\r?\n/)
+      .map((line) => normalizePath(line))
+      .filter(Boolean)
+      .forEach((f) => files.add(f));
+
+    // Unstaged changes
+    const unstaged = runGit(['diff', '--name-only'], { allowFailure: true });
+    unstaged.stdout
+      .split(/\r?\n/)
+      .map((line) => normalizePath(line))
+      .filter(Boolean)
+      .forEach((f) => files.add(f));
+  }
+
+  return Array.from(files);
 }
 
 function getExpectedDirectoryForType(type, taskSystemRoot) {
@@ -267,20 +294,29 @@ function extractIdsFromText(text) {
 function getDiffAddedLines(filePath, options) {
   const base = options.base || process.env.PR_BASE_SHA;
   const head = options.head || process.env.PR_HEAD_SHA || 'HEAD';
+  const allLines = new Set();
 
-  let result;
+  const processDiff = (diffArgs) => {
+    const result = runGit([...diffArgs, '--', filePath], { allowFailure: true });
+    (result.stdout || '')
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
+      .forEach((line) => allLines.add(line.slice(1)));
+  };
+
   if (base) {
-    result = runGit(['diff', '--unified=0', `${base}...${head}`, '--', filePath], { allowFailure: true });
-  } else {
-    result = runGit(['diff', '--unified=0', '--', filePath], { allowFailure: true });
+    processDiff(['diff', '--unified=0', `${base}...${head}`]);
   }
 
-  const lines = (result.stdout || '')
-    .split(/\r?\n/)
-    .filter((line) => line.startsWith('+') && !line.startsWith('+++'))
-    .map((line) => line.slice(1));
+  // In self-check mode or when no base is provided, include working tree changes
+  if (options.selfCheck || !base) {
+    // Staged changes
+    processDiff(['diff', '--unified=0', '--cached']);
+    // Unstaged changes
+    processDiff(['diff', '--unified=0']);
+  }
 
-  return lines;
+  return Array.from(allLines);
 }
 
 function readFileAtRef(ref, filePath) {

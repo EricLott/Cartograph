@@ -2,7 +2,7 @@
 id: task-018
 title: Enhance workflow scripts for proactive staging and better validation
 type: task
-status: in_progress
+status: pull_requested
 priority: P2
 owner: Eric Lott
 claim_owner: Eric Lott

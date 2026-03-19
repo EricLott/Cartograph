@@ -40,6 +40,12 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-19T18:40:00-05:00 | `task-018` | `done` | Enhanced workflow scripts to be more pro-active and agent-friendly.
+  - Evidence:
+    - `validate-task-pr.mjs` now includes staged and unstaged changes when running in `selfCheck` mode, preventing premature "No changed files detected" errors.
+    - `cartograph-closeout.mjs` now automatically detects and stages uncommitted changes before validation, reducing friction for developers.
+    - Verified that uncommitted changes are correctly identified and staged during closeout.
+  - Next step: Run own closeout to verify the new proactive staging logic.
 - 2026-03-19T18:30:00-05:00 | `task-009` | `done` | Implemented robust async error handling across all frontend service boundaries and main UI flows.
   - Evidence:
     - Refactored `agentService.js` and `apiService.js` to throw explicit errors instead of failing silently.

@@ -70,6 +70,20 @@ function extractTaskIdFromBranch(branch) {
     return null;
 }
 
+function getUncommittedChanges() {
+    const staged = runGit(['diff', '--cached', '--name-only'], { allowFailure: true }).stdout.trim();
+    const unstaged = runGit(['diff', '--name-only'], { allowFailure: true }).stdout.trim();
+    const untracked = runGit(['ls-files', '--others', '--exclude-standard'], { allowFailure: true }).stdout.trim();
+
+    const all = [
+        ...staged.split(/\r?\n/),
+        ...unstaged.split(/\r?\n/),
+        ...untracked.split(/\r?\n/)
+    ].filter(Boolean);
+
+    return [...new Set(all)];
+}
+
 function todayDateString() {
     return new Date().toISOString().slice(0, 10);
 }
@@ -199,6 +213,18 @@ async function main() {
     }
 
     console.log(`\n[CLOSEOUT] Preparing to close out ${taskId} on branch ${branch}...`);
+
+    // 0. Pro-active change detection
+    const uncommitted = getUncommittedChanges();
+    if (uncommitted.length > 0) {
+        if (options.dryRun) {
+            console.log(`\n[DRY RUN] Would stage ${uncommitted.length} uncommitted changes:`);
+            uncommitted.forEach(f => console.log(`  - ${f}`));
+        } else {
+            console.log(`- Detected ${uncommitted.length} uncommitted changes. Staging for validation...`);
+            runGit(['add', ...uncommitted]);
+        }
+    }
 
     // 1. Preflight Validation
     if (!options.force) {
