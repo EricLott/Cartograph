@@ -40,6 +40,16 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-19T13:40:00-05:00 | `task-003` | `done` | Added request payload validation to `POST /api/save-state` endpoint.
+  - Evidence:
+    - Added recursive validation for `idea` and `pillars` structure in `backend/server.js`.
+    - Handfully tested with malformed JSON payloads (missing `idea`, non-array `pillars`, and missing pillar titles) to verify HTTP 400 responses.
+  - Next step: Continue with task four (Harden retrieval API).
+- 2026-03-19T13:10:00-05:00 | `task-002` | `done` | Wrapped recursive pillar and decision writes in a managed database transaction.
+  - Evidence:
+    - Integrated `sequelize.transaction` into `POST /api/save-state` endpoint.
+    - Verified all-or-nothing atomicity via `backend/test-transaction.mjs`, covering both creation and update rollback scenarios when sub-operations fail.
+  - Next step: Continue with `task-004` (Harden retrieval API).
 - 2026-03-19T12:55:00-05:00 | `task-008` | `done` | Resolved localStorage bootstrap lint errors by using synchronous state initializers.
   - Evidence:
     - Refactored `App.jsx` and `SettingsModal.jsx` to load configuration from `localStorage` within `useState(() => ...)` initializers.
