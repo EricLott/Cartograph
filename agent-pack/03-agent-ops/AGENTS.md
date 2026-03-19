@@ -105,6 +105,7 @@ Execution rules:
 ### Single-Task PR Boundary
 - One PR must map to exactly one primary task ID.
 - Do not modify other backlog item files (`task-*`, `bug-*`, `spike-*`, `feature-*`, `epic-*`) outside the selected primary item.
+- Do not update claim/status metadata or move status folders for any non-primary backlog item in the same PR.
 - If state logs are updated (`progress`, `blockers`, `decisions`), entries must reference the same primary task ID.
 - PR title must include the same task ID as the branch and task file.
 - Run local preflight validation before opening PR:

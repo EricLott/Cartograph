@@ -40,7 +40,8 @@ Backlog item files now live under status buckets and must be moved when `status`
 - `./tasks/in_progress/`: `status: in_progress` with active claim
 - `./tasks/claim_expired/`: `claim_status: expired`
 - `./tasks/blocked/`: `status: blocked`
-- `./tasks/complete/`: `status: done` and claim released
+- `./tasks/pull_requested/`: `status: pull_requested` with active claim while PR review is pending
+- `./tasks/completed/`: `status: completed` and claim released
 - `./tasks/cancelled/`: `status: cancelled`
 
 ### Epics, Features, Bugs, Spikes
@@ -66,9 +67,9 @@ For all item types, file name remains stable (`<type>-###-slug.md`); only the co
 - If a claim expires, the task becomes claimable again and work can be reassigned without overlap.
 
 ## PR Contribution Rules
-- Every pull request that changes behavior must include the primary backlog item file(s) in `./<type>/<status>/` associated with that change.
+- Every pull request that changes behavior must include exactly one primary backlog item file in `./<type>/<status>/` associated with that change.
 - If no matching task exists, create one in the same PR before or alongside implementation changes.
-- If a PR spans multiple tasks, include all corresponding task files and keep dependency links accurate.
+- Do not span multiple primary task IDs in one PR.
 - PR summaries should reference task IDs directly for traceability and review speed.
 - Task files move to `tasks/pull_requested/` when a PR is submitted and to `tasks/completed/` when that PR is approved.
 

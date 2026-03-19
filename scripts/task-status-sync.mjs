@@ -28,7 +28,7 @@ Usage:
 
 Notes:
   - If --task-id is omitted, the task ID is parsed from --branch.
-  - The task file is moved into agent-pack/04-task-system/tasks/<status>/.
+  - The task file is moved into the workflow-configured tasks root under <status>/.
 `);
 }
 

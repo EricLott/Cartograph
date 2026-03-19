@@ -59,8 +59,7 @@ export function getTaskStatusBucket(frontmatter) {
   const status = String(frontmatter.status || '').toLowerCase();
   const claimStatus = String(frontmatter.claim_status || '').toLowerCase();
 
-  if (status === 'completed') return 'completed';
-  if (status === 'done') return 'complete';
+  if (status === 'completed' || status === 'done') return 'completed';
   if (status === 'cancelled') return 'cancelled';
   if (claimStatus === 'expired') return 'claim_expired';
   if (status === 'pull_requested') return 'pull_requested';

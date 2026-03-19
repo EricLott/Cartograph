@@ -193,6 +193,30 @@ function getPrimaryPathCandidates(changedFiles, primaryId, primaryType, taskSyst
   return changedFiles.filter((file) => nestedPattern.test(file) || flatPattern.test(file));
 }
 
+function selectPrimaryPathCandidate(candidates) {
+  if (candidates.length === 0) return { path: null };
+  if (candidates.length === 1) return { path: candidates[0] };
+
+  // Status-folder moves can produce old/new paths for the same task ID in one diff.
+  // Prefer the current working-tree path when exactly one exists.
+  const existing = candidates.filter((candidate) => fs.existsSync(candidate));
+  if (existing.length === 1) {
+    return { path: existing[0] };
+  }
+
+  if (existing.length > 1) {
+    return {
+      path: existing[0],
+      error: `Multiple current primary item files found for the same ID: ${existing.join(', ')}`,
+    };
+  }
+
+  return {
+    path: candidates[0],
+    error: `Multiple possible primary item files found for the same ID and none exist in working tree: ${candidates.join(', ')}`,
+  };
+}
+
 function extractIdsFromText(text) {
   const matches = String(text || '').match(/(task|bug|spike|feature)-\d+/g) || [];
   return [...new Set(matches)];
@@ -383,8 +407,11 @@ function main() {
     } else if (candidates.length === 0) {
       addError(errors, `Changed files must include the primary item file for ${primaryId}.`);
     } else {
-      addError(errors, `Multiple possible primary item files found for ${primaryId}: ${candidates.join(', ')}`);
-      primaryPath = candidates[0];
+      const resolved = selectPrimaryPathCandidate(candidates);
+      if (resolved.error) {
+        addError(errors, resolved.error);
+      }
+      primaryPath = resolved.path;
     }
   }
 
@@ -401,13 +428,18 @@ function main() {
     }
   }
 
-  const changedBacklogItemFiles = changedFiles.filter((file) => getBacklogItemFileId(file, taskSystemRoot));
-  const invalidBacklogChanges = changedBacklogItemFiles.filter((file) => file !== primaryPath);
+  const changedBacklogItems = changedFiles
+    .map((file) => ({ file, id: getBacklogItemFileId(file, taskSystemRoot) }))
+    .filter((item) => item.id);
+  const changedBacklogItemFiles = changedBacklogItems.map((item) => item.file);
+  const invalidBacklogChanges = changedBacklogItems
+    .filter((item) => item.id !== primaryId)
+    .map((item) => item.file);
   if (invalidBacklogChanges.length > 0) {
-    addError(errors, `Strict mode violation: other backlog item files changed: ${invalidBacklogChanges.join(', ')}`);
+    addError(errors, `Strict mode violation: other backlog item files changed: ${[...new Set(invalidBacklogChanges)].join(', ')}`);
   }
 
-  const multiItemIds = [...new Set(changedBacklogItemFiles.map((file) => getBacklogItemFileId(file, taskSystemRoot)).filter(Boolean))]
+  const multiItemIds = [...new Set(changedBacklogItems.map((item) => item.id).filter(Boolean))]
     .filter((id) => id !== primaryId);
   if (multiItemIds.length > 0) {
     addError(errors, `PR spans multiple primary items: ${multiItemIds.join(', ')}`);

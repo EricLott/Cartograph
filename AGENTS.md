@@ -40,6 +40,7 @@ PR enforcement is strict:
 - one primary task per PR
 - branch, PR title, and PR template must link the same task ID
 - unrelated backlog item file changes are rejected
+- status-folder moves and claim/status metadata updates are allowed only for that same primary task ID
 
 ## First Read
 Before coding, read in order:

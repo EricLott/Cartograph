@@ -2,7 +2,7 @@
 id: task-007
 title: Replace unsafe chat HTML rendering with safe text rendering
 type: task
-status: done
+status: completed
 priority: P0
 owner: codex
 claim_owner: unassigned
@@ -16,6 +16,7 @@ acceptance_criteria:
   - No visual regression for basic chat history display.
 last_updated: 2026-03-19
 ---
+
 
 
 # Task: Replace unsafe chat HTML rendering with safe text rendering

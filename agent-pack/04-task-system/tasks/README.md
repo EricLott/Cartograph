@@ -63,7 +63,8 @@ last_updated: 2026-03-19
 - To prevent overlap, do not implement a task while another active claim is unexpired.
 
 ## Pull Request Requirement
-- Every pull request must include the task file under `agent-pack/04-task-system/tasks/<status>/` for each task ID it implements.
+- Every pull request must include exactly one primary task file under `agent-pack/04-task-system/tasks/<status>/`.
+- Do not implement multiple primary task IDs in the same PR.
 - If code changes do not map to an existing task file, create the task file in the same PR.
 - On PR open/sync/reopen, task status must move to `pull_requested` and live in `tasks/pull_requested/`.
 - On PR approval, task status must move to `completed` and live in `tasks/completed/` with released claim metadata.

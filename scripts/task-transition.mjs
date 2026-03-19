@@ -13,7 +13,7 @@ import {
 } from './lib/task-workflow.mjs';
 import { loadWorkflowConfig, getWorkflowPath, toAbsolutePath } from './lib/workflow-config.mjs';
 
-const ALLOWED_TARGETS = new Set(['claimed', 'in_progress', 'done', 'blocked', 'expired', 'cancelled']);
+const ALLOWED_TARGETS = new Set(['claimed', 'in_progress', 'pull_requested', 'completed', 'done', 'blocked', 'expired', 'cancelled']);
 
 function parseArgs(argv) {
   const options = {
@@ -114,8 +114,18 @@ function applyTargetState(frontmatter, target, owner, claimHours) {
       updated.claim_status = 'claimed';
       updated.claim_expires_at = claimExpiry;
       break;
+    case 'pull_requested':
+      updated.status = 'pull_requested';
+      updated.owner = owner;
+      if (['unclaimed', 'released', 'expired', ''].includes(String(updated.claim_status || '').toLowerCase())) {
+        updated.claim_owner = owner;
+      }
+      updated.claim_status = 'claimed';
+      updated.claim_expires_at = claimExpiry;
+      break;
+    case 'completed':
     case 'done':
-      updated.status = 'done';
+      updated.status = 'completed';
       updated.claim_owner = 'unassigned';
       updated.claim_status = 'released';
       updated.claim_expires_at = null;
@@ -149,7 +159,7 @@ function applyTargetState(frontmatter, target, owner, claimHours) {
 }
 
 function printHelp() {
-  console.log(`task-transition\n\nUsage:\n  node scripts/task-transition.mjs --task-id task-### --to <state> [options]\n\nOptions:\n  --task-id <task-###>        Required task ID\n  --to <state>                claimed|in_progress|done|blocked|expired|cancelled\n  --owner <name>              Claim owner for claimed/in_progress/blocked transitions\n  --claim-hours <n>           Claim window in hours (default: 24)\n  --dry-run                   Preview changes without writing files\n  --help                      Show this help\n`);
+  console.log(`task-transition\n\nUsage:\n  node scripts/task-transition.mjs --task-id task-### --to <state> [options]\n\nOptions:\n  --task-id <task-###>        Required task ID\n  --to <state>                claimed|in_progress|pull_requested|completed|done|blocked|expired|cancelled\n  --owner <name>              Claim owner for claimed/in_progress/pull_requested/blocked transitions\n  --claim-hours <n>           Claim window in hours (default: 24)\n  --dry-run                   Preview changes without writing files\n  --help                      Show this help\n`);
 }
 
 function main() {
