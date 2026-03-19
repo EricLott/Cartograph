@@ -2,20 +2,21 @@
 id: task-009
 title: Add robust async error handling for send update and export flows
 type: task
-status: todo
+status: pull_requested
 priority: P1
-owner: unassigned
-claim_owner: unassigned
-claim_status: unclaimed
-claim_expires_at: null
-sla_due_at: 2026-04-11T23:59:00Z
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-20T23:13:24.669Z"
+sla_due_at: "2026-04-11T23:59:00Z"
 depends_on:
   - task-008
 acceptance_criteria:
-  - Provider, backend, and export errors are surfaced to users with clear messaging.
+  - "Provider, backend, and export errors are surfaced to users with clear messaging."
   - App does not get stuck in loading state after failures.
 last_updated: 2026-03-19
 ---
+
 
 # Task: Add robust async error handling for send update and export flows
 

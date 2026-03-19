@@ -17,6 +17,7 @@ function App() {
   const [activePillar, setActivePillar] = useState(null);
   const [agentFeedback, setAgentFeedback] = useState([]);
   const [projectId, setProjectId] = useState(null);
+  const [errorMessage, setErrorMessage] = useState(null);
 
   useEffect(() => {
     async function hydrate() {
@@ -52,88 +53,101 @@ function App() {
   });
 
   const handleSendMessage = async (content) => {
+    setErrorMessage(null);
     const newMessages = [...messages, { role: 'user', content }];
     setMessages(newMessages);
     setIsWaiting(true);
 
-    if (pillars.length === 0) {
-      const generatedPillars = await generatePillarsFromIdea(content, llmConfig);
-      setMessages([...newMessages, { role: 'agent', content: "I've extracted the top-level pillars rapidly. I am now deploying sub-agents in parallel to draft the specific categories and decisions..." }]);
-      setPillars(generatedPillars);
-      setIsWaiting(false); // Release the lock so UI updates
+    try {
+      if (pillars.length === 0) {
+        const generatedPillars = await generatePillarsFromIdea(content, llmConfig);
+        setMessages([...newMessages, { role: 'agent', content: "I've extracted the top-level pillars rapidly. I am now deploying sub-agents in parallel to draft the specific categories and decisions..." }]);
+        setPillars(generatedPillars);
+        setIsWaiting(false); // Release the lock so UI updates for partial progress
 
-      const parallelPromises = generatedPillars.map(async (pillar) => {
-        const subData = await generateCategoriesForPillar(content, pillar, llmConfig);
-        setPillars(current => current.map(p => {
-          if (p.id === pillar.id) {
-            return { ...p, subcategories: subData.subcategories || [], decisions: subData.decisions || [] };
+        const parallelPromises = generatedPillars.map(async (pillar) => {
+          try {
+            const subData = await generateCategoriesForPillar(content, pillar, llmConfig);
+            setPillars(current => current.map(p => {
+              if (p.id === pillar.id) {
+                return { ...p, subcategories: subData.subcategories || [], decisions: subData.decisions || [] };
+              }
+              return p;
+            }));
+            return subData;
+          } catch (err) {
+            console.error(`Pillar expansion failed for ${pillar.title}:`, err);
+            return { subcategories: [], decisions: [] }; // Fail gracefully for individual pillars
           }
-          return p;
+        });
+
+        await Promise.all(parallelPromises);
+
+        setMessages(msgs => [...msgs, { role: 'agent', content: "All sub-agents have reported back. The architectural framework is fully staged! Which area would you like to discuss first?" }]);
+
+        const finalPillars = await Promise.all(generatedPillars.map(async (p, idx) => {
+          const subData = await parallelPromises[idx];
+          return { ...p, subcategories: subData.subcategories || [], decisions: subData.decisions || [] };
         }));
-        return subData;
-      });
-
-      await Promise.all(parallelPromises);
-
-      setMessages(msgs => [...msgs, { role: 'agent', content: "All sub-agents have reported back. The architectural framework is fully staged! Which area would you like to discuss first?" }]);
-
-      const finalPillars = await Promise.all(generatedPillars.map(async (p, idx) => {
-        const subData = await parallelPromises[idx];
-        return { ...p, subcategories: subData.subcategories || [], decisions: subData.decisions || [] };
-      }));
-      const resultData = await saveStateToBackend(content, finalPillars, null); // new project
-      if (resultData && resultData.projectId) {
-        setProjectId(resultData.projectId);
-      }
-    } else {
-      const result = await processChatTurn(newMessages, pillars, llmConfig);
-
-      let nextPillars = [...pillars];
-      if (result.newCategories && result.newCategories.length > 0) {
-        nextPillars = [...nextPillars, ...result.newCategories];
-      }
-
-      if (result.updatedDecisions && result.updatedDecisions.length > 0) {
-        const updateNodeDecisions = (nodes) => {
-          return nodes.map(node => {
-            let newNode = { ...node };
-            if (newNode.decisions) {
-              newNode.decisions = newNode.decisions.map(d => {
-                const update = result.updatedDecisions.find(u => u.id === d.id);
-                return update ? { ...d, answer: update.answer } : d;
-              });
-            }
-            if (newNode.subcategories && newNode.subcategories.length > 0) {
-              newNode.subcategories = updateNodeDecisions(newNode.subcategories);
-            }
-            return newNode;
-          });
-        };
-        nextPillars = updateNodeDecisions(nextPillars);
-      }
-
-      setPillars(nextPillars);
-      setMessages([...newMessages, { role: 'agent', content: result.reply }]);
-
-      if (result.conflicts && result.conflicts.length > 0) {
-        setAgentFeedback(result.conflicts.map(c => `Conflict: ${c.description}`));
-      } else {
-        setAgentFeedback([]);
-      }
-
-      const ideaMsg = newMessages.find(m => m.role === 'user');
-      if (ideaMsg) {
-        const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId);
+        const resultData = await saveStateToBackend(content, finalPillars, null); // new project
         if (resultData && resultData.projectId) {
           setProjectId(resultData.projectId);
         }
-      }
-    }
+      } else {
+        const result = await processChatTurn(newMessages, pillars, llmConfig);
 
-    setIsWaiting(false);
+        let nextPillars = [...pillars];
+        if (result.newCategories && result.newCategories.length > 0) {
+          nextPillars = [...nextPillars, ...result.newCategories];
+        }
+
+        if (result.updatedDecisions && result.updatedDecisions.length > 0) {
+          const updateNodeDecisions = (nodes) => {
+            return nodes.map(node => {
+              let newNode = { ...node };
+              if (newNode.decisions) {
+                newNode.decisions = newNode.decisions.map(d => {
+                  const update = result.updatedDecisions.find(u => u.id === d.id);
+                  return update ? { ...d, answer: update.answer } : d;
+                });
+              }
+              if (newNode.subcategories && newNode.subcategories.length > 0) {
+                newNode.subcategories = updateNodeDecisions(newNode.subcategories);
+              }
+              return newNode;
+            });
+          };
+          nextPillars = updateNodeDecisions(nextPillars);
+        }
+
+        setPillars(nextPillars);
+        setMessages([...newMessages, { role: 'agent', content: result.reply }]);
+
+        if (result.conflicts && result.conflicts.length > 0) {
+          setAgentFeedback(result.conflicts.map(c => `Conflict: ${c.description}`));
+        } else {
+          setAgentFeedback([]);
+        }
+
+        const ideaMsg = newMessages.find(m => m.role === 'user');
+        if (ideaMsg) {
+          const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId);
+          if (resultData && resultData.projectId) {
+            setProjectId(resultData.projectId);
+          }
+        }
+      }
+    } catch (err) {
+      console.error("Chat flow failed:", err);
+      setMessages([...newMessages, { role: 'agent', content: "I encountered an error while processing your request. Please check the alert above." }]);
+      setErrorMessage(err.message || "An unexpected error occurred.");
+    } finally {
+      setIsWaiting(false);
+    }
   };
 
   const handleUpdateDecision = async (pillarId, decisionId, answer) => {
+    setErrorMessage(null);
     const updateNodeDecisions = (nodes) => {
       return nodes.map(node => {
         let newNode = { ...node };
@@ -151,26 +165,32 @@ function App() {
 
     const nextPillars = updateNodeDecisions(pillars);
     setPillars(nextPillars);
-
-    // activePillar might be deeply nested, we don't strictly re-find it right now 
-    // but React's state linkage works down safely as long as object ref passes correctly, 
-    // actually we should just reset activePillar to null or let it be stale, but it's simpler to just let React re-render.
-    // For now we just close the activePillar.
     setActivePillar(null);
 
-    const ideaMsg = messages.find(m => m.role === 'user');
-    if (ideaMsg) {
-      const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId);
-      if (resultData && resultData.projectId) {
-        setProjectId(resultData.projectId);
+    try {
+      const ideaMsg = messages.find(m => m.role === 'user');
+      if (ideaMsg) {
+        const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId);
+        if (resultData && resultData.projectId) {
+          setProjectId(resultData.projectId);
+        }
       }
+    } catch (err) {
+      console.error("Decision persistence failed:", err);
+      setErrorMessage("Failed to save decision to the cloud. You can continue, but changes may not persist if you refresh.");
+    } finally {
+      setAgentFeedback([]);
     }
-
-    setAgentFeedback([]);
   };
 
   const handleExport = async () => {
-    await generateBlueprintZip(pillars);
+    setErrorMessage(null);
+    try {
+      await generateBlueprintZip(pillars);
+    } catch (err) {
+      console.error("Export failed:", err);
+      setErrorMessage("Failed to generate export package: " + err.message);
+    }
   };
 
   const checkAllAnswered = (nodes) => {
@@ -211,6 +231,16 @@ function App() {
             Export .zip
           </button>
         </header>
+
+        {errorMessage && (
+          <div className="agent-alerts glass-panel" style={{ padding: '1rem', borderLeft: '3px solid #ef4444', marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <h4 style={{ color: '#ef4444', marginBottom: '0.25rem' }}>System Error</h4>
+              <p style={{ margin: 0, fontSize: '0.9rem' }}>{errorMessage}</p>
+            </div>
+            <button className="btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setErrorMessage(null)}>Dismiss</button>
+          </div>
+        )}
 
         {agentFeedback.length > 0 && (
           <div className="agent-alerts glass-panel" style={{ padding: '1rem', borderLeft: '3px solid #f59e0b', marginBottom: '1rem' }}>

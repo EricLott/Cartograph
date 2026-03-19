@@ -40,6 +40,14 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-19T18:30:00-05:00 | `task-009` | `done` | Implemented robust async error handling across all frontend service boundaries and main UI flows.
+  - Evidence:
+    - Refactored `agentService.js` and `apiService.js` to throw explicit errors instead of failing silently.
+    - Updated `App.jsx` with `try/catch/finally` blocks for chat, decision updates, and export flows.
+    - Added user-visible error alert banner to `App.jsx` for surfacing provider and system failures.
+    - Verified that loading states (`isWaiting`) are correctly reset even after failures, preventing UI lockup.
+    - `npm run lint` pass in `frontend`.
+  - Next step: Run local validation and PR closeout.
 - 2026-03-19T17:25:00-05:00 | `task-005` | `in_progress` | Added `GET /api/health` endpoint to surface backend and database connectivity status.
   - Evidence:
     - Updated `backend/server.js` with authenticated database health check.

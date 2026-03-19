@@ -248,35 +248,30 @@ export const generatePillarsFromIdea = async (ideaDescription, config) => {
 
     const prompt = `Application Idea:\n${ideaDescription}`;
 
-    try {
-        const completion = await requestProviderCompletion({
-            provider,
-            keys,
-            openaiPayload: {
-                model: 'gpt-4o',
-                messages: [
-                    { role: 'system', content: SYSTEM_PROMPT + "\nRemember, return ONLY the raw JSON array." },
-                    { role: 'user', content: prompt }
-                ]
-            },
-            anthropicPayload: {
-                model: 'claude-3-5-sonnet-20240620',
-                max_tokens: 4000,
-                system: SYSTEM_PROMPT,
-                messages: [{ role: 'user', content: prompt }]
-            },
-            geminiPayload: {
-                systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: 'application/json' }
-            }
-        });
+    const completion = await requestProviderCompletion({
+        provider,
+        keys,
+        openaiPayload: {
+            model: 'gpt-4o',
+            messages: [
+                { role: 'system', content: SYSTEM_PROMPT + "\nRemember, return ONLY the raw JSON array." },
+                { role: 'user', content: prompt }
+            ]
+        },
+        anthropicPayload: {
+            model: 'claude-3-5-sonnet-20240620',
+            max_tokens: 4000,
+            system: SYSTEM_PROMPT,
+            messages: [{ role: 'user', content: prompt }]
+        },
+        geminiPayload: {
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json' }
+        }
+    });
 
-        return parseLLMResponse(completion);
-    } catch (err) {
-        console.error("LLM Error:", err);
-        return [{ id: 'err', title: 'Error Generation', description: err.message, decisions: [] }];
-    }
+    return parseLLMResponse(completion);
 };
 
 const mockGenerate = async () => {
@@ -309,35 +304,30 @@ export const generateCategoriesForPillar = async (ideaDescription, pillar, confi
 
     const prompt = `Application Idea:\n${ideaDescription}\n\nAssigned Pillar to expand:\n${pillar.title}\n${pillar.description}`;
 
-    try {
-        const completion = await requestProviderCompletion({
-            provider,
-            keys,
-            openaiPayload: {
-                model: 'gpt-4o',
-                messages: [
-                    { role: 'system', content: SUBCATEGORY_SYSTEM_PROMPT },
-                    { role: 'user', content: prompt }
-                ]
-            },
-            anthropicPayload: {
-                model: 'claude-3-5-sonnet-20240620',
-                max_tokens: 4000,
-                system: SUBCATEGORY_SYSTEM_PROMPT,
-                messages: [{ role: 'user', content: prompt }]
-            },
-            geminiPayload: {
-                systemInstruction: { parts: [{ text: SUBCATEGORY_SYSTEM_PROMPT }] },
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: 'application/json' }
-            }
-        });
+    const completion = await requestProviderCompletion({
+        provider,
+        keys,
+        openaiPayload: {
+            model: 'gpt-4o',
+            messages: [
+                { role: 'system', content: SUBCATEGORY_SYSTEM_PROMPT },
+                { role: 'user', content: prompt }
+            ]
+        },
+        anthropicPayload: {
+            model: 'claude-3-5-sonnet-20240620',
+            max_tokens: 4000,
+            system: SUBCATEGORY_SYSTEM_PROMPT,
+            messages: [{ role: 'user', content: prompt }]
+        },
+        geminiPayload: {
+            systemInstruction: { parts: [{ text: SUBCATEGORY_SYSTEM_PROMPT }] },
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json' }
+        }
+    });
 
-        return parseLLMResponse(completion);
-    } catch (err) {
-        console.error("LLM Sub-Agent Error:", err);
-        return { subcategories: [], decisions: [] };
-    }
+    return parseLLMResponse(completion);
 };
 
 export const processChatTurn = async (chatHistory, currentPillars, config) => {
@@ -357,36 +347,31 @@ export const processChatTurn = async (chatHistory, currentPillars, config) => {
         });
     }
 
-    try {
-        const completion = await requestProviderCompletion({
-            provider,
-            keys,
-            openaiPayload: {
-                model: 'gpt-4o',
-                messages: [
-                    { role: 'system', content: CHAT_SYSTEM_PROMPT },
-                    ...chatHistory.slice(1, -1),
-                    { role: 'user', content: prompt }
-                ]
-            },
-            anthropicPayload: {
-                model: 'claude-3-5-sonnet-20240620',
-                max_tokens: 4000,
-                system: CHAT_SYSTEM_PROMPT,
-                messages: [{ role: 'user', content: prompt }]
-            },
-            geminiPayload: {
-                systemInstruction: { parts: [{ text: CHAT_SYSTEM_PROMPT }] },
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: 'application/json' }
-            }
-        });
+    const completion = await requestProviderCompletion({
+        provider,
+        keys,
+        openaiPayload: {
+            model: 'gpt-4o',
+            messages: [
+                { role: 'system', content: CHAT_SYSTEM_PROMPT },
+                ...chatHistory.slice(1, -1),
+                { role: 'user', content: prompt }
+            ]
+        },
+        anthropicPayload: {
+            model: 'claude-3-5-sonnet-20240620',
+            max_tokens: 4000,
+            system: CHAT_SYSTEM_PROMPT,
+            messages: [{ role: 'user', content: prompt }]
+        },
+        geminiPayload: {
+            systemInstruction: { parts: [{ text: CHAT_SYSTEM_PROMPT }] },
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json' }
+        }
+    });
 
-        return parseLLMResponse(completion);
-    } catch (err) {
-        console.error("LLM Chat Error:", err);
-        return { reply: "I encountered an error trying to process that thought: " + err.message, updatedDecisions: [], newCategories: [], conflicts: [] };
-    }
+    return parseLLMResponse(completion);
 };
 
 export const evaluateDecisions = async () => {
