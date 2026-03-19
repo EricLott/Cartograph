@@ -2,12 +2,12 @@
 id: task-018
 title: Enhance workflow scripts for proactive staging and better validation
 type: task
-status: pull_requested
+status: completed
 priority: P2
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-20T23:25:59.214Z"
+claim_status: released
+claim_expires_at: null
 depends_on: []
 last_updated: 2026-03-19
 ---
