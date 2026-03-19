@@ -45,44 +45,76 @@ sequelize.sync({ alter: true }).then(() => console.log('Database synced')).catch
 
 app.post('/api/save-state', async (req, res) => {
     try {
-        const { idea, pillars } = req.body;
+        const { idea, pillars, projectId } = req.body;
+        let savedProjectId = null;
 
-        // Simple overwrite for prototyping: clear old data
-        await Project.destroy({ where: {} });
+        await sequelize.transaction(async (transaction) => {
+            let project = null;
 
-        const project = await Project.create({ idea });
+            if (projectId) {
+                project = await Project.findByPk(projectId, { transaction });
+            }
 
-        const savePillars = async (pillarsArray, parentId = null) => {
-            if (!pillarsArray) return;
-            for (const p of pillarsArray) {
-                const pillar = await Pillar.create({
-                    pillarId: p.id,
-                    title: p.title,
-                    description: p.description,
-                    ProjectId: project.id,
-                    parentId: parentId
+            if (project) {
+                project.idea = idea;
+                await project.save({ transaction });
+
+                const existingPillars = await Pillar.findAll({
+                    where: { ProjectId: project.id },
+                    attributes: ['id'],
+                    transaction
                 });
 
-                if (p.decisions) {
-                    for (const d of p.decisions) {
-                        await Decision.create({
-                            decisionId: d.id,
-                            question: d.question,
-                            context: d.context,
-                            answer: d.answer,
-                            PillarId: pillar.id
-                        });
+                if (existingPillars.length > 0) {
+                    const existingPillarIds = existingPillars.map((pillar) => pillar.id);
+                    await Decision.destroy({
+                        where: { PillarId: existingPillarIds },
+                        transaction
+                    });
+                }
+
+                await Pillar.destroy({
+                    where: { ProjectId: project.id },
+                    transaction
+                });
+            } else {
+                project = await Project.create({ idea }, { transaction });
+            }
+
+            const savePillars = async (pillarsArray, parentId = null) => {
+                if (!pillarsArray) return;
+                for (const p of pillarsArray) {
+                    const pillar = await Pillar.create({
+                        pillarId: p.id,
+                        title: p.title,
+                        description: p.description,
+                        ProjectId: project.id,
+                        parentId: parentId
+                    }, { transaction });
+
+                    if (p.decisions) {
+                        for (const d of p.decisions) {
+                            await Decision.create({
+                                decisionId: d.id,
+                                question: d.question,
+                                context: d.context,
+                                answer: d.answer,
+                                PillarId: pillar.id
+                            }, { transaction });
+                        }
+                    }
+
+                    if (p.subcategories && p.subcategories.length > 0) {
+                        await savePillars(p.subcategories, pillar.id);
                     }
                 }
+            };
 
-                if (p.subcategories && p.subcategories.length > 0) {
-                    await savePillars(p.subcategories, pillar.id);
-                }
-            }
-        };
+            await savePillars(pillars);
+            savedProjectId = project.id;
+        });
 
-        await savePillars(pillars);
-        res.json({ success: true, projectId: project.id });
+        res.json({ success: true, projectId: savedProjectId });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

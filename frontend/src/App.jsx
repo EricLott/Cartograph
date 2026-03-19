@@ -16,6 +16,7 @@ function App() {
   const [pillars, setPillars] = useState([]);
   const [activePillar, setActivePillar] = useState(null);
   const [agentFeedback, setAgentFeedback] = useState([]);
+  const [projectId, setProjectId] = useState(null);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [llmConfig, setLlmConfig] = useState({
@@ -60,7 +61,10 @@ function App() {
         const subData = await parallelPromises[idx];
         return { ...p, subcategories: subData.subcategories || [], decisions: subData.decisions || [] };
       }));
-      await saveStateToBackend(content, finalPillars);
+      const savedProjectId = await saveStateToBackend(content, finalPillars, projectId);
+      if (savedProjectId) {
+        setProjectId(savedProjectId);
+      }
     } else {
       const result = await processChatTurn(newMessages, pillars, llmConfig);
 
@@ -98,7 +102,12 @@ function App() {
       }
 
       const ideaMsg = newMessages.find(m => m.role === 'user');
-      if (ideaMsg) await saveStateToBackend(ideaMsg.content, nextPillars);
+      if (ideaMsg) {
+        const savedProjectId = await saveStateToBackend(ideaMsg.content, nextPillars, projectId);
+        if (savedProjectId) {
+          setProjectId(savedProjectId);
+        }
+      }
     }
 
     setIsWaiting(false);
@@ -130,7 +139,12 @@ function App() {
     setActivePillar(null);
 
     const ideaMsg = messages.find(m => m.role === 'user');
-    if (ideaMsg) await saveStateToBackend(ideaMsg.content, nextPillars);
+    if (ideaMsg) {
+      const savedProjectId = await saveStateToBackend(ideaMsg.content, nextPillars, projectId);
+      if (savedProjectId) {
+        setProjectId(savedProjectId);
+      }
+    }
 
     setAgentFeedback([]);
   };

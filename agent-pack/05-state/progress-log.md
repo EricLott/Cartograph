@@ -44,6 +44,13 @@ next_step: Add retrieval endpoint and integration tests.
 - 2026-03-19T08:55:00-05:00 | `task-000` | `done` | Completed codebase review (`frontend`, `backend`, export pipeline) and baseline lint/build checks.
 - 2026-03-19T09:30:00-05:00 | `task-000` | `done` | Replaced placeholder strategy docs with codebase-grounded architecture and execution content.
 - 2026-03-19T10:05:00-05:00 | `task-000` | `done` | Seeded epics, features, and 17 atomic claimable tasks with dependencies and SLAs.
+- 2026-03-19T10:45:00-05:00 | `task-001` | `in_progress` | Replaced destructive global save-state overwrite with project-scoped non-destructive persistence and stable project ID reuse.
+  - Evidence:
+    - `backend/server.js` now uses create-or-update by `projectId` and deletes only pillars/decisions for that project inside a transaction.
+    - `frontend/src/services/apiService.js` sends optional `projectId` and returns response `projectId`.
+    - `frontend/src/App.jsx` stores returned `projectId` and reuses it on subsequent saves.
+    - `node scripts/validate-task-pr.mjs --self-check --task-id task-001` (pass).
+  - Next step: Complete PR handoff for `task-001`.
 
 ## Weekly Summary
 - Week of 2026-03-16: transitioned from scaffold-only pack to execution-ready planning and task backlog.
