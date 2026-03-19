@@ -47,29 +47,46 @@ app.post('/api/save-state', async (req, res) => {
     try {
         const { idea, pillars, projectId } = req.body;
 
-        if (!idea || typeof idea !== 'string' || !idea.trim()) {
-            return res.status(400).json({ error: 'Missing or empty idea.' });
-        }
-        if (!Array.isArray(pillars)) {
-            return res.status(400).json({ error: 'pillars must be an array.' });
-        }
-
-        const validatePillars = (ps) => {
-            for (const p of ps) {
-                if (!p.title || typeof p.title !== 'string' || !p.title.trim()) {
-                    throw new Error(`Pillar is missing a valid title.`);
-                }
-                if (p.subcategories && !Array.isArray(p.subcategories)) {
-                    throw new Error(`Pillar subcategories must be an array.`);
-                }
-                if (p.subcategories) validatePillars(p.subcategories);
+        const validateRequest = (reqBody) => {
+            const { idea, pillars } = reqBody;
+            if (!idea || typeof idea !== 'string' || !idea.trim()) {
+                throw { status: 400, message: 'Missing or empty idea.' };
             }
+            if (!Array.isArray(pillars)) {
+                throw { status: 400, message: 'pillars must be an array.' };
+            }
+
+            const validatePillars = (ps) => {
+                for (const p of ps) {
+                    if (!p.title || typeof p.title !== 'string' || !p.title.trim()) {
+                        throw { status: 400, message: 'Pillar is missing a valid title.' };
+                    }
+                    if (p.decisions && !Array.isArray(p.decisions)) {
+                        throw { status: 400, message: 'Decisions must be an array.' };
+                    }
+                    if (p.decisions) {
+                        for (const d of p.decisions) {
+                            if (!d.question || typeof d.question !== 'string' || !d.question.trim()) {
+                                throw { status: 400, message: 'Decision is missing a valid question.' };
+                            }
+                        }
+                    }
+                    if (p.subcategories && !Array.isArray(p.subcategories)) {
+                        throw { status: 400, message: 'Pillar subcategories must be an array.' };
+                    }
+                    if (p.subcategories) validatePillars(p.subcategories);
+                }
+            };
+            validatePillars(pillars);
         };
 
         try {
-            validatePillars(pillars);
+            validateRequest(req.body);
         } catch (vErr) {
-            return res.status(400).json({ error: vErr.message });
+            if (vErr.status) {
+                return res.status(vErr.status).json({ error: vErr.message });
+            }
+            throw vErr;
         }
 
         const resultId = await sequelize.transaction(async (t) => {

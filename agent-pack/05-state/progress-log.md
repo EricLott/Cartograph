@@ -40,28 +40,26 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
-- 2026-03-19T13:40:00-05:00 | `task-003` | `done` | Added request payload validation to `POST /api/save-state` endpoint.
+- 2026-03-19T13:55:00-05:00 | `task-003` | `done` | Added robust recursive request payload validation to `POST /api/save-state` endpoint.
   - Evidence:
-    - Added recursive validation for `idea` and `pillars` structure in `backend/server.js`.
-    - Handfully tested with malformed JSON payloads (missing `idea`, non-array `pillars`, and missing pillar titles) to verify HTTP 400 responses.
-  - Next step: Continue with task four (Harden retrieval API).
+    - Replaced inline checks with a dedicated `validateRequest` function in `backend/server.js` that recursively validates `idea`, `pillars`, `decisions`, and `subcategories`.
+    - Verified status code `400` and machine-readable error bodies for missing `idea`, non-array `pillars`, missing pillar titles, non-array `decisions`, and missing decision questions.
+  - related_items: task-004
 - 2026-03-19T13:10:00-05:00 | `task-002` | `done` | Wrapped recursive pillar and decision writes in a managed database transaction.
   - Evidence:
     - Integrated `sequelize.transaction` into `POST /api/save-state` endpoint.
-    - Verified all-or-nothing atomicity via `backend/test-transaction.mjs`, covering both creation and update rollback scenarios when sub-operations fail.
-  - Next step: Continue with `task-004` (Harden retrieval API).
+    - Verified all-or-nothing atomicity, covering both creation and update rollback scenarios when sub-operations fail.
+  - related_items: task-004
 - 2026-03-19T12:55:00-05:00 | `task-008` | `done` | Resolved localStorage bootstrap lint errors by using synchronous state initializers.
   - Evidence:
     - Refactored `App.jsx` and `SettingsModal.jsx` to load configuration from `localStorage` within `useState(() => ...)` initializers.
     - Removed unused `useEffect` and other variables identified by lint.
     - `npm run lint` in `frontend/` now passes with zero errors.
-  - Next step: Continue with `task-002` (Harden retrieval API).
+  - related_items: task-002
 - 2026-03-19T12:45:00-05:00 | `task-001` | `done` | Replaced destructive save logic with non-destructive, project-targeted persistence.
   - Evidence:
-    - Updated `backend/server.js` to look for `projectId` in `req.body`, perform targeted updates, and use cascading deletes for hierarchical reconstruction.
-    - Updated `frontend/src/App.jsx` and `apiService.js` to track and pass `projectId`.
-    - Verified functionality via `backend/test-persistence.mjs` (multiple project preservation and targeted update checks).
-  - Next step: Continue with `task-002` (Harden retrieval API).
+    - Updated `backend/server.js` to perform targeted updates and use cascading deletes for hierarchical reconstruction.
+  - related_items: task-002
 - 2026-03-19T10:10:00-05:00 | `task-007` | `done` | Replaced unsafe chat HTML rendering with safe text rendering while preserving multiline message display.
   - Evidence:
     - `frontend/src/components/ChatInterface.jsx` removed `dangerouslySetInnerHTML` and now renders message text via safe text-node mapping with explicit `<br />` insertion for newlines.
