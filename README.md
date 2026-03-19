@@ -32,3 +32,17 @@ An open-ended agentic platform that guides users through architecting an applica
 
 ### BYOK Setup
 Click the **Settings (⚙️)** icon in the sidebar to configure your preferred LLM provider and input your API keys. Your keys are securely stored only within your local browser's storage and used to authorize requests against the models.
+
+## Contributing (Very Simple)
+1. Fork this repo and create a branch.
+2. Read [AGENTS.md](AGENTS.md) for contributor workflow.
+3. Pick one path:
+   - Create new tasks in `agent-pack/04-task-system/` if the backlog is missing work.
+   - Work an outstanding task from `agent-pack/04-task-system/tasks/`.
+4. Claim your task in its task file before coding (claims expire, so expired tasks are claimable again).
+5. Make your changes and keep them focused.
+6. Run the app with `docker-compose up --build` and verify it still works.
+7. Open a PR with a short summary and include the related `agent-pack/04-task-system/tasks/*.md` file(s).
+
+### Using a Coding Agent
+Point your coding agent to [AGENTS.md](AGENTS.md) at repo root. It contains first-time onboarding steps, contribution rules, quality gates, and logging expectations.

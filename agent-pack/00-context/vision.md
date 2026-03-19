@@ -1,5 +1,18 @@
 # Cartograph Vision
 
+## Purpose
+Define the strategic contract for Cartograph so all architecture and execution artifacts remain aligned to a clear product mission.
+
+## Inputs
+- User and team product intent
+- Architecture-to-execution operating goals
+- Enterprise delivery and governance expectations
+
+## Outputs
+- Stable product mission and principles
+- Measurable success criteria for blueprint effectiveness
+- Scope boundaries and non-goals
+
 ## Product Contract
 Cartograph is an open-source, agent-guided architecture platform that turns evolving product ideas into execution-grade blueprint packs for autonomous coding agents.
 
@@ -36,14 +49,7 @@ Cartograph converts architecture intent into a durable mission pack with clear s
 - Agents can execute for multi-day runs using only the pack plus repository context.
 
 ## Pack Intent
-### Inputs
-- User product idea, constraints, and business goals.
-- Architecture decisions and rationale gathered iteratively.
-- Governance and quality requirements.
-
-### Outputs
-- Structured agent pack across context, architecture, execution, agent-ops, tasks, state, quality, and artifacts.
-- Markdown-first format with machine-readable metadata where required.
+The pack compiles product, architecture, execution, and operations context into machine-consumable markdown artifacts.
 
 ### Required Sections For This File
 - Product Contract

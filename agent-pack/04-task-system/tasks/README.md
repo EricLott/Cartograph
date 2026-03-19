@@ -22,6 +22,7 @@ Define the default unit of execution for autonomous agents.
 - Dependencies
 - Acceptance Criteria
 - Evidence Plan
+- Claim and SLA
 
 ## Metadata Schema
 ```yaml
@@ -31,12 +32,34 @@ type: task
 status: todo
 priority: P1
 owner: unassigned
+claim_owner: unassigned
+claim_status: unclaimed
+claim_expires_at: null
+sla_due_at: 2026-03-26T17:00:00Z
 depends_on:
   - feature-001
 acceptance_criteria:
   - Single verifiable deliverable
 last_updated: 2026-03-19
 ```
+
+## Claim and SLA Rules
+- Contributors must claim a task before starting implementation.
+- Claiming a task requires updating the task file metadata:
+  - `claim_owner`: contributor/agent identifier.
+  - `claim_status`: `claimed`.
+  - `claim_expires_at`: ISO-8601 timestamp.
+  - `status`: `in_progress`.
+- Default claim window is 24 hours unless a task explicitly requires a different window.
+- `claim_expires_at` must not exceed `sla_due_at`.
+- Renewal is allowed only with explicit metadata update before expiry and must include reason in the task body.
+- If claim time expires, set `claim_status` to `expired`, return `status` to `todo` (or `backlog`), and the task becomes claimable by others.
+- To prevent overlap, do not implement a task while another active claim is unexpired.
+
+## Pull Request Requirement
+- Every pull request must include the `agent-pack/04-task-system/tasks/` file for each task ID it implements.
+- If code changes do not map to an existing task file, create the task file in the same PR.
+- Before marking task `done`, release claim ownership by setting `claim_status` to `released` and `claim_expires_at` to `null`.
 
 ## Atomicity Rules
 - One task should represent one principal deliverable.
@@ -45,6 +68,10 @@ last_updated: 2026-03-19
 
 ## Status Lifecycle
 `backlog -> todo -> in_progress -> blocked -> in_progress -> done`
+
+## Claim Lifecycle
+`unclaimed -> claimed -> released`
+`claimed -> expired -> unclaimed`
 
 ## Naming Rules
 - File name: `task-###-short-name.md`
