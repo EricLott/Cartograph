@@ -40,6 +40,12 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-19T12:45:00-05:00 | `task-001` | `done` | Replaced destructive save logic with non-destructive, project-targeted persistence.
+  - Evidence:
+    - Updated `backend/server.js` to look for `projectId` in `req.body`, perform targeted updates, and use cascading deletes for hierarchical reconstruction.
+    - Updated `frontend/src/App.jsx` and `apiService.js` to track and pass `projectId`.
+    - Verified functionality via `backend/test-persistence.mjs` (multiple project preservation and targeted update checks).
+  - Next step: Continue with `task-002` (Harden retrieval API).
 - 2026-03-19T10:10:00-05:00 | `task-007` | `done` | Replaced unsafe chat HTML rendering with safe text rendering while preserving multiline message display.
   - Evidence:
     - `frontend/src/components/ChatInterface.jsx` removed `dangerouslySetInnerHTML` and now renders message text via safe text-node mapping with explicit `<br />` insertion for newlines.

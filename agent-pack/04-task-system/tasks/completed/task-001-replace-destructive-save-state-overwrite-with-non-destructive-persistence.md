@@ -2,13 +2,13 @@
 id: task-001
 title: Replace destructive save-state overwrite with non-destructive persistence
 type: task
-status: todo
+status: completed
 priority: P0
-owner: unassigned
-claim_owner: unassigned
-claim_status: unclaimed
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: released
 claim_expires_at: null
-sla_due_at: 2026-04-05T23:59:00Z
+sla_due_at: "2026-04-05T23:59:00Z"
 depends_on: []
 acceptance_criteria:
   - Saving new state no longer deletes unrelated project records.
@@ -16,6 +16,7 @@ acceptance_criteria:
   - Repeated saves preserve expected latest project data without global data loss.
 last_updated: 2026-03-19
 ---
+
 
 # Task: Replace destructive save-state overwrite with non-destructive persistence
 
