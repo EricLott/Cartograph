@@ -3,6 +3,13 @@ import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { parseFrontmatter } from './lib/frontmatter.mjs';
 import { STATUS_TRANSITIONS, CLAIM_TRANSITIONS, getTaskPathKind } from './lib/task-workflow.mjs';
+import {
+  loadWorkflowConfig,
+  getWorkflowPath,
+  getWorkflowPolicy,
+  getTaskSystemRoot,
+  joinWorkflowPath,
+} from './lib/workflow-config.mjs';
 
 const REQUIRED_PR_FIELDS = [
   'Task ID',
@@ -52,6 +59,10 @@ function runGit(args, { allowFailure = false } = {}) {
 
 function normalizePath(value) {
   return value.replace(/\\/g, '/').trim();
+}
+
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function readIfExists(filePath) {
@@ -153,19 +164,20 @@ function loadChangedFiles(options) {
     .filter(Boolean);
 }
 
-function getExpectedDirectoryForType(type) {
+function getExpectedDirectoryForType(type, taskSystemRoot) {
   return {
-    task: 'agent-pack/04-task-system/tasks',
-    bug: 'agent-pack/04-task-system/bugs',
-    spike: 'agent-pack/04-task-system/spikes',
-    feature: 'agent-pack/04-task-system/features',
+    task: joinWorkflowPath(taskSystemRoot, 'tasks'),
+    bug: joinWorkflowPath(taskSystemRoot, 'bugs'),
+    spike: joinWorkflowPath(taskSystemRoot, 'spikes'),
+    feature: joinWorkflowPath(taskSystemRoot, 'features'),
   }[type];
 }
 
-function getBacklogItemFileId(filePath) {
+function getBacklogItemFileId(filePath, taskSystemRoot) {
   const normalized = normalizePath(filePath);
+  const escapedRoot = escapeRegex(taskSystemRoot);
   const match = normalized.match(
-    /^agent-pack\/04-task-system\/(tasks|bugs|spikes|features|epics)(?:\/[^/]+)?\/((task|bug|spike|feature|epic)-[^/]+)\.md$/,
+    new RegExp(`^${escapedRoot}/(tasks|bugs|spikes|features|epics)(?:/[^/]+)?/((task|bug|spike|feature|epic)-[^/]+)\\.md$`),
   );
   if (!match) return null;
   const itemName = match[2];
@@ -173,11 +185,12 @@ function getBacklogItemFileId(filePath) {
   return idMatch ? idMatch[0] : null;
 }
 
-function getPrimaryPathCandidates(changedFiles, primaryId, primaryType) {
-  const expectedDir = getExpectedDirectoryForType(primaryType);
+function getPrimaryPathCandidates(changedFiles, primaryId, primaryType, taskSystemRoot) {
+  const expectedDir = getExpectedDirectoryForType(primaryType, taskSystemRoot);
   if (!expectedDir) return [];
-  const nestedPattern = new RegExp(`^${expectedDir}/[^/]+/${primaryId}-.+\\.md$`);
-  const flatPattern = new RegExp(`^${expectedDir}/${primaryId}-.+\\.md$`);
+  const escapedExpected = escapeRegex(expectedDir);
+  const nestedPattern = new RegExp(`^${escapedExpected}/[^/]+/${primaryId}-.+\\.md$`);
+  const flatPattern = new RegExp(`^${escapedExpected}/${primaryId}-.+\\.md$`);
   return changedFiles.filter((file) => nestedPattern.test(file) || flatPattern.test(file));
 }
 
@@ -253,10 +266,11 @@ function isRelatedItemsLine(line) {
   return /related_items\s*:/i.test(line);
 }
 
-function shouldStrictTaskPaths(options) {
+function shouldStrictTaskPaths(options, policyValue) {
   if (options.strictTaskPaths) return true;
   const envValue = String(process.env.VALIDATE_TASK_PATH_POLICY || process.env.VALIDATE_TASK_PATH_STRICT || '').toLowerCase();
-  return envValue === 'strict' || envValue === '1' || envValue === 'true';
+  if (envValue === 'strict' || envValue === '1' || envValue === 'true') return true;
+  return String(policyValue || '').toLowerCase() === 'strict';
 }
 
 function printHelp() {
@@ -278,10 +292,15 @@ function main() {
     return;
   }
 
+  const config = loadWorkflowConfig(process.cwd());
+  const tasksRoot = getWorkflowPath(config, 'tasks_root');
+  const stateRoot = getWorkflowPath(config, 'state_root');
+  const taskSystemRoot = getTaskSystemRoot(config);
+  const strictTaskPaths = shouldStrictTaskPaths(options, getWorkflowPolicy(config, 'task_path_policy', 'warn'));
+
   const errors = [];
   const warnings = [];
   const event = loadEventPayload();
-  const strictTaskPaths = shouldStrictTaskPaths(options);
 
   const branch = options.branch || process.env.PR_BRANCH || process.env.GITHUB_HEAD_REF || getCurrentBranch();
   const primaryFromBranch = parsePrimaryFromBranch(branch);
@@ -335,7 +354,7 @@ function main() {
     }
   }
 
-  const expectedDir = primaryType ? getExpectedDirectoryForType(primaryType) : null;
+  const expectedDir = primaryType ? getExpectedDirectoryForType(primaryType, taskSystemRoot) : null;
   if (!expectedDir) {
     addError(errors, `Unsupported primary item type for validation: ${primaryType || 'unknown'}.`);
   }
@@ -346,8 +365,9 @@ function main() {
     const taskFileField = normalizePath(fields['Task File Path'] || '');
     if (taskFileField) {
       primaryPath = taskFileField;
-      const isValidTaskPath = new RegExp(`^${expectedDir}/[^/]+/${primaryId}-.+\\.md$`).test(taskFileField)
-        || new RegExp(`^${expectedDir}/${primaryId}-.+\\.md$`).test(taskFileField);
+      const escapedExpected = escapeRegex(expectedDir);
+      const isValidTaskPath = new RegExp(`^${escapedExpected}/[^/]+/${primaryId}-.+\\.md$`).test(taskFileField)
+        || new RegExp(`^${escapedExpected}/${primaryId}-.+\\.md$`).test(taskFileField);
 
       if (!isValidTaskPath) {
         const expectedPattern = `${expectedDir}/<status>/${primaryId}-*.md`;
@@ -356,7 +376,7 @@ function main() {
     }
   }
 
-  const candidates = getPrimaryPathCandidates(changedFiles, primaryId, primaryType || 'task');
+  const candidates = getPrimaryPathCandidates(changedFiles, primaryId, primaryType || 'task', taskSystemRoot);
 
   if (!primaryPath) {
     if (candidates.length === 1) {
@@ -374,30 +394,30 @@ function main() {
   }
 
   if (primaryType === 'task' && primaryPath) {
-    const kind = getTaskPathKind(primaryPath);
+    const kind = getTaskPathKind(primaryPath, tasksRoot);
     if (kind.flat) {
-      const message = `Primary task path is legacy flat layout: ${primaryPath}. Migrate to agent-pack/04-task-system/tasks/<status>/...`;
+      const message = `Primary task path is legacy flat layout: ${primaryPath}. Migrate to ${tasksRoot}/<status>/...`;
       if (strictTaskPaths) addError(errors, message);
       else addWarning(warnings, message);
     }
   }
 
-  const changedBacklogItemFiles = changedFiles.filter((file) => getBacklogItemFileId(file));
+  const changedBacklogItemFiles = changedFiles.filter((file) => getBacklogItemFileId(file, taskSystemRoot));
   const invalidBacklogChanges = changedBacklogItemFiles.filter((file) => file !== primaryPath);
   if (invalidBacklogChanges.length > 0) {
     addError(errors, `Strict mode violation: other backlog item files changed: ${invalidBacklogChanges.join(', ')}`);
   }
 
-  const multiItemIds = [...new Set(changedBacklogItemFiles.map((file) => getBacklogItemFileId(file)).filter(Boolean))]
+  const multiItemIds = [...new Set(changedBacklogItemFiles.map((file) => getBacklogItemFileId(file, taskSystemRoot)).filter(Boolean))]
     .filter((id) => id !== primaryId);
   if (multiItemIds.length > 0) {
     addError(errors, `PR spans multiple primary items: ${multiItemIds.join(', ')}`);
   }
 
   const logFiles = [
-    'agent-pack/05-state/progress-log.md',
-    'agent-pack/05-state/blockers.md',
-    'agent-pack/05-state/decisions-log.md',
+    joinWorkflowPath(stateRoot, 'progress-log.md'),
+    joinWorkflowPath(stateRoot, 'blockers.md'),
+    joinWorkflowPath(stateRoot, 'decisions-log.md'),
   ];
 
   for (const logFile of logFiles) {

@@ -16,6 +16,12 @@ Define the default unit of execution for autonomous agents.
 ## Outputs
 - Atomic implementation task with objective completion evidence
 
+## Workflow Manifest Contract
+- Script workflow paths are resolved from `../../../.cartograph/workflow.json`.
+- Workflow scripts must not hardcode task-system path literals.
+- Enforce with:
+  - `node scripts/check-manifest-path-usage.mjs`
+
 ## Required Sections
 - Task Goal
 - Implementation Steps
@@ -109,6 +115,7 @@ When metadata changes, move the file to the matching folder in the same commit.
 
 ## Validation Commands
 - Local preflight:
+  - `node scripts/check-manifest-path-usage.mjs`
   - `node scripts/validate-task-pr.mjs --self-check --task-id task-###`
 - Optional strict path enforcement:
   - `node scripts/validate-task-pr.mjs --self-check --task-id task-### --strict-task-paths`

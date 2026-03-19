@@ -1,0 +1,12 @@
+{
+  "workflow_version": "1.0",
+  "paths": {
+    "agent_pack_root": "agent-pack",
+    "tasks_root": "agent-pack/04-task-system/tasks",
+    "state_root": "agent-pack/05-state"
+  },
+  "policies": {
+    "task_path_policy": "warn",
+    "single_task_enforcement": "strict"
+  }
+}

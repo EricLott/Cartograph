@@ -25,6 +25,10 @@ jobs:
           echo "Changed files:"
           cat changed_files.txt
 
+      - name: Enforce manifest path usage in workflow scripts
+        run: |
+          node scripts/check-manifest-path-usage.mjs
+
       - name: Validate single-task PR contract
         env:
           PR_BRANCH: ${{ github.head_ref }}

@@ -35,6 +35,9 @@ Click the **Settings (⚙️)** icon in the sidebar to configure your preferred 
 
 ## Contributing (Very Simple)
 1. Fork and clone this repo.
+2. Workflow contract source of truth:
+   - `.cartograph/workflow.json`
+   - Workflow scripts may not hardcode workflow paths.
 2. Prompt your coding agent with one of these:
    - `Read AGENTS.md and work on tasks`
    - `Read AGENTS.md and create new tasks`
@@ -43,6 +46,7 @@ Click the **Settings (⚙️)** icon in the sidebar to configure your preferred 
    - Resume existing task branch: `node scripts/cartograph-contribute.mjs --task task-### --resume`
 4. Implement only that one primary task and required related files.
 5. Run local scope check before opening PR:
+   - `node scripts/check-manifest-path-usage.mjs`
    - `node scripts/validate-task-pr.mjs --self-check --task-id task-###`
    - Optional strict task-path mode: `node scripts/validate-task-pr.mjs --self-check --task-id task-### --strict-task-paths`
 6. Open a PR with title format `[task-###] ...` and complete the PR template fields.

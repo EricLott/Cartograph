@@ -13,6 +13,12 @@ Define how work items are represented, named, and progressed across epics, featu
 - PR-to-task traceability
 - Claim ownership rules that prevent overlapping execution
 
+## Workflow Manifest Contract
+- Workflow path and policy source of truth is `../../.cartograph/workflow.json`.
+- Workflow scripts must resolve task-system paths through manifest-backed helpers.
+- Direct hardcoded workflow paths in scripts are disallowed and checked by:
+  - `node scripts/check-manifest-path-usage.mjs`
+
 ## Required Sections
 - Metadata Schema
 - ID and Naming Rules
@@ -79,6 +85,7 @@ For all item types, file name remains stable (`<type>-###-slug.md`); only the co
 - Validation fails if branch, PR title, and primary item linkage do not match.
 - Validation fails if multiple backlog item files are modified.
 - Local preflight command:
+  - `node scripts/check-manifest-path-usage.mjs`
   - `node scripts/validate-task-pr.mjs --self-check --task-id task-###`
 - Optional strict task-path mode:
   - `node scripts/validate-task-pr.mjs --self-check --task-id task-### --strict-task-paths`

@@ -11,6 +11,12 @@ import {
   getTaskTargetPath,
   parseIsoDate,
 } from './lib/task-workflow.mjs';
+import {
+  loadWorkflowConfig,
+  getWorkflowPath,
+  joinWorkflowPath,
+  toAbsolutePath,
+} from './lib/workflow-config.mjs';
 
 const PRIORITY_ORDER = {
   P0: 0,
@@ -65,16 +71,20 @@ function runGit(args, { allowFailure = false } = {}) {
   return result;
 }
 
-function assertRepoStructure(rootDir) {
+function assertRepoStructure(rootDir, config) {
+  const agentPackRoot = getWorkflowPath(config, 'agent_pack_root');
+  const tasksRoot = getWorkflowPath(config, 'tasks_root');
+  const stateRoot = getWorkflowPath(config, 'state_root');
+
   const required = [
     'AGENTS.md',
-    path.join('agent-pack', '03-agent-ops', 'AGENTS.md'),
-    path.join('agent-pack', '04-task-system', 'README.md'),
-    path.join('agent-pack', '04-task-system', 'tasks', 'README.md'),
-    path.join('agent-pack', '05-state', 'progress-log.md'),
+    joinWorkflowPath(agentPackRoot, '03-agent-ops', 'AGENTS.md'),
+    joinWorkflowPath(agentPackRoot, '04-task-system', 'README.md'),
+    joinWorkflowPath(tasksRoot, 'README.md'),
+    joinWorkflowPath(stateRoot, 'progress-log.md'),
   ];
 
-  const missing = required.filter((rel) => !fs.existsSync(path.join(rootDir, rel)));
+  const missing = required.filter((rel) => !fs.existsSync(toAbsolutePath(rootDir, rel)));
   if (missing.length > 0) {
     throw new Error(`Required workflow files are missing:\n- ${missing.join('\n- ')}`);
   }
@@ -93,8 +103,8 @@ function todayDateString() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function loadTasks(rootDir) {
-  const tasksDir = path.join(rootDir, 'agent-pack', '04-task-system', 'tasks');
+function loadTasks(rootDir, tasksRootRel) {
+  const tasksDir = toAbsolutePath(rootDir, tasksRootRel);
   const files = collectTaskFilesRecursively(tasksDir);
 
   const tasks = files.map((filePath) => {
@@ -237,8 +247,13 @@ function getFastVerifyCommands(itemType, taskId) {
   return commands;
 }
 
-function buildContextBundle(task, owner, branchName) {
+function buildContextBundle(task, owner, branchName, config) {
   const fm = task.frontmatter;
+  const agentPackRoot = getWorkflowPath(config, 'agent_pack_root');
+  const readPath1 = joinWorkflowPath(agentPackRoot, '03-agent-ops', 'AGENTS.md');
+  const readPath2 = joinWorkflowPath(agentPackRoot, '02-execution', 'implementation-strategy.md');
+  const readPath3 = joinWorkflowPath(agentPackRoot, '02-execution', 'dependency-map.md');
+
   const dependsOn = Array.isArray(fm.depends_on) && fm.depends_on.length > 0
     ? fm.depends_on.map((dep) => `- ${dep}`).join('\n')
     : '- None';
@@ -247,7 +262,7 @@ function buildContextBundle(task, owner, branchName) {
     : '- Add acceptance criteria in task file.';
   const fastVerify = getFastVerifyCommands(fm.type, fm.id).map((command) => `- ${command}`).join('\n');
 
-  return `# Cartograph Contribution Context: ${fm.id}\n\n## Primary Task\n- Task ID: ${fm.id}\n- Task File: ${task.relativePath}\n- Task Title: ${fm.title}\n- Branch: ${branchName}\n- Owner: ${owner}\n\n## Task Goal\n${extractSection(task.body, 'Task Goal') || 'See task file.'}\n\n## Dependencies\n${dependsOn}\n\n## Acceptance Criteria\n${acceptance}\n\n## Source-of-Truth Read Order\n1. AGENTS.md\n2. agent-pack/03-agent-ops/AGENTS.md\n3. agent-pack/02-execution/implementation-strategy.md\n4. agent-pack/02-execution/dependency-map.md\n5. ${task.relativePath}\n\n## PR Contract Checklist\n- [ ] PR title includes ${fm.id}\n- [ ] PR body includes required task linkage fields\n- [ ] Changed backlog files are limited to this primary task file\n- [ ] Progress/decision/blocker updates (if any) reference ${fm.id}\n\n## Local Validation\n- Run: node scripts/validate-task-pr.mjs --self-check --task-id ${fm.id}\n\n## Fast Verify\n${fastVerify}\n\n## Ready Prompt\nRead AGENTS.md and agent-pack/03-agent-ops/AGENTS.md. Implement only ${fm.id} (${fm.title}). Keep scope to this primary task plus required state logs. Do not modify other backlog items. Produce evidence aligned to acceptance criteria and keep PR title/body linked to ${fm.id}.\n`;
+  return `# Cartograph Contribution Context: ${fm.id}\n\n## Primary Task\n- Task ID: ${fm.id}\n- Task File: ${task.relativePath}\n- Task Title: ${fm.title}\n- Branch: ${branchName}\n- Owner: ${owner}\n\n## Task Goal\n${extractSection(task.body, 'Task Goal') || 'See task file.'}\n\n## Dependencies\n${dependsOn}\n\n## Acceptance Criteria\n${acceptance}\n\n## Source-of-Truth Read Order\n1. AGENTS.md\n2. ${readPath1}\n3. ${readPath2}\n4. ${readPath3}\n5. ${task.relativePath}\n\n## PR Contract Checklist\n- [ ] PR title includes ${fm.id}\n- [ ] PR body includes required task linkage fields\n- [ ] Changed backlog files are limited to this primary task file\n- [ ] Progress/decision/blocker updates (if any) reference ${fm.id}\n\n## Local Validation\n- Run: node scripts/validate-task-pr.mjs --self-check --task-id ${fm.id}\n\n## Fast Verify\n${fastVerify}\n\n## Ready Prompt\nRead AGENTS.md and ${readPath1}. Implement only ${fm.id} (${fm.title}). Keep scope to this primary task plus required state logs. Do not modify other backlog items. Produce evidence aligned to acceptance criteria and keep PR title/body linked to ${fm.id}.\n`;
 }
 
 function extractSection(body, headingName) {
@@ -350,10 +365,12 @@ async function main() {
   }
 
   const rootDir = process.cwd();
-  assertRepoStructure(rootDir);
+  const config = loadWorkflowConfig(rootDir);
+  assertRepoStructure(rootDir, config);
   ensureCleanWorktree(options.allowDirty || options.dryRun);
 
-  const tasks = loadTasks(rootDir);
+  const tasksRootRel = getWorkflowPath(config, 'tasks_root');
+  const tasks = loadTasks(rootDir, tasksRootRel);
   const taskMap = new Map(tasks.map((task) => [String(task.frontmatter.id), task]));
 
   const owner = options.owner
@@ -417,7 +434,7 @@ async function main() {
       updated.status = 'in_progress';
       updated.last_updated = todayDateString();
 
-      const tasksDir = path.join(rootDir, 'agent-pack', '04-task-system', 'tasks');
+      const tasksDir = toAbsolutePath(rootDir, tasksRootRel);
       const targetPath = getTaskTargetPath(tasksDir, selectedTask.filePath, updated);
       fs.mkdirSync(path.dirname(targetPath), { recursive: true });
       writeMarkdownWithFrontmatter(targetPath, updated, selectedTask.body, TASK_KEY_ORDER);
@@ -434,7 +451,7 @@ async function main() {
 
   const bundleDir = path.join(rootDir, '.cartograph', 'context');
   const bundlePath = path.join(bundleDir, `${taskId}.md`);
-  const bundleContent = buildContextBundle(selectedTask, owner, branchName);
+  const bundleContent = buildContextBundle(selectedTask, owner, branchName, config);
 
   if (!options.dryRun) {
     fs.mkdirSync(bundleDir, { recursive: true });

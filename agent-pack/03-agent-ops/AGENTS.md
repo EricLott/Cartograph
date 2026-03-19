@@ -8,6 +8,7 @@ Define how a first-time coding agent can quickly and safely contribute to Cartog
 - Task system files with YAML metadata
 - Current repository code and build scripts
 - State logs for progress, blockers, and decisions
+- Workflow manifest (`../../.cartograph/workflow.json`)
 
 ## Outputs
 - New or updated work items aligned to implementation strategy
@@ -107,6 +108,7 @@ Execution rules:
 - If state logs are updated (`progress`, `blockers`, `decisions`), entries must reference the same primary task ID.
 - PR title must include the same task ID as the branch and task file.
 - Run local preflight validation before opening PR:
+  - `node scripts/check-manifest-path-usage.mjs`
   - `node scripts/validate-task-pr.mjs --self-check --task-id task-###`
   - Optional strict path mode:
     - `node scripts/validate-task-pr.mjs --self-check --task-id task-### --strict-task-paths`
@@ -117,6 +119,7 @@ When instructions conflict, resolve in this order:
 2. `../01-architecture/*` and `../02-execution/*`
 3. `../04-task-system/*`
 4. `../05-state/*`
+5. `../../.cartograph/workflow.json` for workflow path and policy values used by scripts
 
 State logs track execution history and must not silently override context or architecture intent unless explicitly logged in `../05-state/decisions-log.md`.
 
@@ -192,6 +195,7 @@ Before closing a task, ensure:
 - Do not close tasks without evidence.
 - Do not ignore blockers that meet critical-risk stop criteria.
 - Do not rewrite source-of-truth intent without a logged decision.
+- Do not hardcode workflow paths in scripts; resolve them through `.cartograph/workflow.json`.
 
 ## Update Cadence
 - Update this file when contribution workflow, risk posture, or metadata schema changes.

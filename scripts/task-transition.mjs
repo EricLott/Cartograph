@@ -11,6 +11,7 @@ import {
   getTaskTargetPath,
   parseIsoDate,
 } from './lib/task-workflow.mjs';
+import { loadWorkflowConfig, getWorkflowPath, toAbsolutePath } from './lib/workflow-config.mjs';
 
 const ALLOWED_TARGETS = new Set(['claimed', 'in_progress', 'done', 'blocked', 'expired', 'cancelled']);
 
@@ -78,8 +79,8 @@ function resolveOwner(explicitOwner) {
     || 'unassigned';
 }
 
-function findTaskFile(rootDir, taskId) {
-  const tasksDir = path.join(rootDir, 'agent-pack', '04-task-system', 'tasks');
+function findTaskFile(rootDir, taskId, tasksRootRel) {
+  const tasksDir = toAbsolutePath(rootDir, tasksRootRel);
   const files = collectTaskFilesRecursively(tasksDir);
   const matches = files.filter((filePath) => path.basename(filePath).startsWith(`${taskId}-`));
 
@@ -172,8 +173,10 @@ function main() {
   }
 
   const rootDir = process.cwd();
+  const config = loadWorkflowConfig(rootDir);
+  const tasksRootRel = getWorkflowPath(config, 'tasks_root');
   const owner = resolveOwner(options.owner);
-  const { tasksDir, filePath } = findTaskFile(rootDir, String(options.taskId));
+  const { tasksDir, filePath } = findTaskFile(rootDir, String(options.taskId), tasksRootRel);
   const { frontmatter, body } = readMarkdownWithFrontmatter(filePath);
 
   const updated = applyTargetState(frontmatter, String(options.to), owner, options.claimHours);
@@ -218,4 +221,3 @@ try {
   console.error(`\ntask-transition failed: ${error.message}`);
   process.exit(1);
 }
-

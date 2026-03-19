@@ -24,4 +24,6 @@ dist-ssr
 *.sw?
 
 # Local contributor context bundles
-.cartograph/
+.cartograph/*
+!.cartograph/
+!.cartograph/workflow.json

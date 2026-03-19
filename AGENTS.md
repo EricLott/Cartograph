@@ -6,6 +6,10 @@ If you are a coding agent contributing to this repository, use this file as your
 Follow the full contributor and execution rules in:
 - `agent-pack/03-agent-ops/AGENTS.md`
 
+Workflow path source of truth:
+- `.cartograph/workflow.json`
+- Workflow scripts must resolve repository workflow paths via manifest-backed helpers only.
+
 ## Contribution Modes
 After reading the canonical contract, do one of the following:
 1. Create new tasks when backlog coverage is insufficient.
@@ -27,6 +31,7 @@ This command validates docs, selects one eligible task, prepares a task-linked b
 
 ## Local Preflight Validation
 Before opening a PR, run:
+- `node scripts/check-manifest-path-usage.mjs`
 - `node scripts/validate-task-pr.mjs --self-check --task-id task-###`
 - Optional strict task-path enforcement:
   - `node scripts/validate-task-pr.mjs --self-check --task-id task-### --strict-task-paths`

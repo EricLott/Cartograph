@@ -71,10 +71,16 @@ export function getTaskTargetPath(tasksDir, filePath, frontmatter) {
   return path.join(targetDir, path.basename(filePath));
 }
 
-export function getTaskPathKind(filePath) {
+function escapeRegex(value) {
+  return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+export function getTaskPathKind(filePath, tasksRoot) {
   const normalized = String(filePath).replace(/\\/g, '/');
-  const nested = /^agent-pack\/04-task-system\/tasks\/[^/]+\/task-\d+-.+\.md$/.test(normalized);
-  const flat = /^agent-pack\/04-task-system\/tasks\/task-\d+-.+\.md$/.test(normalized);
+  const root = String(tasksRoot || '').replace(/\\/g, '/').replace(/\/$/, '');
+  const escapedRoot = escapeRegex(root);
+  const nested = new RegExp(`^${escapedRoot}/[^/]+/task-\\d+-.+\\.md$`).test(normalized);
+  const flat = new RegExp(`^${escapedRoot}/task-\\d+-.+\\.md$`).test(normalized);
   return { nested, flat };
 }
 
@@ -84,4 +90,3 @@ export function parseIsoDate(value) {
   if (Number.isNaN(parsed.getTime())) return null;
   return parsed;
 }
-
