@@ -53,6 +53,20 @@ Format MUST match exactly:
 }
 `;
 
+const consolidateMessages = (messages) => {
+    if (messages.length === 0) return [];
+    const consolidated = [{ ...messages[0] }];
+    for (let i = 1; i < messages.length; i += 1) {
+        const last = consolidated[consolidated.length - 1];
+        if (messages[i].role === last.role) {
+            last.content = `${last.content.trim()}\n\n${messages[i].content.trim()}`;
+        } else {
+            consolidated.push({ ...messages[i] });
+        }
+    }
+    return consolidated;
+};
+
 const CHAT_SYSTEM_PROMPT = `You are the Cartograph Agent, an expert software architect.
 You are helping the user build the perfect architectural context package for an AI coding agent.
 You MUST be proactive. You will receive the current state of Pillars/Decisions and the user's latest message.
@@ -477,6 +491,12 @@ export const processChatTurn = async (chatHistory, currentPillars, config) => {
         });
     }
 
+    // Clean and consolidate history once for all providers
+    const history = consolidateMessages(chatHistory.slice(1, -1).map(m => ({
+        role: m.role === 'agent' ? 'assistant' : m.role,
+        content: m.content
+    })));
+
     const completion = await requestProviderCompletion({
         provider,
         keys,
@@ -484,7 +504,7 @@ export const processChatTurn = async (chatHistory, currentPillars, config) => {
             model: 'gpt-4o',
             messages: [
                 { role: 'system', content: CHAT_SYSTEM_PROMPT },
-                ...chatHistory.slice(1, -1),
+                ...history,
                 { role: 'user', content: prompt }
             ]
         },
@@ -492,11 +512,20 @@ export const processChatTurn = async (chatHistory, currentPillars, config) => {
             model: 'claude-3-5-sonnet-20240620',
             max_tokens: 4000,
             system: CHAT_SYSTEM_PROMPT,
-            messages: [{ role: 'user', content: prompt }]
+            messages: [
+                ...history,
+                { role: 'user', content: prompt }
+            ]
         },
         geminiPayload: {
             systemInstruction: { parts: [{ text: CHAT_SYSTEM_PROMPT }] },
-            contents: [{ parts: [{ text: prompt }] }],
+            contents: [
+                ...history.map(m => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.content }]
+                })),
+                { role: 'user', parts: [{ text: prompt }] }
+            ],
             generationConfig: { responseMimeType: 'application/json' }
         }
     });
