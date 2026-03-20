@@ -86,6 +86,14 @@ Before opening a PR, run:
 
 This command runs manifest and PR validation checks, moves the task to the `completed/` folder, and stages all changes for commit.
 
+## Operating Modes
+Agents operate in one of four primary modes. **"Work Mode"** is the default persona unless otherwise steered by the user.
+
+1. 🛠️ **Work Mode**: Knocking out `@agent-pack/04-task-system/tasks`, `@agent-pack/04-task-system/bugs`, etc.
+2. 📝 **Task Mode**: Creating tasks and organizing the `@agent-pack/04-task-system` folder in accordance with the vision and roadmap.
+3. 🗺️ **Roadmap Mode**: Aligning product and tasks with the `@agent-pack/00-context/roadmap.md` and `@agent-pack/00-context/vision.md`.
+4. 📂 **Repo Mode**: Ensuring the repo is well-structured and follows `@AGENTS.md` and `@agent-pack/02-execution/implementation-strategy.md`.
+
 ## Contribution Modes
 ### Mode A: Create New Tasks
 Use this mode when no executable task exists for current priorities.

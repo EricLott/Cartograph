@@ -14,10 +14,13 @@ Workflow path source of truth:
 - **GitHub CLI (`gh`)**: Required for automated PR creation and status checks.
   - Install via `winget install --id GitHub.cli` (Windows) or `brew install gh` (macOS).
 
-## Contribution Modes
-After reading the canonical contract, do one of the following:
-1. Create new tasks when backlog coverage is insufficient.
-2. Execute eligible outstanding tasks in priority/dependency order.
+## Operating Modes
+Agents operate in one of four primary modes. **"Work Mode"** is the default persona unless otherwise steered by the user.
+
+1. 🛠️ **Work Mode**: Knocking out `@agent-pack/04-task-system/tasks`, `@agent-pack/04-task-system/bugs`, etc.
+2. 📝 **Task Mode**: Creating tasks and organizing the `@agent-pack/04-task-system` folder in accordance with the vision and roadmap.
+3. 🗺️ **Roadmap Mode**: Aligning product and tasks with the `@agent-pack/00-context/roadmap.md` and `@agent-pack/00-context/vision.md`.
+4. 📂 **Repo Mode**: Ensuring the repo is well-structured and follows `@AGENTS.md` and `@agent-pack/02-execution/implementation-strategy.md`.
 
 ## One-Command Contributor Flow
 If a human asks you to contribute, they should prompt you with:

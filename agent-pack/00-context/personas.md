@@ -19,6 +19,10 @@ To guide Cartograph's development and UX decisions, we focus on three primary ta
   * Incomplete or ambiguous documentation leading to rework.
   * Difficulty tracking implementation progress against the original design.
 * **Cartograph Value**: **Deterministic translation** from intent to execution-ready tasks.
+* **Primary Modes**: **Task Mode** (architecture decomposition) and **Roadmap Mode** (strategic alignment).
+
+#### Operational Narrative
+Alex starts in **Roadmap Mode**, auditing the current project state against the long-term vision. Once a milestone is set, they switch to **Task Mode** to decompose high-level functional requirements into atomic task files with strict dependencies, ensuring **Aris** (the agent) has zero ambiguity.
 
 ---
 
@@ -37,6 +41,10 @@ To guide Cartograph's development and UX decisions, we focus on three primary ta
   * Managing a chaotic backlog of small, disconnected tasks.
   * Difficulty "resuming" work after being away for a few days.
 * **Cartograph Value**: **Long-running execution state** and autonomous task management.
+* **Primary Modes**: **Roadmap Mode** (vision refinement) and **Task Mode** (rapid prototyping).
+
+#### Operational Narrative
+Sam uses **Roadmap Mode** to set the North Star for their MVP. They rely on Cartograph to "remember" the plan while they deal with other founder responsibilties. When they need progress, they switch to **Task Mode** to seed the backlog, then hand off to **Work Mode** for the agents to build.
 
 ---
 
@@ -55,6 +63,10 @@ To guide Cartograph's development and UX decisions, we focus on three primary ta
   * Missing dependencies (starting task B before A).
   * No clear "Definition of Done" or acceptance criteria.
 * **Cartograph Value**: **Machine-consumable "Source of Truth"** for execution.
+* **Primary Modes**: **Work Mode** (executing tasks).
+
+#### Operational Narrative
+Aris lives in **Work Mode**. They use the Cartograph bootstrap to claim the highest-priority, unblocked task, execute the code changes while following **Alex's** architecture, and provide evidence in **Repo Mode** (closeout scripts) to maintain repository health and structure.
 
 ---
 
@@ -62,3 +74,15 @@ To guide Cartograph's development and UX decisions, we focus on three primary ta
 * **Alex** drives our need for **formal architecture pillars** and **traceability**.
 * **Sam** drives our need for **speed, hydration, and persistence**.
 * **Aris** drives our need for **deterministic structure**, **metadata**, and **explicit PRDs**.
+
+---
+
+## 🛠️ Operating Mode Mapping
+These personas directly inform our four primary **Operating Modes** as defined in `AGENTS.md`.
+
+| Mode | Primary Persona | Goal |
+|---|---|---|
+| **🛠️ Work Mode** | **Aris** (Agent) | High-speed task execution and bug fixing. This is the bedrock of delivery. |
+| **📝 Task Mode** | **Alex** & **Sam** | Translating architectural vision into atomic, executable task units. |
+| **🗺️ Roadmap Mode** | **Alex** & **Sam** | Strategizing and aligning current execution with the high-level roadmap and vision. |
+| **📂 Repo Mode** | **System Guards** | Maintaining repo integrity, structure, and operational documentation. |
