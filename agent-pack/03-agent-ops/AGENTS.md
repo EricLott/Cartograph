@@ -8,12 +8,14 @@ Define how a first-time coding agent can quickly and safely contribute to Cartog
 - Task system files with YAML metadata
 - Current repository code and build scripts
 - State logs for progress, blockers, and decisions
+- Mistake history and prevention patterns (`./mistakes-framework.md`)
 - Workflow manifest (`../../.cartograph/workflow.json`)
 
 ## Outputs
 - New or updated work items aligned to implementation strategy
 - High-quality code contributions with validation evidence
 - Traceable progress, decisions, and escalation records
+- Preventive improvements derived from prior mistakes
 
 ## Mission
 Contribute reliably to Cartograph by either:
@@ -40,6 +42,7 @@ Contribute reliably to Cartograph by either:
 12. `../07-artifacts/design-system.md` (if working on UI)
 13. `../07-artifacts/user-flows.md`
 14. `../05-state/*` for current execution state
+15. `./mistakes-framework.md` for known failure patterns and safeguards
 
 ### Step 2: Familiarize With Codebase
 Read these files before coding:
@@ -52,6 +55,8 @@ Read these files before coding:
 - `../../frontend/src/services/apiService.js`
 
 Then inspect related modules for your target task scope.
+
+Before coding, read the latest 5 entries in `./mistakes-framework.md` and apply any relevant prevention actions.
 
 ### Step 3: Choose Contribution Mode
 - Mode A: Create new tasks if outstanding tasks are missing, stale, or under-specified.
@@ -123,11 +128,12 @@ Execution rules:
 1. Update selected task to `in_progress`.
 2. Set claim metadata (`claim_owner`, `claim_status: claimed`, `claim_expires_at`) before coding.
 3. Implement only what is required by task acceptance criteria.
-4. Validate per quality docs.
-5. Record evidence in `../05-state/progress-log.md`.
-6. Use `node scripts/cartograph-closeout.mjs` to prepare for completion.
-7. Move task to `pull_requested` when PR is submitted, then `completed` after PR approval.
-8. Release claim (`claim_status: released`, `claim_expires_at: null`) when task is `completed`.
+4. Apply any relevant safeguards documented in `./mistakes-framework.md`.
+5. Validate per quality docs.
+6. Record evidence in `../05-state/progress-log.md`.
+7. Use `node scripts/cartograph-closeout.mjs` to prepare for completion.
+8. Move task to `pull_requested` when PR is submitted, then `completed` after PR approval.
+9. Release claim (`claim_status: released`, `claim_expires_at: null`) when task is `completed`.
 
 ### Single-Task PR Boundary
 - One PR must map to exactly one primary task ID.
@@ -217,6 +223,7 @@ Before closing a task, ensure:
 - Changes are scoped to the task goal and dependencies.
 - Relevant docs in `agent-pack` are updated when behavior changes.
 - Decisions, assumptions, blockers, and progress are all logged.
+- New mistakes are logged in `./mistakes-framework.md` when applicable, with prevention actions.
 - Handoff details are written to `../05-state/handoff-notes.md` if work is incomplete.
 
 ## Guardrails: What Not To Do
@@ -245,3 +252,4 @@ Before closing a task, ensure:
 - `./agent-rules.md`
 - `./decision-making-framework.md`
 - `./escalation-rules.md`
+- `./mistakes-framework.md`
