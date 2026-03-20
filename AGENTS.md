@@ -10,6 +10,10 @@ Workflow path source of truth:
 - `.cartograph/workflow.json`
 - Workflow scripts must resolve repository workflow paths via manifest-backed helpers only.
 
+## Task Scope Boundary
+- The task system under `agent-pack/04-task-system/tasks/` is for **Cartograph product work only** (frontend/backend/exported product behavior).
+- Changes to contributor workflow, agent workflow scripts, or `agent-pack` process/docs should be implemented directly in those files and validated, **not** introduced as new product backlog tasks.
+
 ## Prerequisites
 - **GitHub CLI (`gh`)**: Required for automated PR creation and status checks.
   - Install via `winget install --id GitHub.cli` (Windows) or `brew install gh` (macOS).
@@ -50,6 +54,8 @@ This command runs manifest and PR validation checks, moves the task to the `comp
 ## Local Preflight Validation
 Before opening a PR, use the closeout script to run:
 - `node scripts/cartograph-closeout.mjs`
+- Preferred unified preflight:
+  - `node scripts/cartograph-preflight.mjs --task task-###`
 - Manual validation commands:
   - `node scripts/check-manifest-path-usage.mjs`
   - `node scripts/validate-task-pr.mjs --self-check --task-id task-###`

@@ -229,16 +229,6 @@ function App() {
     }
   };
 
-  const checkAllAnswered = (nodes) => {
-    return nodes.every(p => {
-      const parentAns = p.decisions ? p.decisions.every(d => d.answer !== null && d.answer !== "") : true;
-      const childAns = (p.subcategories && p.subcategories.length > 0) ? checkAllAnswered(p.subcategories) : true;
-      return parentAns && childAns;
-    });
-  };
-
-  const isExportReady = pillars.length > 0 && checkAllAnswered(pillars);
-
   const findNodeById = (nodes, id) => {
     for (const node of nodes) {
       if (node.id === id) return node;
@@ -281,9 +271,8 @@ function App() {
           <h3>Architecture Blueprint</h3>
           <button
             className="btn-primary"
-            disabled={!isExportReady}
             onClick={handleExport}
-            title={isExportReady ? "Export Blueprint" : "Answer all decisions first"}
+            title="Export Blueprint"
           >
             Export .zip
           </button>

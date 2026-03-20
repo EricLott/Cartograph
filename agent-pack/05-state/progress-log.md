@@ -40,6 +40,12 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-20T16:15:52+00:00 | `task-014` | `done` | Prepared task-014 closeout updates touching task-014-add-export-contract-validation-and-failure-messaging.md, App.jsx, exportService.js.
+  - Evidence:
+    - `agent-pack/04-task-system/tasks/in_progress/task-014-add-export-contract-validation-and-failure-messaging.md`
+    - `frontend/src/App.jsx`
+    - `frontend/src/services/exportService.js`
+  - Next step: Open Pull Request for review.
 - 2026-03-20T08:31:41-05:00 | `task-016` | `in_progress` | Added backend integration test harness and coverage for save/retrieve integrity, transaction rollback, and health endpoint behavior.
   - Evidence:
     - Added `backend/tests/integration/api.integration.test.js` with five integration tests:

@@ -1,7 +1,23 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
+const checkAllAnswered = (nodes) => {
+    return nodes.every(p => {
+        const parentAns = p.decisions ? p.decisions.every(d => d.answer !== null && d.answer !== "") : true;
+        const childAns = (p.subcategories && p.subcategories.length > 0) ? checkAllAnswered(p.subcategories) : true;
+        return parentAns && childAns;
+    });
+};
+
 export const generateBlueprintZip = async (pillars) => {
+    if (!pillars || pillars.length === 0) {
+        throw new Error("Cannot export blueprint. No architecture pillars defined. Describe your application idea first.");
+    }
+
+    if (!checkAllAnswered(pillars)) {
+        throw new Error("Cannot export blueprint. There are unanswered decisions in the architecture. Please answer all decisions before exporting.");
+    }
+
     const zip = new JSZip();
     const root = zip.folder("agent-pack");
 

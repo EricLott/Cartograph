@@ -467,12 +467,13 @@ async function main() {
       updated.last_updated = todayDateString();
 
       const tasksDir = toAbsolutePath(rootDir, tasksRootRel);
-      const targetPath = getTaskTargetPath(tasksDir, selectedTask.filePath, updated);
+      const sourcePath = selectedTask.filePath;
+      const targetPath = getTaskTargetPath(tasksDir, sourcePath, updated);
       fs.mkdirSync(path.dirname(targetPath), { recursive: true });
       writeMarkdownWithFrontmatter(targetPath, updated, selectedTask.body, TASK_KEY_ORDER);
 
-      if (targetPath !== selectedTask.filePath && fs.existsSync(selectedTask.filePath)) {
-        fs.unlinkSync(selectedTask.filePath);
+      if (targetPath !== sourcePath && fs.existsSync(sourcePath)) {
+        fs.unlinkSync(sourcePath);
       }
 
       selectedTask.filePath = targetPath;
@@ -481,10 +482,7 @@ async function main() {
 
       // 3. Commit and optionally push
       console.log(`- Committing claim to ${options.base}...`);
-      runGit(['add', targetPath]);
-      if (targetPath !== selectedTask.filePath) {
-        runGit(['add', selectedTask.filePath], { allowFailure: true });
-      }
+      runGit(['add', '--all']);
       runGit(['commit', '-m', `[${taskId}] Claim: in_progress`]);
 
       if (!options.skipPush) {

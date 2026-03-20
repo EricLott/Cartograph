@@ -2,19 +2,19 @@
 id: task-014
 title: Add export contract validation and failure messaging
 type: task
-status: todo
+status: pull_requested
 priority: P1
-owner: unassigned
-claim_owner: unassigned
-claim_status: unclaimed
-claim_expires_at: null
-sla_due_at: 2026-04-22T23:59:00Z
+owner: "google-labs-jules[bot]"
+claim_owner: "google-labs-jules[bot]"
+claim_status: claimed
+claim_expires_at: "2026-03-21T16:08:21.663Z"
+sla_due_at: "2026-04-22T23:59:00Z"
 depends_on:
   - task-013
 acceptance_criteria:
   - Invalid export state produces clear validation message and blocks zip generation.
   - Valid state exports successfully without false positives.
-last_updated: 2026-03-19
+last_updated: 2026-03-20
 ---
 
 # Task: Add export contract validation and failure messaging

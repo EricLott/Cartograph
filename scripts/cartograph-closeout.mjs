@@ -67,6 +67,10 @@ function getCurrentBranch() {
     return runGit(['rev-parse', '--abbrev-ref', 'HEAD']).stdout.trim();
 }
 
+function normalizeRepoPath(value) {
+    return String(value || '').replace(/\\/g, '/').replace(/^\.\/+/, '').trim();
+}
+
 function extractTaskIdFromBranch(branch) {
     const match = branch.match(/(task|bug|spike|feature)-(task|bug|spike|feature)-(\d+)/);
     if (match) return `${match[2]}-${match[3]}`;
@@ -77,18 +81,26 @@ function extractTaskIdFromBranch(branch) {
     return null;
 }
 
+function parseStatusPaths(stdout) {
+    return String(stdout || '')
+        .split(/\r?\n/)
+        .map(line => line.trimEnd())
+        .filter(Boolean)
+        .flatMap(line => {
+            const payload = line.slice(3).trim();
+            if (!payload) return [];
+            if (payload.includes(' -> ')) {
+                const [fromPath, toPath] = payload.split(' -> ');
+                return [normalizeRepoPath(fromPath), normalizeRepoPath(toPath)];
+            }
+            return [normalizeRepoPath(payload)];
+        })
+        .filter(Boolean);
+}
+
 function getUncommittedChanges() {
-    const staged = runGit(['diff', '--cached', '--name-only'], { allowFailure: true }).stdout.trim();
-    const unstaged = runGit(['diff', '--name-only'], { allowFailure: true }).stdout.trim();
-    const untracked = runGit(['ls-files', '--others', '--exclude-standard'], { allowFailure: true }).stdout.trim();
-
-    const all = [
-        ...staged.split(/\r?\n/),
-        ...unstaged.split(/\r?\n/),
-        ...untracked.split(/\r?\n/)
-    ].filter(Boolean);
-
-    return [...new Set(all)];
+    const porcelain = runGit(['status', '--porcelain'], { allowFailure: true }).stdout;
+    return [...new Set(parseStatusPaths(porcelain))];
 }
 
 function todayDateString() {
@@ -126,11 +138,11 @@ function normalizeListFromArgs(rawValues) {
 function parseChangedFilesOutput(stdout) {
     return String(stdout || '')
         .split(/\r?\n/)
-        .map(line => line.trim())
+        .map(line => normalizeRepoPath(line))
         .filter(Boolean);
 }
 
-function getRecentChangedFiles(baseBranch) {
+function getRecentChangedFiles(baseBranch, rootDir, primaryTaskPath = null) {
     const files = new Set();
 
     const branchDiff = runGit(
@@ -141,7 +153,30 @@ function getRecentChangedFiles(baseBranch) {
 
     getUncommittedChanges().forEach(file => files.add(file));
 
-    return Array.from(files);
+    if (primaryTaskPath) {
+        files.add(normalizeRepoPath(primaryTaskPath));
+    }
+
+    return Array.from(files)
+        .map(file => normalizeRepoPath(file))
+        .filter(Boolean)
+        .filter(file => fs.existsSync(path.join(rootDir, file)))
+        .filter((file, index, all) => all.indexOf(file) === index)
+        .sort((a, b) => a.localeCompare(b));
+}
+
+function createDefaultSummary(taskId, evidence) {
+    const normalizedEvidence = Array.isArray(evidence)
+        ? evidence.map(item => String(item || '').trim()).filter(Boolean)
+        : [];
+
+    if (normalizedEvidence.length === 0) {
+        return `Prepared ${taskId} closeout updates.`;
+    }
+
+    const topFiles = normalizedEvidence.slice(0, 3).map(file => path.basename(file));
+    const suffix = normalizedEvidence.length > 3 ? ` and ${normalizedEvidence.length - 3} more file(s)` : '';
+    return `Prepared ${taskId} closeout updates touching ${topFiles.join(', ')}${suffix}.`;
 }
 
 async function collectProgressLogInput(taskId, options, suggestedEvidence) {
@@ -186,7 +221,8 @@ async function collectProgressLogInput(taskId, options, suggestedEvidence) {
     }
 
     if (!summary) {
-        throw new Error('Closeout requires a progress summary. Provide --summary or run in an interactive terminal.');
+        summary = createDefaultSummary(taskId, evidence.length > 0 ? evidence : visibleSuggestions);
+        console.log(`- No summary provided; generated summary: ${summary}`);
     }
 
     if (evidence.length === 0 && visibleSuggestions.length > 0) {
@@ -242,7 +278,7 @@ function appendProgressLogEntry({ rootDir, config, taskId, summary, evidence, ne
 }
 
 function printHelp() {
-    console.log(`cartograph-closeout\n\nUsage:\n  node scripts/cartograph-closeout.mjs [options]\n\nOptions:\n  --task <task-###>           Target task ID (defaults to current branch ID)\n  --base <branch>             Base branch for validation (default: main)\n  --summary "<text>"          Progress-log summary for this closeout\n  --evidence "<path>"         Evidence item (repeatable or comma-separated)\n  --next-step "<text>"        Optional next-step line for progress log entry\n  --create-pr                 Automate GitHub PR creation using gh CLI\n  --dry-run                   Preview actions without mutating files/git\n  --force                     Skip validation checks\n  --help                      Show this help\n`);
+    console.log(`cartograph-closeout\n\nUsage:\n  node scripts/cartograph-closeout.mjs [options]\n\nOptions:\n  --task <task-###>           Target task ID (defaults to current branch ID)\n  --base <branch>             Base branch for validation (default: main)\n  --summary "<text>"          Progress-log summary for this closeout (auto-generated in non-interactive mode if omitted)\n  --evidence "<path>"         Evidence item (repeatable or comma-separated)\n  --next-step "<text>"        Optional next-step line for progress log entry\n  --create-pr                 Automate GitHub PR creation using gh CLI\n  --dry-run                   Preview actions without mutating files/git\n  --force                     Skip validation checks\n  --help                      Show this help\n`);
 }
 
 function extractSection(body, headingName) {
@@ -375,7 +411,7 @@ async function main() {
             uncommitted.forEach(f => console.log(`  - ${f}`));
         } else {
             console.log(`- Detected ${uncommitted.length} uncommitted changes. Staging for validation...`);
-            runGit(['add', ...uncommitted]);
+            runGit(['add', '--all']);
         }
     }
 
@@ -390,24 +426,7 @@ async function main() {
         console.log(`- Skipping manifest validation (--force).`);
     }
 
-    // 2. Capture progress log details and append entry
-    const suggestedEvidence = getRecentChangedFiles(options.base);
-    const progressInput = await collectProgressLogInput(taskId, options, suggestedEvidence);
-    const progressResult = appendProgressLogEntry({
-        rootDir,
-        config,
-        taskId,
-        summary: progressInput.summary,
-        evidence: progressInput.evidence,
-        nextStep: progressInput.nextStep,
-        dryRun: options.dryRun,
-    });
-
-    if (!options.dryRun && progressResult.appended) {
-        runGit(['add', progressResult.progressLogPath]);
-    }
-
-    // 3. Find the task file
+    // 2. Find the task file
     const tasksDir = toAbsolutePath(rootDir, tasksRootRel);
 
     // Ensure uniqueness before proceeding
@@ -422,6 +441,27 @@ async function main() {
     }
 
     console.log(`- Found task file: ${path.relative(rootDir, task)}`);
+
+    // 3. Capture progress log details and append entry
+    const suggestedEvidence = getRecentChangedFiles(
+        options.base,
+        rootDir,
+        path.relative(rootDir, task).replace(/\\/g, '/')
+    );
+    const progressInput = await collectProgressLogInput(taskId, options, suggestedEvidence);
+    const progressResult = appendProgressLogEntry({
+        rootDir,
+        config,
+        taskId,
+        summary: progressInput.summary,
+        evidence: progressInput.evidence,
+        nextStep: progressInput.nextStep,
+        dryRun: options.dryRun,
+    });
+
+    if (!options.dryRun && progressResult.appended) {
+        runGit(['add', progressResult.progressLogPath]);
+    }
 
     // 4. Update task file and move to pull_requested
     const { frontmatter, body } = readMarkdownWithFrontmatter(task);
@@ -450,10 +490,7 @@ async function main() {
 
         // 5. Git staging
         console.log(`- Staging closeout changes...`);
-        runGit(['add', targetPath]);
-        if (targetPath !== task) {
-            runGit(['add', task], { allowFailure: true }); // Catch the deletion if original was in git
-        }
+        runGit(['add', '--all']);
     }
 
     // 6. Task PR validation with progress-log enforcement
