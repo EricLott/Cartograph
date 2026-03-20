@@ -40,6 +40,22 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-20T08:31:41-05:00 | `task-016` | `in_progress` | Added backend integration test harness and coverage for save/retrieve integrity, transaction rollback, and health endpoint behavior.
+  - Evidence:
+    - Added `backend/tests/integration/api.integration.test.js` with five integration tests:
+      - save-state persistence + latest-project nested retrieval correctness
+      - project update snapshot replacement integrity
+      - explicit transaction rollback on nested write failure
+      - health endpoint `DOWN` path when DB auth fails
+      - health endpoint `UP` path when DB auth succeeds
+    - Refactored `backend/server.js` to export `app`, `sequelize`, and models for integration testing without auto-start side effects.
+    - Added backend test tooling in `backend/package.json` (`jest`, `supertest`, `sqlite3`) and updated lockfile.
+    - Validation checks:
+      - `cd backend && npm test` passed (`5/5` tests)
+      - `node scripts/validate-task-pr.mjs --self-check --task-id task-016` passed
+      - `cd frontend && npm run lint` passed
+      - `cd frontend && npm run build` failed due unresolved import `react-icons/vsc` in `frontend/src/components/PillarWorkspace.jsx` (pre-existing, not introduced by this task)
+  - Next step: Decide whether to address the unrelated frontend build dependency in this task or track it as a separate follow-up before closeout.
 - 2026-03-19T19:27:45-05:00 | `task-023` | `done` | Enhanced closeout automation to suggest evidence from recent changes, auto-append progress-log entries, and enforce summary/evidence validation before task transition.
   - Evidence:
     - `agent-pack/04-task-system/tasks/todo/task-023-enhance-closeout-script-with-automated-progress-logging.md`

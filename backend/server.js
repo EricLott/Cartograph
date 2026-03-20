@@ -6,16 +6,30 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const sequelize = new Sequelize(
-    process.env.DB_NAME || 'cartograph_db',
-    process.env.DB_USER || 'cartograph',
-    process.env.DB_PASSWORD || 'cartograph_pass',
-    {
-        host: process.env.DB_HOST || 'localhost',
-        dialect: 'mysql',
-        logging: false
+const createSequelize = () => {
+    const dialect = process.env.DB_DIALECT || 'mysql';
+
+    if (dialect === 'sqlite') {
+        return new Sequelize({
+            dialect: 'sqlite',
+            storage: process.env.DB_STORAGE || ':memory:',
+            logging: false
+        });
     }
-);
+
+    return new Sequelize(
+        process.env.DB_NAME || 'cartograph_db',
+        process.env.DB_USER || 'cartograph',
+        process.env.DB_PASSWORD || 'cartograph_pass',
+        {
+            host: process.env.DB_HOST || 'localhost',
+            dialect: 'mysql',
+            logging: false
+        }
+    );
+};
+
+const sequelize = createSequelize();
 
 app.get('/api/health', async (req, res) => {
     try {
@@ -59,8 +73,6 @@ Pillar.hasMany(Decision, { onDelete: 'CASCADE' });
 Decision.belongsTo(Pillar);
 Pillar.hasMany(Pillar, { as: 'subcategories', foreignKey: 'parentId', onDelete: 'CASCADE' });
 Pillar.belongsTo(Pillar, { as: 'parent', foreignKey: 'parentId' });
-
-sequelize.sync({ alter: true }).then(() => console.log('Database synced')).catch(console.error);
 
 const getProjectTree = async (projectId) => {
     const project = await Project.findByPk(projectId);
@@ -239,7 +251,26 @@ app.post('/api/save-state', async (req, res) => {
     }
 });
 
-const PORT = 3000;
-app.listen(PORT, () => {
-    console.log(`Backend listening on port ${PORT}`);
-});
+const PORT = Number(process.env.PORT || 3000);
+
+const startServer = () => {
+    sequelize.sync({ alter: true }).then(() => console.log('Database synced')).catch(console.error);
+    return app.listen(PORT, () => {
+        console.log(`Backend listening on port ${PORT}`);
+    });
+};
+
+if (require.main === module) {
+    startServer();
+}
+
+module.exports = {
+    app,
+    sequelize,
+    models: {
+        Project,
+        Pillar,
+        Decision
+    },
+    startServer
+};
