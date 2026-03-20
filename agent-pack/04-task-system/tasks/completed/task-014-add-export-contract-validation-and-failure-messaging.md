@@ -2,12 +2,12 @@
 id: task-014
 title: Add export contract validation and failure messaging
 type: task
-status: pull_requested
+status: completed
 priority: P1
 owner: "google-labs-jules[bot]"
 claim_owner: "google-labs-jules[bot]"
-claim_status: claimed
-claim_expires_at: "2026-03-21T16:08:21.663Z"
+claim_status: released
+claim_expires_at: null
 sla_due_at: "2026-04-22T23:59:00Z"
 depends_on:
   - task-013
