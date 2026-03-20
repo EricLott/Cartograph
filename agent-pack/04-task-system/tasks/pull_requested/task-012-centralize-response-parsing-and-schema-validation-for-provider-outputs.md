@@ -2,7 +2,7 @@
 id: task-012
 title: Centralize response parsing and schema validation for provider outputs
 type: task
-status: in_progress
+status: pull_requested
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
@@ -14,7 +14,7 @@ depends_on:
 acceptance_criteria:
   - Malformed provider payloads fail with explicit user-visible errors.
   - Lint issues in touched agent-service paths are resolved.
-last_updated: 2026-03-19
+last_updated: 2026-03-20
 ---
 
 

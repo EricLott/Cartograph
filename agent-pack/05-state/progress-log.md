@@ -40,6 +40,15 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-19T18:57:42-05:00 | `task-012` | `done` | Centralized provider-output parsing with schema validation for pillar, category, and chat response shapes.
+  - Evidence:
+    - `frontend/src/services/agentService.js` now uses shared JSON parsing and schema guard helpers (`parseAndValidateProviderOutput`, recursive node validators).
+    - Malformed provider JSON now fails with explicit, user-visible error messages that include the invalid field path.
+    - Validation checks passed:
+      - `npm run lint` (frontend)
+      - `npm run build` (frontend)
+      - `node scripts/validate-task-pr.mjs --self-check --task-id task-012`
+  - Next step: Run `node scripts/cartograph-closeout.mjs --task task-012` to finalize task status transition.
 - 2026-03-19T18:40:00-05:00 | `task-018` | `done` | Enhanced workflow scripts to be more pro-active and agent-friendly.
   - Evidence:
     - `validate-task-pr.mjs` now includes staged and unstaged changes when running in `selfCheck` mode, preventing premature "No changed files detected" errors.
