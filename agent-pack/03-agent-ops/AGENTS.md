@@ -27,15 +27,19 @@ Contribute reliably to Cartograph by either:
 ## First-Time Agent Quickstart
 ### Step 1: Read Source of Truth in Order
 1. `../00-context/vision.md`
-2. `../00-context/business-goals.md`
-3. `../00-context/constraints.md`
-4. `../01-architecture/*`
-5. `../02-execution/implementation-strategy.md`
-6. `../02-execution/workstreams.md`
-7. `../02-execution/dependency-map.md`
-8. `../02-execution/definition-of-done.md`
-9. `../04-task-system/README.md` and all bucket `README.md` files
-10. `../05-state/*` for current execution state
+2. `../00-context/roadmap.md`
+3. `../00-context/personas.md`
+4. `../00-context/business-goals.md`
+5. `../00-context/constraints.md`
+6. `../01-architecture/*`
+7. `../02-execution/implementation-strategy.md`
+8. `../02-execution/workstreams.md`
+9. `../02-execution/dependency-map.md`
+10. `../02-execution/definition-of-done.md`
+11. `../04-task-system/README.md` and all bucket `README.md` files
+12. `../07-artifacts/design-system.md` (if working on UI)
+13. `../07-artifacts/user-flows.md`
+14. `../05-state/*` for current execution state
 
 ### Step 2: Familiarize With Codebase
 Read these files before coding:
@@ -221,10 +225,14 @@ Before closing a task, ensure:
 
 ## Source of Truth References
 - `../00-context/vision.md`
+- `../00-context/roadmap.md`
+- `../00-context/personas.md`
 - `../02-execution/implementation-strategy.md`
 - `../02-execution/dependency-map.md`
 - `../02-execution/definition-of-done.md`
 - `../04-task-system/README.md`
+- `../07-artifacts/design-system.md`
+- `../07-artifacts/user-flows.md`
 - `../05-state/*`
 - `./agent-rules.md`
 - `./decision-making-framework.md`
