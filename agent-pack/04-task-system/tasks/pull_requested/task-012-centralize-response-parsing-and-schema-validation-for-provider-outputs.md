@@ -14,7 +14,7 @@ depends_on:
 acceptance_criteria:
   - Malformed provider payloads fail with explicit user-visible errors.
   - Lint issues in touched agent-service paths are resolved.
-last_updated: 2026-03-19
+last_updated: 2026-03-20
 ---
 
 
