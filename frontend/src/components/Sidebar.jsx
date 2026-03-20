@@ -13,10 +13,10 @@ const SettingsIcon = () => (
     </svg>
 );
 
-const PillarNode = ({ node, activePillar, onSelectPillar, depth = 0 }) => {
+const PillarNode = ({ node, activePillarId, onSelectPillar, depth = 0 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const hasChildren = node.subcategories && node.subcategories.length > 0;
-    const isActive = activePillar?.id === node.id;
+    const isActive = activePillarId === node.id;
 
     return (
         <div className="pillar-node-container" style={{ marginLeft: `${depth * 12}px`, marginTop: '4px' }}>
@@ -65,7 +65,7 @@ const PillarNode = ({ node, activePillar, onSelectPillar, depth = 0 }) => {
                     animation: 'fadeIn 0.3s ease-out'
                 }}>
                     {node.subcategories.map(child => (
-                        <PillarNode key={child.id} node={child} activePillar={activePillar} onSelectPillar={onSelectPillar} depth={0} />
+                        <PillarNode key={child.id} node={child} activePillarId={activePillarId} onSelectPillar={onSelectPillar} depth={0} />
                     ))}
                 </div>
             )}
@@ -73,7 +73,7 @@ const PillarNode = ({ node, activePillar, onSelectPillar, depth = 0 }) => {
     );
 };
 
-export default function Sidebar({ pillars, activePillar, onSelectPillar, onOpenSettings }) {
+export default function Sidebar({ pillars, activePillarId, onSelectPillar, onOpenSettings }) {
     return (
         <aside className="sidebar glass-panel" style={{ border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-xl)' }}>
             <div className="sidebar-header">
@@ -83,7 +83,7 @@ export default function Sidebar({ pillars, activePillar, onSelectPillar, onOpenS
                 {pillars && pillars.length > 0 ? (
                     <nav className="pillar-nav">
                         {pillars.map(p => (
-                            <PillarNode key={p.id} node={p} activePillar={activePillar} onSelectPillar={onSelectPillar} />
+                            <PillarNode key={p.id} node={p} activePillarId={activePillarId} onSelectPillar={onSelectPillar} />
                         ))}
                     </nav>
                 ) : (

@@ -14,7 +14,7 @@ function App() {
   ]);
   const [isWaiting, setIsWaiting] = useState(false);
   const [pillars, setPillars] = useState([]);
-  const [activePillar, setActivePillar] = useState(null);
+  const [activePillarId, setActivePillarId] = useState(null);
   const [agentFeedback, setAgentFeedback] = useState([]);
   const [projectId, setProjectId] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
@@ -165,7 +165,7 @@ function App() {
 
     const nextPillars = updateNodeDecisions(pillars);
     setPillars(nextPillars);
-    setActivePillar(null);
+    setActivePillarId(null);
 
     try {
       const ideaMsg = messages.find(m => m.role === 'user');
@@ -203,6 +203,19 @@ function App() {
 
   const isExportReady = pillars.length > 0 && checkAllAnswered(pillars);
 
+  const findNodeById = (nodes, id) => {
+    for (const node of nodes) {
+      if (node.id === id) return node;
+      if (node.subcategories && node.subcategories.length > 0) {
+        const found = findNodeById(node.subcategories, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const activePillar = activePillarId ? findNodeById(pillars, activePillarId) : null;
+
   return (
     <div className="app-layout">
       {isSettingsOpen && (
@@ -214,8 +227,8 @@ function App() {
 
       <Sidebar
         pillars={pillars}
-        activePillar={activePillar}
-        onSelectPillar={setActivePillar}
+        activePillarId={activePillarId}
+        onSelectPillar={(node) => setActivePillarId(node.id)}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
@@ -257,7 +270,7 @@ function App() {
               <PillarWorkspace
                 pillar={activePillar}
                 onUpdateDecision={handleUpdateDecision}
-                onBack={() => setActivePillar(null)}
+                onBack={() => setActivePillarId(null)}
               />
             ) : (
               <div className="glass-panel" style={{ padding: '2rem', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', opacity: 0.7 }}>

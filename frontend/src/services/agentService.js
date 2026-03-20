@@ -26,6 +26,13 @@ Format MUST match exactly:
 const SUBCATEGORY_SYSTEM_PROMPT = `You are a specialized Sub-Agent architect focusing exclusively on a single architectural pillar.
 Analyze the user's application idea and generate the specific categories and pending architectural decisions required for your assigned pillar.
 The initial decisions should ask VERY high-level, abstract questions that an architect needs to know to get started, thinking chronologically to build context.
+
+RESERVED DECISION IDs:
+If you are expanding an "Infrastructure", "DevOps", or "Cloud" category, شما MUST use these exact IDs for these specific questions if they are relevant:
+- "infra_hosting": For the question "Where is this going to live? (Azure/AWS/GCP/Hybrid/etc)"
+- "infra_containerization": For the question "Do you want it containerized? (Docker/Kubernetes/None/etc)"
+- "infra_iac": For the question "How to handle infrastructure-as-code? (Terraform/Bicep/Pulumi/etc)"
+
 You can optionally define "subcategories" to recursively break down larger architectural domains.
 You MUST respond with ONLY a valid JSON object! NO markdown wrappers like \`\`\`json. Just the raw object.
 
@@ -424,6 +431,13 @@ const mockGenerate = async () => {
                     description: 'The user-facing application interface.',
                     subcategories: [],
                     decisions: []
+                },
+                {
+                    id: 'pillar-infra',
+                    title: 'Infrastructure',
+                    description: 'Hosting, deployment, and cloud strategy.',
+                    subcategories: [],
+                    decisions: []
                 }
             ]);
         }, 500);
@@ -436,8 +450,22 @@ export const generateCategoriesForPillar = async (ideaDescription, pillar, confi
     if (provider === 'mock') {
         return new Promise((resolve) => {
             setTimeout(() => resolve({
-                subcategories: [{ id: 'cat-fe-state', title: 'State Management', description: 'How client state is managed.', subcategories: [], decisions: [{ id: 'd-fe-state', question: 'Global state or local?', context: 'Impacts perf', answer: null }] }],
-                decisions: [{ id: 'd-fe-fw', question: 'Primary mode of interaction?', context: 'SPA vs Static', answer: null }]
+                subcategories: [
+                    { 
+                        id: 'cat-fe-state', 
+                        title: 'State Management', 
+                        description: 'How client state is managed.', 
+                        subcategories: [], 
+                        decisions: [
+                            { id: 'd-fe-state', question: 'Global state or local?', context: 'Impacts perf', answer: null }
+                        ] 
+                    }
+                ],
+                decisions: [
+                    { id: 'infra_hosting', question: 'Where is this going to live?', context: 'Cloud provider choice', answer: null },
+                    { id: 'infra_containerization', question: 'Do you want it containerized?', context: 'Deployment model', answer: null },
+                    { id: 'infra_iac', question: 'How to handle infrastructure-as-code?', context: 'Management strategy', answer: null }
+                ]
             }), 1500);
         });
     }
