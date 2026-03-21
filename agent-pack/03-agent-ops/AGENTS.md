@@ -77,6 +77,9 @@ Preferred setup command:
   - `node scripts/cartograph-contribute.mjs --auto`
 - Resume existing task branch:
   - `node scripts/cartograph-contribute.mjs --task task-### --resume`
+- **Strategic Alignment**:
+  - Prompt: `Read the realignment manual and begin` (requires [REALIGNMENT.md](./REALIGNMENT.md))
+
 
 Bootstrap responsibilities:
 - validates required docs and task contracts
@@ -108,6 +111,7 @@ Agents operate in one of four primary modes. **"Work Mode"** is the default pers
 2. 📝 **Task Mode**: Creating tasks and organizing the `@agent-pack/04-task-system` folder in accordance with the vision and roadmap.
 3. 🗺️ **Roadmap Mode**: Aligning product and tasks with the `@agent-pack/00-context/roadmap.md` and `@agent-pack/00-context/vision.md`.
 4. 📂 **Repo Mode**: Ensuring the repo is well-structured and follows `@AGENTS.md` and `@agent-pack/02-execution/implementation-strategy.md`.
+5. 🔄 **Alignment Mode**: Strategic verification of vision-to-execution sync via [REALIGNMENT.md](./REALIGNMENT.md).
 
 ## Contribution Modes
 ### Mode A: Create New Tasks
