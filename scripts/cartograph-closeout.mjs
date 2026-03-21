@@ -30,7 +30,7 @@ function parseArgs(argv) {
         const arg = argv[i];
 
         if (arg === '--task') {
-            options.taskId = argv[++i];
+            options.taskIds = normalizeListFromArgs([argv[++i]]);
         } else if (arg === '--base') {
             options.base = argv[++i];
         } else if (arg === '--summary') {
@@ -71,14 +71,9 @@ function normalizeRepoPath(value) {
     return String(value || '').replace(/\\/g, '/').replace(/^\.\/+/, '').trim();
 }
 
-function extractTaskIdFromBranch(branch) {
-    const match = branch.match(/(task|bug|spike|feature)-(task|bug|spike|feature)-(\d+)/);
-    if (match) return `${match[2]}-${match[3]}`;
-
-    const simpleMatch = branch.match(/(task|bug|spike|feature)-(\d+)/);
-    if (simpleMatch) return `${simpleMatch[1]}-${simpleMatch[2]}`;
-
-    return null;
+function extractTaskIdsFromBranch(branch) {
+    const idMatches = String(branch || '').match(/(task|bug|spike|feature)-\d+/g) || [];
+    return [...new Set(idMatches)];
 }
 
 function parseStatusPaths(stdout) {
@@ -303,35 +298,38 @@ function extractProgressLogEvidence(rootDir, config, taskId) {
     return match[1].trim();
 }
 
-async function createPullRequest(taskId, branch, taskPath, rootDir, config, options) {
-    const { frontmatter, body } = readMarkdownWithFrontmatter(taskPath);
-    const acceptance = (frontmatter.acceptance_criteria || []).map(ac => `- [x] ${ac}`).join('\n');
-    const goal = extractSection(body, 'Task Goal') || 'See task file.';
-    const evidence = extractProgressLogEvidence(rootDir, config, taskId) || 'Add evidence details here.';
+async function createPullRequest(taskIds, branch, taskPaths, rootDir, config, options) {
+    const tasksData = taskPaths.map(taskPath => {
+        const { frontmatter, body } = readMarkdownWithFrontmatter(taskPath);
+        const taskId = frontmatter.id;
+        const acceptance = (frontmatter.acceptance_criteria || []).map(ac => `- [x] ${ac}`).join('\n');
+        const goal = extractSection(body, 'Task Goal') || 'See task file.';
+        const evidence = extractProgressLogEvidence(rootDir, config, taskId) || 'Add evidence details here.';
+        return { taskId, taskPath, title: frontmatter.title, acceptance, goal, evidence };
+    });
 
-    const prBody = `## Primary Task
-### Task ID
-${taskId}
+    const primaryTasksSection = tasksData.map(t => `
+### Task ID: ${t.taskId}
+**Link**: [${path.relative(rootDir, t.taskPath).replace(/\\/g, '/')}](${path.relative(rootDir, t.taskPath).replace(/\\/g, '/')})
+**Title**: ${t.title}
 
-### Task File Path
-${path.relative(rootDir, taskPath).replace(/\\/g, '/')}
+#### Acceptance Criteria
+${t.acceptance}
 
-### Task Title
-${frontmatter.title}
+#### Evidence
+${t.evidence}
+`).join('\n---\n');
+
+    const prBody = `## Primary Tasks
+${primaryTasksSection}
 
 ## Scope Contract
-- [x] This PR has exactly one primary task.
+- [x] This PR addresses the listed primary tasks.
 - [x] I did not update unrelated backlog item files.
-- [x] Any state-log updates reference the same primary task ID.
-
-### Acceptance Criteria
-${acceptance}
-
-### Evidence
-${evidence}
+- [x] Any state-log updates reference these primary task IDs.
 
 ### Validation Results
-- node scripts/validate-task-pr.mjs --self-check --task-id ${taskId} passed.
+${tasksData.map(t => `- node scripts/validate-task-pr.mjs --self-check --task-id ${t.taskId} passed.`).join('\n')}
 
 ### Assumptions Made
 - None.
@@ -343,10 +341,11 @@ ${evidence}
 - None.
 
 ## PR Title Contract
-- [x] PR title includes the same primary task ID.
+- [x] PR title includes at least one primary task ID.
 `;
 
-    const title = `[${taskId}] ${frontmatter.title}`;
+    const titlePrefix = taskIds.length > 1 ? `[${taskIds.join(', ')}]` : `[${taskIds[0]}]`;
+    const title = `${titlePrefix} ${tasksData[0].title}${tasksData.length > 1 ? ' (+ more tasks)' : ''}`;
     const prBodyPath = path.join(rootDir, '.cartograph', 'PR_BODY.md');
     fs.mkdirSync(path.dirname(prBodyPath), { recursive: true });
     fs.writeFileSync(prBodyPath, prBody, 'utf8');
@@ -395,13 +394,13 @@ async function main() {
     const tasksRootRel = getWorkflowPath(config, 'tasks_root');
 
     const branch = getCurrentBranch();
-    const taskId = options.taskId || extractTaskIdFromBranch(branch);
+    const taskIds = options.taskIds || extractTaskIdsFromBranch(branch);
 
-    if (!taskId) {
-        throw new Error('Unable to determine task ID from branch or --task argument.');
+    if (!taskIds || taskIds.length === 0) {
+        throw new Error('Unable to determine task ID(s) from branch or --task argument.');
     }
 
-    console.log(`\n[CLOSEOUT] Preparing to close out ${taskId} on branch ${branch}...`);
+    console.log(`\n[CLOSEOUT] Preparing to close out ${taskIds.join(', ')} on branch ${branch}...`);
 
     // 0. Pro-active change detection
     const uncommitted = getUncommittedChanges();
@@ -411,7 +410,7 @@ async function main() {
             uncommitted.forEach(f => console.log(`  - ${f}`));
         } else {
             console.log(`- Detected ${uncommitted.length} uncommitted changes. Staging for validation...`);
-            runGit(['add', '--all']);
+            runGit(['add', ...uncommitted]);
         }
     }
 
@@ -426,106 +425,113 @@ async function main() {
         console.log(`- Skipping manifest validation (--force).`);
     }
 
-    // 2. Find the task file
-    const tasksDir = toAbsolutePath(rootDir, tasksRootRel);
+    const taskPaths = [];
 
-    // Ensure uniqueness before proceeding
-    console.log(`- Checking task ID uniqueness across global task folders...`);
-    validateTaskUniqueness(tasksDir);
+    for (const taskId of taskIds) {
+        console.log(`\n--- Processing ${taskId} ---`);
 
-    const allTasks = collectTaskFilesRecursively(tasksDir);
-    const task = allTasks.find(t => path.basename(t).startsWith(`${taskId}-`));
+        // 2. Capture progress log details and append entry
+        const suggestedEvidence = getRecentChangedFiles(options.base);
+        const progressInput = await collectProgressLogInput(taskId, options, suggestedEvidence);
+        const progressResult = appendProgressLogEntry({
+            rootDir,
+            config,
+            taskId,
+            summary: progressInput.summary,
+            evidence: progressInput.evidence,
+            nextStep: progressInput.nextStep,
+            dryRun: options.dryRun,
+        });
 
-    if (!task) {
-        throw new Error(`Task file for ${taskId} not found in ${tasksRootRel}.`);
-    }
-
-    console.log(`- Found task file: ${path.relative(rootDir, task)}`);
-
-    // 3. Capture progress log details and append entry
-    const suggestedEvidence = getRecentChangedFiles(
-        options.base,
-        rootDir,
-        path.relative(rootDir, task).replace(/\\/g, '/')
-    );
-    const progressInput = await collectProgressLogInput(taskId, options, suggestedEvidence);
-    const progressResult = appendProgressLogEntry({
-        rootDir,
-        config,
-        taskId,
-        summary: progressInput.summary,
-        evidence: progressInput.evidence,
-        nextStep: progressInput.nextStep,
-        dryRun: options.dryRun,
-    });
-
-    if (!options.dryRun && progressResult.appended) {
-        runGit(['add', progressResult.progressLogPath]);
-    }
-
-    // 4. Update task file and move to pull_requested
-    const { frontmatter, body } = readMarkdownWithFrontmatter(task);
-
-    const updated = { ...frontmatter };
-    updated.status = 'pull_requested';
-    // claim_status remains 'claimed' since it's not yet released into 'completed'
-    updated.last_updated = todayDateString();
-
-    const targetPath = getTaskTargetPath(tasksDir, task, updated);
-
-    if (options.dryRun) {
-        console.log(`\n[DRY RUN] Would move and update task:`);
-        console.log(`  From: ${path.relative(rootDir, task)}`);
-        console.log(`  To:   ${path.relative(rootDir, targetPath)}`);
-        console.log(`  Status: pull_requested`);
-    } else {
-        console.log(`- Transitioning task to pull_requested...`);
-        fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-        writeMarkdownWithFrontmatter(targetPath, updated, body, TASK_KEY_ORDER);
-
-        if (targetPath !== task) {
-            fs.unlinkSync(task);
-            console.log(`- Moved to: ${path.relative(rootDir, targetPath)}`);
+        if (!options.dryRun && progressResult.appended) {
+            runGit(['add', progressResult.progressLogPath]);
         }
 
-        // 5. Git staging
-        console.log(`- Staging closeout changes...`);
-        runGit(['add', '--all']);
-    }
+        // 3. Find the task file
+        const tasksDir = toAbsolutePath(rootDir, tasksRootRel);
 
-    // 6. Task PR validation with progress-log enforcement
-    if (options.dryRun) {
-        console.log(`- Skipping task PR validation in dry-run mode.`);
-    } else if (!options.force) {
-        console.log(`- Running task PR validation (base: ${options.base})...`);
-        const validateCheck = spawnSync('node', [
-            'scripts/validate-task-pr.mjs',
-            '--self-check',
-            '--task-id', taskId,
-            '--base', options.base
-        ], { stdio: 'inherit' });
+        // Ensure uniqueness before proceeding
+        console.log(`- Checking task ID uniqueness across global task folders...`);
+        validateTaskUniqueness(tasksDir);
 
-        if (validateCheck.status !== 0) {
-            throw new Error(`Validation failed for ${taskId}. Ensure task scope, progress log summary, and evidence are valid.`);
+        const allTasks = collectTaskFilesRecursively(tasksDir);
+        const task = allTasks.find(t => path.basename(t).startsWith(`${taskId}-`));
+
+        if (!task) {
+            throw new Error(`Task file for ${taskId} not found in ${tasksRootRel}.`);
         }
-    } else {
-        console.log(`- Skipping task PR validation (--force).`);
+
+        console.log(`- Found task file: ${path.relative(rootDir, task)}`);
+
+        // 4. Update task file and move to pull_requested
+        const { frontmatter, body } = readMarkdownWithFrontmatter(task);
+
+        const updated = { ...frontmatter };
+        updated.status = 'pull_requested';
+        // claim_status remains 'claimed' since it's not yet released into 'completed'
+        updated.last_updated = todayDateString();
+
+        const targetPath = getTaskTargetPath(tasksDir, task, updated);
+        taskPaths.push(targetPath);
+
+        if (options.dryRun) {
+            console.log(`\n[DRY RUN] Would move and update task:`);
+            console.log(`  From: ${path.relative(rootDir, task)}`);
+            console.log(`  To:   ${path.relative(rootDir, targetPath)}`);
+            console.log(`  Status: pull_requested`);
+        } else {
+            console.log(`- Transitioning task to pull_requested...`);
+            fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+            writeMarkdownWithFrontmatter(targetPath, updated, body, TASK_KEY_ORDER);
+
+            if (targetPath !== task) {
+                fs.unlinkSync(task);
+                console.log(`- Moved to: ${path.relative(rootDir, targetPath)}`);
+            }
+
+            // 5. Git staging
+            console.log(`- Staging closeout changes...`);
+            runGit(['add', targetPath]);
+            if (targetPath !== task) {
+                runGit(['add', task], { allowFailure: true }); // Catch the deletion if original was in git
+            }
+        }
+
+        // 6. Task PR validation with progress-log enforcement
+        if (options.dryRun) {
+            console.log(`- Skipping task PR validation in dry-run mode.`);
+        } else if (!options.force) {
+            console.log(`- Running task PR validation (base: ${options.base})...`);
+            const validateCheck = spawnSync('node', [
+                'scripts/validate-task-pr.mjs',
+                '--self-check',
+                '--task-id', taskId,
+                '--base', options.base
+            ], { stdio: 'inherit' });
+
+            if (validateCheck.status !== 0) {
+                throw new Error(`Validation failed for ${taskId}. Ensure task scope, progress log summary, and evidence are valid.`);
+            }
+        } else {
+            console.log(`- Skipping task PR validation (--force).`);
+        }
     }
 
-    console.log(`\n[SUCCESS] ${taskId} closeout prepared.`);
+    console.log(`\n[SUCCESS] Closeout prepared for: ${taskIds.join(', ')}.`);
     console.log(`\nSummary:`);
-    console.log(`- Task file moved to pull_requested/ bucket.`);
+    console.log(`- Task files moved to pull_requested/ bucket.`);
     console.log(`- Frontmatter updated (status: pull_requested).`);
     console.log(`- Changes staged for commit.`);
 
     console.log(`\nNext steps:`);
     if (options.createPr) {
-        await createPullRequest(taskId, branch, targetPath, rootDir, config, options);
+        await createPullRequest(taskIds, branch, taskPaths, rootDir, config, options);
     } else {
+        const idsString = taskIds.length > 1 ? `[${taskIds.join(', ')}]` : `[${taskIds[0]}]`;
         console.log(`1. Review staged changes: git status`);
-        console.log(`2. Commit work: git commit -m "[${taskId}] Closeout: completion of task goal"`);
+        console.log(`2. Commit work: git commit -m "${idsString} Closeout: completion of task goals"`);
         console.log(`3. Push branch and create Pull Request: git push origin ${branch}`);
-        console.log(`4. Upon merge to main, a GitHub Action will move the task to completed/.`);
+        console.log(`4. Upon merge to main, a GitHub Action will move tasks to completed/.`);
     }
 }
 

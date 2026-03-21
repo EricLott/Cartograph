@@ -32,9 +32,9 @@ Notes:
 `);
 }
 
-function parseTaskIdFromBranch(branch) {
-  const match = String(branch || '').match(/(task-\d+)/);
-  return match ? match[1] : null;
+function parseTaskIdsFromBranch(branch) {
+  const matches = String(branch || '').match(/(task-\d+)/g) || [];
+  return [...new Set(matches)];
 }
 
 function toDateString() {
@@ -112,32 +112,41 @@ function main() {
   const tasksRootRel = getWorkflowPath(config, 'tasks_root');
   const tasksDir = toAbsolutePath(process.cwd(), tasksRootRel);
 
-  const taskId = options.taskId || parseTaskIdFromBranch(options.branch);
-  if (!taskId) {
-    throw new Error('Task ID is required. Pass --task-id task-### or --branch task/task-###-slug.');
+  const taskIdsInput = options.taskId ? options.taskId.split(',').map(id => id.trim()) : (parseTaskIdsFromBranch(options.branch) || []);
+  if (taskIdsInput.length === 0) {
+    throw new Error('Task ID(s) required. Pass --task-id task-### or --branch task/task-###-slug.');
   }
 
-  const sourcePath = findTaskFilePath(taskId, tasksDir);
-  const { frontmatter, body } = readMarkdownWithFrontmatter(sourcePath);
-  const nextFrontmatter = transitionFrontmatter(frontmatter, options.to);
-  const destinationDir = path.join(tasksDir, options.to);
-  const destinationPath = path.join(destinationDir, path.basename(sourcePath));
+  for (const taskId of taskIdsInput) {
+    console.log(`- Syncing status for ${taskId}...`);
+    try {
+        const sourcePath = findTaskFilePath(taskId, tasksDir);
+        const { frontmatter, body } = readMarkdownWithFrontmatter(sourcePath);
+        const nextFrontmatter = transitionFrontmatter(frontmatter, options.to);
+        const destinationDir = path.join(tasksDir, options.to);
+        const destinationPath = path.join(destinationDir, path.basename(sourcePath));
 
-  ensureDir(destinationDir);
+        ensureDir(destinationDir);
 
-  if (path.resolve(sourcePath) === path.resolve(destinationPath)) {
-    writeMarkdownWithFrontmatter(sourcePath, nextFrontmatter, body, TASK_KEY_ORDER);
-    console.log(`Updated ${sourcePath.replace(/\\/g, '/')} -> status=${options.to}`);
-    return;
+        if (path.resolve(sourcePath) === path.resolve(destinationPath)) {
+            writeMarkdownWithFrontmatter(sourcePath, nextFrontmatter, body, TASK_KEY_ORDER);
+            console.log(`  Updated ${sourcePath.replace(/\\/g, '/')} -> status=${options.to}`);
+            continue;
+        }
+
+        if (fs.existsSync(destinationPath)) {
+            console.warn(`  Destination task file already exists: ${destinationPath}. Skipping move.`);
+            continue;
+        }
+
+        writeMarkdownWithFrontmatter(sourcePath, nextFrontmatter, body, TASK_KEY_ORDER);
+        fs.renameSync(sourcePath, destinationPath);
+        console.log(`  Moved ${sourcePath.replace(/\\/g, '/')} -> ${destinationPath.replace(/\\/g, '/')} (status=${options.to})`);
+    } catch (err) {
+        console.error(`  Error syncing ${taskId}: ${err.message}`);
+        // We might want to continue for other tasks?
+    }
   }
-
-  if (fs.existsSync(destinationPath)) {
-    throw new Error(`Destination task file already exists: ${destinationPath}`);
-  }
-
-  writeMarkdownWithFrontmatter(sourcePath, nextFrontmatter, body, TASK_KEY_ORDER);
-  fs.renameSync(sourcePath, destinationPath);
-  console.log(`Moved ${sourcePath.replace(/\\/g, '/')} -> ${destinationPath.replace(/\\/g, '/')} (status=${options.to})`);
 }
 
 try {

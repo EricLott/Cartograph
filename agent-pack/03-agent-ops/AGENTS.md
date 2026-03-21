@@ -135,18 +135,17 @@ Execution rules:
 8. Move task to `pull_requested` when PR is submitted, then `completed` after PR approval.
 9. Release claim (`claim_status: released`, `claim_expires_at: null`) when task is `completed`.
 
-### Single-Task PR Boundary
-- One PR must map to exactly one primary task ID.
-- Do not modify other backlog item files (`task-*`, `bug-*`, `spike-*`, `feature-*`, `epic-*`) outside the selected primary item.
+### Task PR Boundary
+- A single PR may address one or more primary task IDs.
+- All primary task IDs in the PR must be included in the branch name and PR title.
+- Do not modify other backlog item files (`task-*`, `bug-*`, etc.) outside the selected primary item(s).
 - Do not update claim/status metadata or move status folders for any non-primary backlog item in the same PR.
-- If state logs are updated (`progress`, `blockers`, `decisions`), entries must reference the same primary task ID.
-- PR title must include the same task ID as the branch and task file.
+- If state logs are updated (`progress`, `blockers`, `decisions`), entries must reference at least one of the primary task IDs.
 - Run local preflight validation before opening PR:
   - `node scripts/cartograph-closeout.mjs`
   - Manual validation:
     - `node scripts/check-manifest-path-usage.mjs`
     - `node scripts/validate-task-pr.mjs --self-check --task-id task-###`
-  - Optional strict path mode:
     - `node scripts/validate-task-pr.mjs --self-check --task-id task-### --strict-task-paths`
 
 ## Source-of-Truth Precedence
@@ -207,7 +206,7 @@ State log entry schemas:
 - Decision: `decision_id`, `context`, `options`, `chosen_option`, `rationale`, `date`
 
 State log reference rule:
-- Added lines must reference the primary task ID.
+- Added lines must reference at least one of the primary task IDs.
 - References to additional task IDs are allowed only inside a dedicated `related_items:` line.
 
 ## Validation and Definition of Done Gates

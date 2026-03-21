@@ -62,11 +62,11 @@ Before opening a PR, use the closeout script to run:
 - Optional strict task-path enforcement:
   - `node scripts/validate-task-pr.mjs --self-check --task-id task-### --strict-task-paths`
 
-PR enforcement is strict:
-- one primary task per PR
-- branch, PR title, and PR template must link the same task ID
+PR enforcement is flexible:
+- one or more primary tasks per PR
+- branch, PR title, and PR template must link the same task ID(s)
 - unrelated backlog item file changes are rejected
-- status-folder moves and claim/status metadata updates are allowed only for that same primary task ID
+- status-folder moves and claim/status metadata updates are allowed only for the linked task IDs
 
 ## First Read
 Before coding, read in order:
