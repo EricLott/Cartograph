@@ -2,21 +2,22 @@
 id: task-028
 title: Implement blueprint integrity validator suite
 type: task
-status: todo
+status: in_progress
 priority: P0
-owner: quality
-claim_owner: null
-claim_status: released
-claim_expires_at: null
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-22T18:17:30.345Z"
 sla_due_at: "2026-04-10T23:59:00Z"
 depends_on:
   - task-014
 acceptance_criteria:
   - Export is blocked if critical pillars (Frontend/Backend/Data) are missing or empty.
-  - Validator checks for "pending decisions" and warns user before export.
-  - Validator outputs a structured report of "missing metadata" (descriptions, context).
-last_updated: 2026-03-20
+  - "Validator checks for \"pending decisions\" and warns user before export."
+  - "Validator outputs a structured report of \"missing metadata\" (descriptions, context)."
+last_updated: 2026-03-21
 ---
+
 
 # Task: Implement blueprint integrity validator suite
 
