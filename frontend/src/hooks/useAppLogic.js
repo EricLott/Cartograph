@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { validateBlueprint } from '../services/validationService';
 import { useChatLogic } from './useChatLogic';
 import { usePillarLogic } from './usePillarLogic';
 import { useProjectManagement } from './useProjectManagement';
@@ -13,7 +14,6 @@ export function useAppLogic() {
   const [isWaiting, setIsWaiting] = useState(false);
   const [pillars, setPillars] = useState([]);
   const [activePillarId, setActivePillarId] = useState(null);
-  const [agentFeedback, setAgentFeedback] = useState([]);
   const [projectId, setProjectId] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
@@ -31,13 +31,13 @@ export function useAppLogic() {
   // 2. Logic Containers
   const setters = {
     setMessages, setIsWaiting, setPillars, setActivePillarId,
-    setAgentFeedback, setProjectId, setErrorMessage, setIsProjectsOpen,
+    setProjectId, setErrorMessage, setIsProjectsOpen,
     setViewMode, setIsSettingsOpen, setLlmConfig
   };
 
   const state = {
     messages, isWaiting, pillars, activePillarId,
-    agentFeedback, projectId, errorMessage, isProjectsOpen,
+    projectId, errorMessage, isProjectsOpen,
     viewMode, isSettingsOpen, llmConfig
   };
 
@@ -45,12 +45,31 @@ export function useAppLogic() {
   const { handleSendMessage } = useChatLogic(state, setters);
   const { handleUpdateDecision } = usePillarLogic(state, setters);
 
-  const handleExport = async () => {
+  // 3. Proactive Validation (Derived observations)
+  const agentFeedback = useMemo(() => {
+    if (pillars.length === 0) return [];
+    const validation = validateBlueprint({ pillars });
+    return [...validation.errors, ...validation.warnings];
+  }, [pillars]);
+
+  const handleExport = async (force = false) => {
     setErrorMessage(null);
     try {
-      await generateBlueprintZip(pillars, { projectId, version: '0.1.0' });
+      await generateBlueprintZip(pillars, { projectId, version: '0.1.0' }, force);
     } catch (err) {
-      setErrorMessage("Failed to generate export package: " + err.message);
+      if (err.isWarning) {
+        // Show the warning as a confirm dialog
+        if (window.confirm(err.message)) {
+          // Retry with force
+          try {
+            await generateBlueprintZip(pillars, { projectId, version: '0.1.0' }, true);
+          } catch (retryErr) {
+            setErrorMessage(retryErr.message);
+          }
+        }
+      } else {
+        setErrorMessage(err.message);
+      }
     }
   };
 
@@ -58,6 +77,7 @@ export function useAppLogic() {
 
   return {
     ...state,
+    agentFeedback,
     setActivePillarId, setErrorMessage, setIsProjectsOpen,
     setViewMode, setIsSettingsOpen, setLlmConfig,
     handleNewProject, handleSelectProject,

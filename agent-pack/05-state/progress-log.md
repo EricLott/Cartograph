@@ -40,6 +40,12 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T14:45:00-05:00 | `task-028` | `done` | Implemented Blueprint Integrity Validator Suite. Added `validationService.js` with rules for critical pillars (Frontend/Backend/Data), minimum description lengths, and unresolved decisions. Integrated validation into the export flow and added proactive UI feedback in the "Agent Observations" panel.
+  - Evidence:
+    - `frontend/src/services/validationService.js`
+    - `frontend/src/test/validationService.test.js`
+    - `frontend/src/hooks/useAppLogic.js`
+  - Next step: Finalize CI integration for blueprint validation.
 - 2026-03-21T13:45:00-05:00 | `task-026` | `done` | Refactored project state persistence to use an atomic upsert strategy. Replaced destructive `destroy` logic with a record synchronization loop that preserves existing Pillar and Decision IDs and their `createdAt` timestamps.
   - Evidence:
     - Updated `backend/services/projectService.js` (upsert + cleanup logic)

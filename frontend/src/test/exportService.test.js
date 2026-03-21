@@ -17,51 +17,46 @@ vi.mock('file-saver', () => ({
 
 describe('exportService', () => {
     describe('checkAllAnswered', () => {
-        it('returns true if all decisions have answers', () => {
-            const _pillars = [
-                {
-                    title: 'Pillar 1',
-                    decisions: [{ question: 'Q1', answer: 'A1' }],
-                    subcategories: [
-                        {
-                            title: 'Sub 1',
-                            decisions: [{ question: 'Q2', answer: 'A2' }]
-                        }
-                    ]
-                }
+        it('returns true if all decisions have answers and all critical pillars are present', () => {
+            const pillars = [
+                { title: 'Frontend', description: 'At least ten words in this description for the pillar.', decisions: [{ question: 'Q1', answer: 'A1' }] },
+                { title: 'Backend', description: 'At least ten words in this description for the pillar.', decisions: [{ question: 'Q2', answer: 'A2' }] },
+                { title: 'Data', description: 'At least ten words in this description for the pillar.' }
             ];
-            expect(checkAllAnswered()).toBe(true);
+            expect(checkAllAnswered(pillars)).toBe(true);
         });
 
-        it('returns true even if some decisions are missing an answer', () => {
-            const _pillars = [
-                {
-                    title: 'Pillar 1',
-                    decisions: [{ question: 'Q1', answer: '' }]
-                }
+        it('returns false if decisions are missing an answer (default quality check)', () => {
+            const pillars = [
+                { title: 'Frontend', description: 'At least ten words in this description for the pillar.', decisions: [{ question: 'Q1', answer: '' }] },
+                { title: 'Backend', description: 'At least ten words in this description for the pillar.' },
+                { title: 'Data', description: 'At least ten words in this description for the pillar.' }
             ];
-            expect(checkAllAnswered()).toBe(true);
+            expect(checkAllAnswered(pillars)).toBe(false);
         });
 
-        it('returns true even if a subcategory decision is missing an answer', () => {
-            const _pillars = [
-                {
-                    title: 'Pillar 1',
-                    decisions: [{ question: 'Q1', answer: 'A1' }],
+        it('returns false if a subcategory decision is missing an answer', () => {
+            const pillars = [
+                { title: 'Frontend', description: 'At least ten words in this description for the pillar.' },
+                { title: 'Backend', description: 'At least ten words in this description for the pillar.' },
+                { 
+                    title: 'Data', 
+                    description: 'At least ten words in this description for the pillar.',
                     subcategories: [
                         {
-                            title: 'Sub 1',
+                            title: 'Storage',
+                            description: 'At least ten words in this description for the subcategory.',
                             decisions: [{ question: 'Q2', answer: null }]
                         }
                     ]
                 }
             ];
-            expect(checkAllAnswered()).toBe(true);
+            expect(checkAllAnswered(pillars)).toBe(false);
         });
 
-        it('returns true if no decisions exist', () => {
-            const _pillars = [{ title: 'Pillar 1' }];
-            expect(checkAllAnswered()).toBe(true);
+        it('returns false if critical pillars are missing', () => {
+            const pillars = [{ title: 'Only One Pillar', description: 'Valid description with more than ten words in it.' }];
+            expect(checkAllAnswered(pillars)).toBe(false);
         });
     });
 
@@ -71,24 +66,20 @@ describe('exportService', () => {
             await expect(generateBlueprintZip(null)).rejects.toThrow("Cannot export blueprint. No architecture pillars defined. Describe your application idea first.");
         });
 
-        it('generates zip even if some decisions are unanswered', async () => {
+        it('generates zip with warnings if forced', async () => {
             const pillars = [
-                {
-                    title: 'Pillar 1',
-                    description: 'Desc 1',
-                    decisions: [{ question: 'Q1', answer: '' }]
-                }
+                { title: 'Frontend', description: 'Desc', decisions: [{ question: 'Q1', answer: '' }] },
+                { title: 'Backend', description: 'Desc' },
+                { title: 'Data', description: 'Desc' }
             ];
-            await expect(generateBlueprintZip(pillars)).resolves.not.toThrow();
+            await expect(generateBlueprintZip(pillars, {}, true)).resolves.not.toThrow();
         });
 
         it('generates zip successfully when all criteria are met', async () => {
             const pillars = [
-                {
-                    title: 'Pillar 1',
-                    description: 'Desc 1',
-                    decisions: [{ question: 'Q1', answer: 'A1' }]
-                }
+                { title: 'Frontend', description: 'At least ten words in this description for the pillar.' },
+                { title: 'Backend', description: 'At least ten words in this description for the pillar.' },
+                { title: 'Data', description: 'At least ten words in this description for the pillar.' }
             ];
             await generateBlueprintZip(pillars);
             
@@ -99,15 +90,17 @@ describe('exportService', () => {
 
         it('generates zip with correct dependencies for nested pillars', async () => {
             const pillars = [
+                { id: 'f1', title: 'Frontend', description: 'At least ten words in this description for the pillar.' },
+                { id: 'b1', title: 'Backend', description: 'At least ten words in this description for the pillar.' },
                 {
                     id: 'p1',
-                    title: 'Parent Pillar',
-                    description: 'Parent Desc',
+                    title: 'Data Layer',
+                    description: 'Data layer description with at least ten words in it.',
                     subcategories: [
                         {
                             id: 's1',
-                            title: 'Child Pillar',
-                            description: 'Child Desc'
+                            title: 'PostgreSQL',
+                            description: 'Database description with at least ten words in it now.'
                         }
                     ]
                 }
@@ -121,59 +114,59 @@ describe('exportService', () => {
             // Get the instance created by generateBlueprintZip
             const mockZipInstance = vi.mocked(JSZip).mock.results[vi.mocked(JSZip).mock.results.length - 1].value;
 
-            // Verify task-001 has AC and Evidence sections
+            // Verify task-003 (Data Layer) has AC and Evidence sections
             expect(mockZipInstance.file).toHaveBeenCalledWith(
-                'task-001-parent-pillar.md',
+                'task-003-data-layer.md',
                 expect.stringContaining('## Acceptance Criteria')
             );
             expect(mockZipInstance.file).toHaveBeenCalledWith(
-                'task-001-parent-pillar.md',
+                'task-003-data-layer.md',
                 expect.stringContaining('## Evidence Required')
             );
 
-            // Verify task-002 (Child) depends on task-001 and has AC
+            // Verify task-004 (Child) depends on task-003 (Data Layer) and has AC
             expect(mockZipInstance.file).toHaveBeenCalledWith(
-                'task-002-child-pillar.md',
-                expect.stringContaining('depends_on: ["task-001"]')
+                'task-004-postgresql.md',
+                expect.stringContaining('depends_on: ["task-003"]')
             );
             expect(mockZipInstance.file).toHaveBeenCalledWith(
-                'task-002-child-pillar.md',
+                'task-004-postgresql.md',
                 expect.stringContaining('## Acceptance Criteria')
             );
 
             // Verify dependency-map.md contains the edge
             expect(mockZipInstance.file).toHaveBeenCalledWith(
                 'dependency-map.md',
-                expect.stringContaining('- task-002 depends on task-001')
+                expect.stringContaining('- task-004 depends on task-003')
             );
         });
 
-        it('tags unanswered decisions as blockers in markdown', async () => {
+        it('tags unanswered decisions as blockers in markdown (forced export)', async () => {
             const pillars = [
+                { title: 'Frontend', description: 'At least ten words in this description for the pillar.' },
+                { title: 'Backend', description: 'At least ten words in this description for the pillar.' },
                 {
-                    title: 'Pillar 1',
-                    description: 'Desc 1',
+                    title: 'Data',
+                    description: 'At least ten words in this description for the pillar.',
                     decisions: [{ question: 'Q1', answer: 'Pending Resolution' }]
                 }
             ];
 
             const JSZip = (await import('jszip')).default;
-            await generateBlueprintZip(pillars);
+            await generateBlueprintZip(pillars, {}, true);
             const mockZipInstance = vi.mocked(JSZip).mock.results[vi.mocked(JSZip).mock.results.length - 1].value;
 
             expect(mockZipInstance.file).toHaveBeenCalledWith(
-                'task-001-pillar-1.md',
+                'task-003-data.md',
                 expect.stringContaining('- [BLOCKER] Resolve decision for question: **Q1** before final implementation.')
             );
         });
 
         it('seeds progress-log.md with initial architecture entry', async () => {
             const pillars = [
-                {
-                    title: 'Pillar 1',
-                    description: 'Desc 1',
-                    decisions: [{ question: 'Q1', answer: 'A1' }]
-                }
+                { title: 'Frontend', description: 'At least ten words in this description for the pillar.' },
+                { title: 'Backend', description: 'At least ten words in this description for the pillar.' },
+                { title: 'Data', description: 'At least ten words in this description for the pillar.' }
             ];
 
             const JSZip = (await import('jszip')).default;

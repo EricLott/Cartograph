@@ -4,7 +4,7 @@ import { updateNodeDecisions } from '../utils/treeUtils';
 
 export function useChatLogic(state, setters) {
   const { messages, pillars, projectId, llmConfig } = state;
-  const { setMessages, setPillars, setIsWaiting, setProjectId, setErrorMessage, setAgentFeedback } = setters;
+  const { setMessages, setPillars, setIsWaiting, setProjectId, setErrorMessage } = setters;
 
   const handleSendMessage = async (content) => {
     setErrorMessage(null);
@@ -70,7 +70,6 @@ export function useChatLogic(state, setters) {
     }
     setPillars(nextPillars);
     setMessages([...newMessages, { role: 'agent', content: result.reply }]);
-    setAgentFeedback(result.conflicts?.map(c => `Conflict: ${c.description}`) || []);
 
     const ideaMsg = newMessages.find(m => m.role === 'user');
     if (ideaMsg) {

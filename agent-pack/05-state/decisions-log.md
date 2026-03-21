@@ -38,6 +38,12 @@ status: active
 ```
 
 ## Active Decisions
+- `dec-007` (2026-03-21): Implement multi-tiered blueprint integrity validation.
+  - Options considered: strict "all-pass" export vs multi-tiered error/warning system.
+  - Chosen: multi-tiered system.
+  - Rationale: Ensures baseline "agent-ready" quality (blocking on missing critical pillars) while allowing "draft" exports with quality warnings (short descriptions, pending decisions). This balances safety with developer flexibility.
+  - Linked items: `task-028`.
+
 - `dec-006` (2026-03-21): Implement ID-based upsert synchronization for Pillar and Decision persistence.
   - Options considered: complete reconstruction (destroy/recreate) vs ID-based synchronization.
   - Chosen: ID-based synchronization.
