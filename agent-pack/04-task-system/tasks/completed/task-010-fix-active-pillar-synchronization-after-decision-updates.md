@@ -2,12 +2,12 @@
 id: task-010
 title: Fix active pillar synchronization after decision updates
 type: task
-status: pull_requested
+status: completed
 priority: P2
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-22T14:12:07.183Z"
+claim_status: released
+claim_expires_at: null
 sla_due_at: "2026-04-12T23:59:00Z"
 depends_on:
   - task-006
