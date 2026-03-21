@@ -40,6 +40,16 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T14:01:36-05:00 | `task-029` | `done` | Populate full 00-07 directory structure in export
+  - Evidence:
+    - `frontend/src/services/exportService.js`
+    - `frontend/src/test/exportService.test.js`
+  - Next step: Open Pull Request for review.
+- 2026-03-22T14:00:00-05:00 | task-029 | in_progress | Expanded exportService to generate full 00-07 directory structure. Added templates for AGENTS.md, DefinitionOfDone.md, and refined pillar-to-document mapping in 01-architecture. Renamed 06-research to 06-quality.
+  - Evidence:
+    - frontend/src/services/exportService.js
+    - frontend/src/test/exportService.test.js
+  - Next step: Finalize validation and close out task.
 - 2026-03-21T14:45:00-05:00 | `task-028` | `done` | Implemented Blueprint Integrity Validator Suite. Added `validationService.js` with rules for critical pillars (Frontend/Backend/Data), minimum description lengths, and unresolved decisions. Integrated validation into the export flow and added proactive UI feedback in the "Agent Observations" panel.
   - Evidence:
     - `frontend/src/services/validationService.js`

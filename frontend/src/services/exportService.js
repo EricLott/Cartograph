@@ -46,23 +46,61 @@ export const generateBlueprintZip = async (pillars, metadata = {}, force = false
 
     // 1. 00-context
     const context = root.folder("00-context");
-    const visionContent = `# Vision\n\n## Purpose\nDefine the strategic contract for the application so all architecture and execution artifacts remain aligned.\n\n## Application Idea\n${pillars.map(p => p.title).join(', ')} focused application.\n\n## Core Promise\nDeliver a high-quality implementation of the architectural pillars defined below.`;
+    const visionContent = `# Cartograph Vision: ${metadata.projectId || 'Unnamed Project'}
+
+## Purpose
+Define the strategic contract for the application so all architecture and execution artifacts remain aligned to a clear product mission.
+
+## Application Idea
+${pillars.map(p => p.title).join(', ')} focused application.
+
+## Core Promise
+From idea to agent-ready blueprint. This pack converts architecture intent into a durable, machine-consumable mission pack with dependency-aware task decomposition.
+
+## Target User
+Autonomous coding-agent operators and implementation teams.
+`;
     context.file("vision.md", visionContent);
-    context.file("business-goals.md", "# Business Goals\n\n- TBD: Define key business objectives.");
-    context.file("constraints.md", "# Constraints\n\n- TBD: Define technical or business constraints.");
-    context.file("assumptions.md", "# Assumptions\n\n- TBD: Record execution assumptions.");
+    context.file("business-goals.md", "# Business Goals\n\n- TBD: Define key business objectives for this project.");
+    context.file("constraints.md", "# Constraints\n\n- TBD: Define technical, temporal, or budgetary constraints.");
+    context.file("assumptions.md", "# Assumptions\n\n- TBD: Record execution assumptions and known unknowns.");
 
     // 2. 01-architecture
     const arch = root.folder("01-architecture");
-    let archSummary = "# Architecture Summary\n\n## Pillars\n";
+    let archSummary = "# Architecture Overview\n\n## Vision Alignment\nThis architecture is designed to fulfill the vision defined in `../00-context/vision.md`.\n\n## Pillars\n";
     pillars.forEach(p => {
-        archSummary += `### ${p.title}\n${p.description}\n\n`;
+        archSummary += `- [${p.title}](./${p.title.replace(/\s+/g, '-').toLowerCase()}.md)\n`;
+        
+        let pillarMd = `# Pillar: ${p.title}\n\n## Goal\n${p.description}\n\n`;
+        if (p.decisions && p.decisions.length > 0) {
+            pillarMd += `## Core Decisions\n\n`;
+            p.decisions.forEach(d => {
+                pillarMd += `### ${d.question}\n- **Answer**: ${d.answer || 'Pending Resolution'}\n- **Rationale**: TBD\n\n`;
+            });
+        }
+        arch.file(`${p.title.replace(/\s+/g, '-').toLowerCase()}.md`, pillarMd);
     });
-    arch.file("architecture-summary.md", archSummary);
+    arch.file("README.md", archSummary);
 
     // 3. 02-execution
     const exec = root.folder("02-execution");
-    exec.file("implementation-strategy.md", "# Implementation Strategy\n\n## Sequencing\n1. Foundation and Core Services\n2. Integration and API hardening\n3. Feature rollout\n4. Quality and CI Enforcement");
+    const strategyMd = `# Implementation Strategy
+
+## Purpose
+Translate architectural intent into an execution path that autonomous contributors can follow with low ambiguity.
+
+## Execution Principles
+1. Foundation and Core Services first.
+2. Integration and API hardening.
+3. Feature rollout.
+4. Quality and CI Enforcement.
+
+## Sequencing Heuristics
+- Fix blocking quality issues to unlock iteration.
+- Harden persistence before building complex state logic.
+- Validate every step with evidence-backed progress logging.
+`;
+    exec.file("implementation-strategy.md", strategyMd);
 
     // Workstreams summary
     let workstreamMd = "# Workstreams\n\n## Overview\nMajor architecture areas defined for this project.\n\n";
@@ -137,21 +175,34 @@ export const generateBlueprintZip = async (pillars, metadata = {}, force = false
 
     // 4. 03-agent-ops
     const ops = root.folder("03-agent-ops");
-    ops.file("AGENTS.md", "# AGENTS Operating Contract\n\nStandard operating procedures for autonomous contributors. Follow the Cartograph canonical workflow.");
+    const agentsMd = `# AGENTS Operating Contract
+
+## Mission
+Execute tasks in priority order as defined in \`../04-task-system\`.
+
+## Canonical Loop
+1. **Read**: Load \`vision.md\` and \`AGENTS.md\`.
+2. **Claim**: Identify and claim the next eligible task (no un-met dependencies).
+3. **Execute**: Implement requirements defined in task acceptance criteria.
+4. **Log**: Record progress in \`../05-state/progress-log.md\`.
+5. **Close**: Update task status to \`completed\`.
+
+## Rules
+- Never skip dependencies.
+- Never hardcode environmental secrets.
+- Always provide evidence for completed work.
+`;
+    ops.file("AGENTS.md", agentsMd);
     
     // SECURITY.md template
     const securityMd = `# Security Policy
 
 ## Reporting a Vulnerability
-
-Security is a first-class concern for Cartograph-generated blueprints. 
-If you discover a security vulnerability in this implementation, please report it via the project owner's established security channel.
+If you discover a security vulnerability, please report it via the project owner's established security channel.
 
 ## Guardrails
-
-- All agent contributions must undergo security review.
 - Secrets must never be committed to the repository.
-- Use a secrets management service for all environment-specific sensitive data.
+- All agent contributions must undergo review.
 - Ensure dependency scanning is enabled.
 `;
     ops.file("SECURITY.md", securityMd);
@@ -191,10 +242,33 @@ last_updated: ${manifest.exportTime.slice(0, 10)}
   - Next step: Begin implementation of prioritized tasks in the 04-task-system/tasks/todo/ folder.
 `;
     state.file("progress-log.md", progressLogContent);
+    state.file("blockers.md", "# Blockers\n\nNo active blockers.");
+    state.file("decisions-log.md", "# Decisions Log\n\nRecord key architectural or execution decisions here.");
+    state.file("change-log.md", "# Change Log\n\nTrack deviations from the original blueprint.");
+    state.file("open-questions.md", "# Open Questions\n\nList unresolved ambiguities for human review.");
 
-    // 7. 06-research & 07-artifacts
-    root.folder("06-research");
-    root.folder("07-artifacts");
+    // 7. 06-quality
+    const quality = root.folder("06-quality");
+    const dodMd = `# Definition of Done
+
+## Task-Level Done Criteria
+A task is \`completed\` only when:
+1. Acceptance criteria in the task file are satisfied.
+2. Required commands/validation for scope passes.
+3. Evidence recorded in \`../05-state/progress-log.md\`.
+4. No unresolved blocker remains linked to task ID.
+
+## Evidence Requirements
+- Code changes reviewed.
+- Test/Command output summaries provided.
+- Verification notes linked to the task.
+`;
+    quality.file("DefinitionOfDone.md", dodMd);
+    quality.file("README.md", "# Quality Gates\n\nContains the Definition of Done and testing strategy for the project.");
+
+    // 8. 07-artifacts
+    const artifacts = root.folder("07-artifacts");
+    artifacts.file("README.md", "# Artifacts\n\nStorage for diagrams, mockups, and other supporting materials.");
 
     // FINAL AUDIT: Ensure no sensitive data from localStorage or environment is captured.
     // The export strictly uses provided 'pillars' and 'metadata' arguments.

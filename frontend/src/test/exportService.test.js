@@ -162,6 +162,36 @@ describe('exportService', () => {
             );
         });
 
+        it('generates the full 00-07 directory structure with core artifacts', async () => {
+            const pillars = [
+                { title: 'Frontend', description: 'At least ten words in this description for the pillar.' },
+                { title: 'Backend', description: 'At least ten words in this description for the pillar.' },
+                { title: 'Data', description: 'At least ten words in this description for the pillar.' }
+            ];
+
+            const JSZip = (await import('jszip')).default;
+            await generateBlueprintZip(pillars);
+            const mockZipInstance = vi.mocked(JSZip).mock.results[vi.mocked(JSZip).mock.results.length - 1].value;
+
+            // Folders
+            expect(mockZipInstance.folder).toHaveBeenCalledWith('00-context');
+            expect(mockZipInstance.folder).toHaveBeenCalledWith('01-architecture');
+            expect(mockZipInstance.folder).toHaveBeenCalledWith('02-execution');
+            expect(mockZipInstance.folder).toHaveBeenCalledWith('03-agent-ops');
+            expect(mockZipInstance.folder).toHaveBeenCalledWith('04-task-system');
+            expect(mockZipInstance.folder).toHaveBeenCalledWith('05-state');
+            expect(mockZipInstance.folder).toHaveBeenCalledWith('06-quality');
+            expect(mockZipInstance.folder).toHaveBeenCalledWith('07-artifacts');
+
+            // Core Files
+            expect(mockZipInstance.file).toHaveBeenCalledWith('vision.md', expect.stringContaining('# Cartograph Vision'));
+            expect(mockZipInstance.file).toHaveBeenCalledWith('AGENTS.md', expect.stringContaining('# AGENTS Operating Contract'));
+            expect(mockZipInstance.file).toHaveBeenCalledWith('DefinitionOfDone.md', expect.stringContaining('# Definition of Done'));
+            expect(mockZipInstance.file).toHaveBeenCalledWith('README.md', expect.stringContaining('# Artifacts'));
+            expect(mockZipInstance.file).toHaveBeenCalledWith('README.md', expect.stringContaining('# Architecture Overview'));
+            expect(mockZipInstance.file).toHaveBeenCalledWith('blockers.md', expect.stringContaining('# Blockers'));
+        });
+
         it('seeds progress-log.md with initial architecture entry', async () => {
             const pillars = [
                 { title: 'Frontend', description: 'At least ten words in this description for the pillar.' },
