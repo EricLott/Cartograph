@@ -8,6 +8,8 @@ import ProjectsPanel from './components/ProjectsPanel';
 import { generatePillarsFromIdea, processChatTurn, generateCategoriesForPillar } from './services/agentService';
 import { generateBlueprintZip } from './services/exportService';
 import { saveStateToBackend, fetchLatestProject, fetchProjectById } from './services/apiService';
+import DependencyGraph from './components/DependencyGraph';
+import { VscFileSubmodule, VscGraph } from 'react-icons/vsc';
 
 function App() {
   const [messages, setMessages] = useState([
@@ -20,6 +22,7 @@ function App() {
   const [projectId, setProjectId] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('pillar'); // 'pillar' | 'graph'
 
   useEffect(() => {
     async function hydrate() {
@@ -268,6 +271,24 @@ function App() {
 
       <main className="main-workspace">
         <header className="workspace-header glass-panel">
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button 
+              className={`btn-secondary ${viewMode === 'pillar' ? 'active' : ''}`}
+              style={{ padding: '0.25rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem', borderColor: viewMode === 'pillar' ? '#3b82f6' : 'rgba(255,255,255,0.1)' }}
+              onClick={() => setViewMode('pillar')}
+              title="Pillar Details"
+            >
+              <VscFileSubmodule /> Details
+            </button>
+            <button 
+              className={`btn-secondary ${viewMode === 'graph' ? 'active' : ''}`}
+              style={{ padding: '0.25rem 0.5rem', display: 'flex', alignItems: 'center', gap: '0.25rem', borderColor: viewMode === 'graph' ? '#10b981' : 'rgba(255,255,255,0.1)' }}
+              onClick={() => setViewMode('graph')}
+              title="Dependency Graph"
+            >
+              <VscGraph /> Graph
+            </button>
+          </div>
           <h3>Architecture Blueprint</h3>
           <button
             className="btn-primary"
@@ -299,7 +320,9 @@ function App() {
 
         <div className="workspace-content" style={{ display: 'flex', gap: '1rem', height: 'calc(100vh - 120px)' }}>
           <div className="pillar-details-pane" style={{ flex: 1, overflowY: 'auto' }}>
-            {activePillar ? (
+            {viewMode === 'graph' ? (
+              <DependencyGraph pillars={pillars} />
+            ) : activePillar ? (
               <PillarWorkspace
                 pillar={activePillar}
                 onUpdateDecision={handleUpdateDecision}

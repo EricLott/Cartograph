@@ -34,6 +34,7 @@ function parseArgs(argv) {
         createPr: false,
         evidence: [],
         nonInteractive: false,
+        peek: false,
     };
 
     for (let i = 0; i < argv.length; i += 1) {
@@ -57,6 +58,8 @@ function parseArgs(argv) {
             options.createPr = true;
         } else if (arg === '--non-interactive') {
             options.nonInteractive = true;
+        } else if (arg === '--peek') {
+            options.peek = true;
         } else if (arg === '--help' || arg === '-h') {
             options.help = true;
         } else {
@@ -187,6 +190,65 @@ function createDefaultSummary(taskId, evidence) {
     return `Prepared ${taskId} closeout updates touching ${topFiles.join(', ')}${suffix}.`;
 }
 
+function peekFileEvidence(file, baseBranch, rootDir) {
+    if (!fs.existsSync(path.join(rootDir, file))) return null;
+    
+    // Check if it's a file (not directory)
+    if (!fs.statSync(path.join(rootDir, file)).isFile()) return null;
+
+    const diff = runGit(['diff', '--unified=0', `origin/${baseBranch}...HEAD`, '--', file], { allowFailure: true });
+    if (diff.status !== 0) return null;
+
+    const lines = diff.stdout.split('\n');
+    const addedLines = lines.filter(l => l.startsWith('+') && !l.startsWith('+++'));
+
+    const lowerFile = file.toLowerCase();
+    
+    // Heuristic for JS/JSX
+    if (lowerFile.endsWith('.js') || lowerFile.endsWith('.jsx') || lowerFile.endsWith('.mjs')) {
+        const exported = addedLines
+            .map(l => l.match(/(?:export\s+(?:const|async\s+function|function|class)\s+)(\w+)/))
+            .filter(Boolean)
+            .map(m => m[1]);
+        
+        if (exported.length > 0) return `exported ${exported.join(', ')}`;
+        
+        const internal = addedLines
+            .map(l => l.match(/(?:const|function|class)\s+(\w+)\s*=\s*(?:async\s*)?\(|function\s+(\w+)/))
+            .filter(Boolean)
+            .map(m => m[1] || m[2])
+            .filter(name => !name.startsWith('_'));
+            
+        if (internal.length > 0) return `modified ${internal.join(', ')}`;
+    }
+
+    // Heuristic for Markdown
+    if (lowerFile.endsWith('.md')) {
+        const headers = addedLines
+            .map(l => l.match(/^#+\s+(.*)/))
+            .filter(Boolean)
+            .map(m => m[1].trim());
+        
+        if (headers.length > 0) return `updated sections: ${headers.join(', ')}`;
+    }
+
+    return null;
+}
+
+function generateHeuristicSummary(taskId, evidence, baseBranch, rootDir) {
+    const peeks = evidence
+        .map(f => {
+            const peek = peekFileEvidence(f, baseBranch, rootDir);
+            return peek ? `${path.basename(f)} (${peek})` : null;
+        })
+        .filter(Boolean);
+
+    if (peeks.length === 0) return createDefaultSummary(taskId, evidence);
+    
+    const summary = peeks.join('; ');
+    return `Task ${taskId} changes: ${summary.length > 200 ? summary.slice(0, 197) + '...' : summary}`;
+}
+
 async function collectProgressLogInput(taskId, options, suggestedEvidence) {
     let summary = String(options.summary || '').trim();
     let evidence = normalizeListFromArgs(options.evidence);
@@ -229,9 +291,16 @@ async function collectProgressLogInput(taskId, options, suggestedEvidence) {
     }
 
     if (!summary) {
-        summary = createDefaultSummary(taskId, evidence.length > 0 ? evidence : visibleSuggestions);
-        if (!options.nonInteractive) {
-            console.log(`- No summary provided; generated summary: ${summary}`);
+        if (options.peek) {
+            summary = generateHeuristicSummary(taskId, evidence.length > 0 ? evidence : visibleSuggestions, options.base, rootDir);
+            if (!options.nonInteractive) {
+                console.log(`- Peek summary generated: ${summary}`);
+            }
+        } else {
+            summary = createDefaultSummary(taskId, evidence.length > 0 ? evidence : visibleSuggestions);
+            if (!options.nonInteractive) {
+                console.log(`- No summary provided; generated default summary: ${summary}`);
+            }
         }
     }
 
@@ -288,7 +357,10 @@ function appendProgressLogEntry({ rootDir, config, taskId, summary, evidence, ne
 }
 
 function printHelp() {
-    console.log(`cartograph-closeout\n\nUsage:\n  node scripts/cartograph-closeout.mjs [options]\n\nOptions:\n  --task <task-###>           Target task ID (defaults to current branch ID)\n  --base <branch>             Base branch for validation (default: main)\n  --summary "<text>"          Progress-log summary for this closeout (auto-generated in non-interactive mode if omitted)\n  --evidence "<path>"         Evidence item (repeatable or comma-separated)\n  --next-step "<text>"        Optional next-step line for progress log entry\n  --create-pr                 Automate GitHub PR creation using gh CLI\n  --non-interactive           Skip prompts and use generated summaries/suggested evidence\n  --dry-run                   Preview actions without mutating files/git\n  --force                     Skip validation checks\n  --help                      Show this help\n`);
+    console.log(`cartograph-closeout\n\nUsage:\n  node scripts/cartograph-closeout.mjs [options]\n\nOptions:\n  --task <task-###>           Target task ID (defaults to current branch ID)\n  --base <branch>             Base branch for validation (default: main)\n  --summary "<text>"          Progress-log summary for this closeout (auto-generated in non-interactive mode if omitted)
+  --peek                      Optionally "peek" into changed functions to suggest a more descriptive summary
+  --evidence "<path>"         Evidence item (repeatable or comma-separated)
+  --next-step "<text>"        Optional next-step line for progress log entry\n  --create-pr                 Automate GitHub PR creation using gh CLI\n  --non-interactive           Skip prompts and use generated summaries/suggested evidence\n  --dry-run                   Preview actions without mutating files/git\n  --force                     Skip validation checks\n  --help                      Show this help\n`);
 }
 
 function extractSection(body, headingName) {
@@ -561,6 +633,8 @@ async function main() {
         console.log(`3. Push branch and create Pull Request: git push origin ${branch}`);
         console.log(`4. Upon merge to main, a GitHub Action will move tasks to completed/.`);
     }
+
+    console.log(`\n> [REMINDER] If you encountered any new mistake patterns during implementation, log them now in 'agent-pack/03-agent-ops/mistakes-framework.md' to keep our guardrails sharp.`);
 }
 
 main().catch((error) => {

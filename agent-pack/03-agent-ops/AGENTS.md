@@ -56,6 +56,9 @@ Read these files before coding:
 
 Then inspect related modules for your target task scope.
 
+> [!IMPORTANT]
+> **Safety First**: Before coding, read the latest 5 entries in `./mistakes-framework.md` and apply any relevant prevention actions to your current task scope. If your task involves a known failure pattern, explicitly mention the safeguard you are applying in your first progress entry.
+
 Before coding, read the latest 5 entries in `./mistakes-framework.md` and apply any relevant prevention actions.
 
 ### Step 3: Choose Contribution Mode
