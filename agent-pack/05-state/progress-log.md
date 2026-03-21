@@ -40,6 +40,11 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T10:40:00-05:00 | `task-030` | `done` | Fixed eligibility check in `cartograph-contribute.mjs` to include `released` claim status.
+  - Evidence:
+    - Updated `cartograph-contribute.mjs`
+    - Dry-run verification for `task-026`
+  - Next step: Pick up next eligible task.
 - 2026-03-22T14:45:00-05:00 | `task-025` | `done` | Implemented architectural conflict identification and user feedback.
   - Evidence:
     - Updated Models and Services (conflict persistence)
