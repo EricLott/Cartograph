@@ -2,12 +2,12 @@
 id: task-037
 title: Fix Agent Observations notification bloat
 type: task
-status: pull_requested
+status: completed
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-22T21:03:48.355Z"
+claim_status: released
+claim_expires_at: null
 sla_due_at: 2026-03-24
 depends_on: []
 acceptance_criteria:
