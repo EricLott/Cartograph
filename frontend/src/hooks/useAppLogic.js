@@ -19,6 +19,7 @@ export function useAppLogic() {
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
   const [viewMode, setViewMode] = useState('pillar');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [llmConfig, setLlmConfig] = useState(() => {
     const savedKeys = localStorage.getItem('cartograph_keys');
     const savedProvider = localStorage.getItem('cartograph_provider');
@@ -32,13 +33,13 @@ export function useAppLogic() {
   const setters = {
     setMessages, setIsWaiting, setPillars, setActivePillarId,
     setProjectId, setErrorMessage, setIsProjectsOpen,
-    setViewMode, setIsSettingsOpen, setLlmConfig
+    setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig
   };
 
   const state = {
     messages, isWaiting, pillars, activePillarId,
     projectId, errorMessage, isProjectsOpen,
-    viewMode, isSettingsOpen, llmConfig
+    viewMode, isSettingsOpen, isNotificationsOpen, llmConfig
   };
 
   const { handleNewProject, handleSelectProject } = useProjectManagement(state, setters);
@@ -47,9 +48,8 @@ export function useAppLogic() {
 
   // 3. Proactive Validation (Derived observations)
   const agentFeedback = useMemo(() => {
-    if (pillars.length === 0) return [];
-    const validation = validateBlueprint({ pillars });
-    return [...validation.errors, ...validation.warnings];
+    if (pillars.length === 0) return { isValid: true, errors: [], warnings: [], metadataReport: [] };
+    return validateBlueprint({ pillars });
   }, [pillars]);
 
   const handleExport = async (force = false) => {
@@ -79,7 +79,7 @@ export function useAppLogic() {
     ...state,
     agentFeedback,
     setActivePillarId, setErrorMessage, setIsProjectsOpen,
-    setViewMode, setIsSettingsOpen, setLlmConfig,
+    setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig,
     handleNewProject, handleSelectProject,
     handleSendMessage, handleUpdateDecision, handleExport,
     activePillar

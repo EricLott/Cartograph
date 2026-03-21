@@ -34,6 +34,9 @@ impact: What behavior or plan changed.
 ```
 
 ## Recent Changes
+- 2026-03-21 | `chg-008` | UI/UX Improvement: Moved Agent Observations to a dedicated Notification Tray to prevent layout bloat and improve focus on core workspace content.
+  - Linked items: `task-037`
+  - Impact: Improved initial viewport visibility for "Architecture Blueprint" and added contextual filtering of observations by active pillar.
 - 2026-03-19 | `chg-001` | Updated root and agent-pack contributor instructions for claimable tasks and PR-to-task traceability.
 - 2026-03-19 | `chg-002` | Populated `00-context`, `01-architecture`, and `02-execution` docs with concrete Cartograph v1 strategy content.
 - 2026-03-19 | `chg-003` | Added concrete command-driven setup/testing guidance in environment and quality docs.

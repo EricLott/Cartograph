@@ -40,6 +40,13 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T16:45:00-05:00 | `task-037` | `done` | Fixed Agent Observations notification bloat by moving observations to a toggleable Notification Tray. Enhanced `validationService.js` with structured report metadata for pillar-level filtering. Added a notification icon with badge count to the Header.
+  - Evidence:
+    - `frontend/src/services/validationService.js` (added structured reports with `pillarId`)
+    - `frontend/src/hooks/useAppLogic.js` (exposed full validation object and notification state)
+    - `frontend/src/App.jsx` (implemented responsive `NotificationTray` component and Header integration)
+    - `frontend/src/App.css` (added premium glassmorphism styles for the tray and notification badge)
+  - Next step: Run `node scripts/cartograph-closeout.mjs --task task-037`.
 - 2026-03-21T15:58:00-05:00 | `task-033` | `done` | Added LLM token counting and latency logging to backend proxy.
   - Evidence:
     - `backend/services/agentService.js` (latency measurement, usage extraction, standardized metadata)

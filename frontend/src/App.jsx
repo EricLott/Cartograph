@@ -6,7 +6,7 @@ import PillarWorkspace from './components/PillarWorkspace';
 import SettingsModal from './components/SettingsModal';
 import ProjectsPanel from './components/ProjectsPanel';
 import DependencyGraph from './components/DependencyGraph';
-import { VscFileSubmodule, VscGraph } from 'react-icons/vsc';
+import { VscFileSubmodule, VscGraph, VscBell, VscClose, VscChevronDown, VscChevronUp } from 'react-icons/vsc';
 import { useAppLogic } from './hooks/useAppLogic';
 
 function App() {
@@ -27,6 +27,8 @@ function App() {
     setViewMode,
     isSettingsOpen,
     setIsSettingsOpen,
+    isNotificationsOpen,
+    setIsNotificationsOpen,
     setLlmConfig,
     handleNewProject,
     handleSelectProject,
@@ -91,7 +93,17 @@ function App() {
               <VscGraph /> Graph
             </button>
           </div>
-          <h3>Architecture Blueprint</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <h3 style={{ margin: 0 }}>Architecture Blueprint</h3>
+            <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}>
+              <VscBell size={20} style={{ opacity: 0.7 }} />
+              {agentFeedback.metadataReport.length > 0 && (
+                <span className="notification-badge">
+                  {agentFeedback.metadataReport.length}
+                </span>
+              )}
+            </div>
+          </div>
           <button
             className="btn-primary"
             onClick={handleExport}
@@ -111,14 +123,12 @@ function App() {
           </div>
         )}
 
-        {agentFeedback.length > 0 && (
-          <div className="agent-alerts glass-panel" style={{ padding: '1rem', borderLeft: '3px solid #f59e0b', marginBottom: '1rem' }}>
-            <h4 style={{ color: '#f59e0b', marginBottom: '0.5rem' }}>Agent Observations</h4>
-            <ul>
-              {agentFeedback.map((fb, i) => <li key={i}>{fb}</li>)}
-            </ul>
-          </div>
-        )}
+        <NotificationTray 
+          isOpen={isNotificationsOpen} 
+          onClose={() => setIsNotificationsOpen(false)}
+          feedback={agentFeedback}
+          activePillarId={activePillarId}
+        />
 
         <div className="workspace-content" style={{ display: 'flex', gap: '1rem', height: 'calc(100vh - 120px)' }}>
           <div className="pillar-details-pane" style={{ flex: 1, overflowY: 'auto' }}>
@@ -147,6 +157,92 @@ function App() {
         </div>
       </main>
     </div>
+  );
+}
+
+function NotificationTray({ isOpen, onClose, feedback, activePillarId }) {
+  const [isExpanded, setIsExpanded] = React.useState(true);
+
+  const filteredItems = React.useMemo(() => {
+    if (!activePillarId) return feedback.metadataReport;
+    return feedback.metadataReport.filter(item => item.pillarId === activePillarId || item.type === 'global');
+  }, [feedback.metadataReport, activePillarId]);
+
+  const groups = React.useMemo(() => {
+    const g = { errors: [], warnings: [], info: [] };
+    filteredItems.forEach(item => {
+      if (item.severity === 'error') g.errors.push(item);
+      else if (item.severity === 'warning') g.warnings.push(item);
+      else g.info.push(item);
+    });
+    return g;
+  }, [filteredItems]);
+
+  return (
+    <>
+      {isOpen && <div className="modal-overlay" style={{ background: 'transparent' }} onClick={onClose} />}
+      <div className={`notification-tray ${isOpen ? 'open' : ''}`}>
+        <div className="notification-header">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <VscBell size={20} />
+            <h4 style={{ margin: 0 }}>Agent Observations</h4>
+          </div>
+          <button className="btn-secondaryIcon" onClick={onClose} style={{ padding: '0.25rem', border: 'none', background: 'transparent', cursor: 'pointer' }}>
+            <VscClose size={20} />
+          </button>
+        </div>
+
+        <div className="notification-content">
+          <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+              {activePillarId ? 'Active Pillar View' : 'Global Overview'}
+            </span>
+            <button 
+              onClick={() => setIsExpanded(!isExpanded)}
+              style={{ background: 'transparent', border: 'none', color: 'var(--accent-color)', fontSize: '0.8rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+            >
+              {isExpanded ? <><VscChevronUp /> Collapse</> : <><VscChevronDown /> Expand</>}
+            </button>
+          </div>
+
+          {isExpanded && (
+            <div className="notification-list">
+              {filteredItems.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)', opacity: 0.6 }}>
+                  No observations for this view.
+                </div>
+              ) : (
+                <>
+                  {groups.errors.length > 0 && <div className="section-title">Critical Blockers</div>}
+                  {groups.errors.map((item, i) => (
+                    <div key={`err-${i}`} className="notification-item error">
+                      <strong>{item.title || 'Error'}</strong>
+                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', opacity: 0.8 }}>{item.message}</p>
+                    </div>
+                  ))}
+
+                  {groups.warnings.length > 0 && <div className="section-title">Quality Warnings</div>}
+                  {groups.warnings.map((item, i) => (
+                    <div key={`warn-${i}`} className="notification-item warning">
+                      <strong>{item.title || 'Warning'}</strong>
+                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', opacity: 0.8 }}>{item.message}</p>
+                    </div>
+                  ))}
+
+                  {groups.info.length > 0 && <div className="section-title">Context Tips</div>}
+                  {groups.info.map((item, i) => (
+                    <div key={`info-${i}`} className="notification-item info">
+                      <strong>{item.title || 'Tip'}</strong>
+                      <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', opacity: 0.8 }}>{item.message}</p>
+                    </div>
+                  ))}
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 

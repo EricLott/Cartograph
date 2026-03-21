@@ -2,7 +2,7 @@
 id: task-037
 title: Fix Agent Observations notification bloat
 type: task
-status: in_progress
+status: pull_requested
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott

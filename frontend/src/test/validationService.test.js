@@ -46,6 +46,14 @@ describe('ValidationService: Blueprint Integrity', () => {
         const result = validateBlueprint(project);
         expect(result.isValid).toBe(true);
         expect(result.warnings).toContain('Pillar "Frontend Architecture" has a thin description (2/10 words).');
+        expect(result.metadataReport).toContainEqual(expect.objectContaining({ 
+            id: 'p1', 
+            pillarId: 'p1',
+            type: 'pillar', 
+            field: 'description', 
+            issue: 'short_description',
+            severity: 'warning'
+        }));
     });
 
     test('warns and reports unresolved decisions', () => {
@@ -63,6 +71,15 @@ describe('ValidationService: Blueprint Integrity', () => {
         const result = validateBlueprint(project);
         expect(result.isValid).toBe(true);
         expect(result.warnings).toContain('Pending decision in "Frontend Architecture": "React framework?"');
-        expect(result.metadataReport).toContainEqual({ id: 'd1', type: 'decision', field: 'answer', title: 'React framework?', parentTitle: 'Frontend Architecture', issue: 'unresolved' });
+        expect(result.metadataReport).toContainEqual(expect.objectContaining({ 
+            id: 'd1', 
+            pillarId: 'p1',
+            type: 'decision', 
+            field: 'answer', 
+            title: 'React framework?', 
+            parentTitle: 'Frontend Architecture', 
+            issue: 'unresolved',
+            severity: 'warning'
+        }));
     });
 });
