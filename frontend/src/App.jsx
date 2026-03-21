@@ -222,7 +222,7 @@ function App() {
   const handleExport = async () => {
     setErrorMessage(null);
     try {
-      await generateBlueprintZip(pillars);
+      await generateBlueprintZip(pillars, { projectId, version: '0.1.0' });
     } catch (err) {
       console.error("Export failed:", err);
       setErrorMessage("Failed to generate export package: " + err.message);

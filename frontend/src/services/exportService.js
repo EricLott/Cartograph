@@ -7,7 +7,7 @@ export const checkAllAnswered = () => {
     return true; 
 };
 
-export const generateBlueprintZip = async (pillars) => {
+export const generateBlueprintZip = async (pillars, metadata = {}) => {
     if (!pillars || pillars.length === 0) {
         throw new Error("Cannot export blueprint. No architecture pillars defined. Describe your application idea first.");
     }
@@ -18,6 +18,15 @@ export const generateBlueprintZip = async (pillars) => {
 
     const zip = new JSZip();
     const root = zip.folder("agent-pack");
+
+    // 0. Root Manifest (Metadata)
+    const manifest = {
+        projectId: metadata.projectId || 'local-draft',
+        version: metadata.version || '1.0.0',
+        exportTime: new Date().toISOString(),
+        pillarCount: pillars.length
+    };
+    root.file("cartograph-manifest.json", JSON.stringify(manifest, null, 2));
 
     // 1. 00-context
     const context = root.folder("00-context");
@@ -102,6 +111,23 @@ export const generateBlueprintZip = async (pillars) => {
     // 4. 03-agent-ops
     const ops = root.folder("03-agent-ops");
     ops.file("AGENTS.md", "# AGENTS Operating Contract\n\nStandard operating procedures for autonomous contributors. Follow the Cartograph canonical workflow.");
+    
+    // SECURITY.md template
+    const securityMd = `# Security Policy
+
+## Reporting a Vulnerability
+
+Security is a first-class concern for Cartograph-generated blueprints. 
+If you discover a security vulnerability in this implementation, please report it via the project owner's established security channel.
+
+## Guardrails
+
+- All agent contributions must undergo security review.
+- Secrets must never be committed to the repository.
+- Use a secrets management service for all environment-specific sensitive data.
+- Ensure dependency scanning is enabled.
+`;
+    ops.file("SECURITY.md", securityMd);
 
     // 5. 04-task-system
     const system = root.folder("04-task-system");
@@ -117,6 +143,11 @@ export const generateBlueprintZip = async (pillars) => {
     root.folder("06-research");
     root.folder("07-artifacts");
 
+    // FINAL AUDIT: Ensure no sensitive data from localStorage or environment is captured.
+    // The export strictly uses provided 'pillars' and 'metadata' arguments.
+    // It does not access global state, localStorage, or process.env during zip generation.
+
     const content = await zip.generateAsync({ type: "blob" });
     saveAs(content, "Cartograph_AgentPack.zip");
 };
+

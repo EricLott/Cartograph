@@ -2,7 +2,7 @@
 id: task-024
 title: Add security guardrails and metadata to exported pack
 type: task
-status: in_progress
+status: pull_requested
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
@@ -28,9 +28,9 @@ Ensure project safety and machine-readability of the exported blueprint.
 - feature-004
 
 ## Implementation Steps
-- Audit `exportService.js` to ensure no dynamic memory or session state is inadvertently serialized.
-- Implement project manifest generation with JSON metadata.
-- Add `SECURITY.md` template to the export folder structure.
+- [x] Audit `exportService.js` to ensure no dynamic memory or session state is inadvertently serialized.
+- [x] Implement project manifest generation with JSON metadata.
+- [x] Add `SECURITY.md` template to the export folder structure.
 
 ## Dependencies
 - task-014

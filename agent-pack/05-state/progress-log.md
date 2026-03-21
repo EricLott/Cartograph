@@ -40,6 +40,11 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T23:45:00-05:00 | `task-024` | `done` | Added security guardrails and metadata to the exported blueprint pack. Implemented `cartograph-manifest.json` generation in the export root and added a `SECURITY.md` template to the `03-agent-ops/` folder. Updated `exportService.js` and `App.jsx` to handle project metadata (ID, version, time) during export. Verified that no sensitive data from `localStorage` or environment is inadvertently serialized.
+  - Evidence:
+    - `frontend/src/services/exportService.js`
+    - `frontend/src/App.jsx`
+  - Next step: Run cartograph-closeout to finalize the task and create PR.
 - 2026-03-20T22:15:00-05:00 | `task-020` | `done` | Refined task template in `exportService.js` to include structured `Acceptance Criteria` and `Evidence Required` sections. AC are now automatically derived from pillar goals and decision answers, with unanswered decisions tagged as `[BLOCKER]`. Relaxed `checkAllAnswered` to allow incremental blueprint exports.
   - Evidence:
     - `frontend/src/services/exportService.js`
