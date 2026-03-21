@@ -2,12 +2,12 @@
 id: task-019
 title: Implement dependency tracking in exported task backlog
 type: task
-status: pull_requested
+status: completed
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-22T02:48:28.317Z"
+claim_status: released
+claim_expires_at: null
 sla_due_at: "2026-05-15T23:59:00Z"
 depends_on:
   - task-014
