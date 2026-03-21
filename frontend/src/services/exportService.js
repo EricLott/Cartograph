@@ -114,48 +114,37 @@ Translate architectural intent into an execution path that autonomous contributo
     let taskCount = 1;
     const taskFiles = [];
 
-    const processPillarTasks = (ps, parentTaskId = null, parentPath = "", topLevelPillar = null) => {
+    const processPillarTasks = (ps, parentTaskId = null, parentPath = "", topLevelPillar = null, parentFeature = null) => {
         ps.forEach(p => {
             const currentTopLevel = topLevelPillar || p.title.replace(/\s+/g, '-').toLowerCase();
+            const currentFeature = p.title;
             const taskId = `task-${String(taskCount++).padStart(3, '0')}`;
             const slug = p.title.replace(/\s+/g, '-').toLowerCase();
             const fileName = `${taskId}-${slug}.md`;
 
             const deps = parentTaskId ? `["${parentTaskId}"]` : "[]";
-            let taskMd = `---\nid: ${taskId}\ntitle: ${p.title}\ntype: task\nstatus: todo\npriority: P1\nowner: TBD\ndepends_on: ${deps}\nlast_updated: ${new Date().toISOString().slice(0, 10)}\n---\n\n`;
+            let taskMd = `---\nid: ${taskId}\ntitle: ${p.title}\ntype: task\nstatus: todo\npriority: P1\nowner: TBD\ndepends_on: ${deps}\nlast_updated: ${new Date().toISOString().slice(0, 10)}\nworkstream: ${currentTopLevel}\nfeature: ${parentFeature || 'System Architecture'}\n---\n\n`;
             taskMd += `# Task: ${p.title}\n\n## Goal\n${p.description}\n\n`;
+
+            // Build Inputs
+            taskMd += `## Inputs\n`;
+            taskMd += `- Workstream: ${currentTopLevel}\n`;
+            if (parentFeature) {
+                taskMd += `- Parent Feature: ${parentFeature}\n`;
+            }
+            taskMd += `\n`;
 
             // Build Acceptance Criteria
             taskMd += `## Acceptance Criteria\n`;
             taskMd += `- Satisfy the core pillar goal: ${p.description}\n`;
-            
             if (p.decisions && p.decisions.length > 0) {
-                p.decisions.forEach(d => {
-                    const ans = d.answer?.trim();
-                    const isUnresolved = !ans || ans === 'Pending Resolution';
-                    if (isUnresolved) {
-                        taskMd += `- [BLOCKER] Resolve decision for question: **${d.question}** before final implementation.\n`;
-                    } else {
-                        taskMd += `- Implement decision: **${d.question}** as per answer choice: *${ans}*\n`;
-                    }
-                    if (d.conflict) {
-                        taskMd += `  - [CONFLICT] Warning: **${d.conflict}**\n`;
-                    }
-                });
+                taskMd += `- Address all related architectural decisions (see sub-tasks).\n`;
             }
             taskMd += `\n`;
 
             // Build Evidence Required
             taskMd += `## Evidence Required\n`;
             taskMd += `- [ ] Proof of implementation for ${p.title} matching architectural intent.\n`;
-            if (p.decisions && p.decisions.length > 0) {
-                p.decisions.forEach(d => {
-                   const ans = d.answer?.trim();
-                   if (ans && ans !== 'Pending Resolution') {
-                       taskMd += `  - [ ] Decision satisfied: ${d.question}\n`;
-                   }
-                });
-            }
             taskMd += `\n`;
 
             taskFiles.push({ name: fileName, content: taskMd, workstream: currentTopLevel });
@@ -164,8 +153,47 @@ Translate architectural intent into an execution path that autonomous contributo
                 depEdges += `- ${taskId} depends on ${parentTaskId}\n`;
             }
 
+            // Decisions as individual tasks
+            if (p.decisions && p.decisions.length > 0) {
+                p.decisions.forEach(d => {
+                    const decisionTaskId = `task-${String(taskCount++).padStart(3, '0')}`;
+                    const decisionSlug = (d.question || 'decision').replace(/[^\w\s]/g, '').replace(/\s+/g, '-').toLowerCase().slice(0, 50);
+                    const decisionFileName = `${decisionTaskId}-${decisionSlug}.md`;
+
+                    let dTaskMd = `---\nid: ${decisionTaskId}\ntitle: Decision Task: ${d.question}\ntype: task\nstatus: todo\npriority: P2\nowner: TBD\ndepends_on: ["${taskId}"]\nlast_updated: ${new Date().toISOString().slice(0, 10)}\nworkstream: ${currentTopLevel}\nfeature: ${currentFeature}\n---\n\n`;
+                    dTaskMd += `# Task: Resolve Decision - ${d.question}\n\n`;
+                    dTaskMd += `## Goal\nImplement the architectural resolution for "${d.question}" within the ${currentFeature} context.\n\n`;
+                    
+                    dTaskMd += `## Inputs\n`;
+                    dTaskMd += `- Feature: ${currentFeature}\n`;
+                    dTaskMd += `- Decision ID: ${d.id || 'N/A'}\n`;
+                    dTaskMd += `- Context: ${d.context || 'Refer to architectural pillar description.'}\n\n`;
+
+                    dTaskMd += `## Acceptance Criteria\n`;
+                    const ans = d.answer?.trim();
+                    const isUnresolved = !ans || ans === 'Pending Resolution';
+                    if (isUnresolved) {
+                        dTaskMd += `- [BLOCKER] Resolve decision for question: **${d.question}** before implementation.\n`;
+                    } else {
+                        dTaskMd += `- Implement decision: **${d.question}** as per answer choice: *${ans}*\n`;
+                    }
+                    if (d.conflict) {
+                        dTaskMd += `- [CONFLICT] Resolve conflict: **${d.conflict}**\n`;
+                    }
+                    dTaskMd += `- Evidence of implementation matching the chosen answer.\n\n`;
+
+                    dTaskMd += `## Evidence Required\n`;
+                    dTaskMd += `- [ ] Verification of decision: ${d.question}\n`;
+                    dTaskMd += `\n`;
+
+                    taskFiles.push({ name: decisionFileName, content: dTaskMd, workstream: currentTopLevel });
+                    depMap += `- ${decisionTaskId}: Decision: ${d.question} (Bucket: ${currentTopLevel})\n`;
+                    depEdges += `- ${decisionTaskId} depends on ${taskId}\n`;
+                });
+            }
+
             if (p.subcategories && p.subcategories.length > 0) {
-                processPillarTasks(p.subcategories, taskId, `${parentPath}${p.title} > `, currentTopLevel);
+                processPillarTasks(p.subcategories, taskId, `${parentPath}${p.title} > `, currentTopLevel, currentFeature);
             }
         });
     };

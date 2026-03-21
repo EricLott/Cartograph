@@ -157,8 +157,8 @@ describe('exportService', () => {
             const mockZipInstance = vi.mocked(JSZip).mock.results[vi.mocked(JSZip).mock.results.length - 1].value;
 
             expect(mockZipInstance.file).toHaveBeenCalledWith(
-                'task-003-data.md',
-                expect.stringContaining('- [BLOCKER] Resolve decision for question: **Q1** before final implementation.')
+                'task-004-q1.md',
+                expect.stringContaining('- [BLOCKER] Resolve decision for question: **Q1** before implementation.')
             );
         });
 

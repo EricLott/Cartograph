@@ -40,6 +40,12 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T15:30:00-05:00 | `task-031` | `done` | Implement Scaffolding Generation in `exportService.js`
+  - Evidence:
+    - `frontend/src/services/exportService.js` (refactored `processPillarTasks` for decision-task mapping)
+    - `frontend/src/test/task-031.test.js` (new validation tests)
+    - `frontend/src/test/exportService.test.js` (updated existing tests)
+  - Next step: Run `node scripts/cartograph-closeout.mjs --task task-031`.
 - 2026-03-21T14:15:13-05:00 | `task-027` | `done` | Migrate LLM provider logic to backend proxy
   - Evidence:
     - `backend/services/agentService.js`
