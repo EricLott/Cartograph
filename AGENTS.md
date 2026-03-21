@@ -62,6 +62,12 @@ Before opening a PR, use the closeout script to run:
 - Optional strict task-path enforcement:
   - `node scripts/validate-task-pr.mjs --self-check --task-id task-### --strict-task-paths`
 
+## Continuous Integration
+All PRs to `main` must pass automated checks:
+- **Quality**: `npm run lint`, `npm run build`, and `npm run test` (frontend/backend).
+- **Contract**: `scripts/validate-task-pr.mjs` enforces the task-to-PR boundary.
+- **Diagnostics**: Check GitHub Action run outputs for failures.
+
 PR enforcement is flexible:
 - one or more primary tasks per PR
 - branch, PR title, and PR template must link the same task ID(s)

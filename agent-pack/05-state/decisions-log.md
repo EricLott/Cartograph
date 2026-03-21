@@ -38,6 +38,12 @@ status: active
 ```
 
 ## Active Decisions
+- `dec-004` (2026-03-21): Enforce automated quality gates (lint/build/test) and task metadata contracts via GitHub Actions.
+  - Options considered: manual pre-merge checks vs mandatory CI enforcement.
+  - Chosen: mandatory CI enforcement.
+  - Rationale: Ensures baseline quality, prevents regressions, and automates task-to-PR consistency validation.
+  - Linked items: `task-017`.
+
 - `dec-001` (2026-03-19): Prioritize non-destructive persistence and retrieval hardening before export expansion.
   - Options considered: keep prototype overwrite behavior vs targeted snapshot persistence.
   - Chosen: targeted persistence with transaction guarantees.

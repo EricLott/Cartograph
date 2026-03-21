@@ -40,6 +40,15 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T21:40:00-05:00 | `task-017` | `done` | Added CI workflow for lint, build, and test enforcement. Updated contributor docs (README.md, AGENTS.md, definition-of-done.md) to reflect automated quality gates.
+  - Evidence:
+    - `.github/workflows/ci.yml` (added)
+    - `README.md` (updated)
+    - `AGENTS.md` (updated)
+    - `agent-pack/03-agent-ops/AGENTS.md` (updated)
+    - `agent-pack/02-execution/definition-of-done.md` (updated)
+    - Local validation: `npm run lint`, `npm run build`, `npm run test` (frontend) and `npm run test` (backend) all passed.
+  - Next step: Run cartograph-closeout to finalize the task and create PR.
 - 2026-03-21T21:15:00-05:00 | `task-015` | `done` | Introduced frontend automated testing with Vitest and JSDOM. Added regression tests for ChatInterface safe rendering and exportService zip generation guardrails.
   - Evidence:
     - `frontend/package.json`

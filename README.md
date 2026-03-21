@@ -8,6 +8,24 @@ An open-ended agentic platform that guides users through architecting an applica
 - **Automated Blueprint Export**: Click 'Export .zip' to download an organized set of markdown files representing your app's architecture.
 - **Dockerized Full-Stack & Persisted State**: Instantly boot up the frontend React app, the Node.js backend API, and a MySQL database for persistent storage using Docker Compose. All user ideas, pillars, and decisions are continuously backed up to the database.
 
+## Development
+
+1. **Prerequisites**: Node.js 22+, Docker (optional).
+2. **Setup**:
+   - `cd frontend && npm install`
+   - `cd backend && npm install`
+3. **Local Checks**:
+   - Frontend: `npm run lint`, `npm run build`, `npm run test`
+   - Backend: `npm run test`
+
+## Quality & CI
+
+Automated quality checks are enforced on all pull requests to `main`:
+- **Linting**: Frontend code must pass ESLint checks.
+- **Build**: Frontend must build successfully.
+- **Tests**: All frontend (Vitest) and backend (Jest) tests must pass.
+- **Task Validation**: PRs must follow the task/PR contract (branch names, title formats, and backlog consistency).
+
 ## Getting Started
 
 ### Prerequisites
