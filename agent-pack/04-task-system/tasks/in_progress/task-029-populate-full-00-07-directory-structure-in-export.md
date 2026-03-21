@@ -2,22 +2,23 @@
 id: task-029
 title: Populate full 00-07 directory structure in export
 type: task
-status: todo
+status: in_progress
 priority: P0
-owner: architecture
-claim_owner: null
-claim_status: released
-claim_expires_at: null
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-22T18:56:42.633Z"
 sla_due_at: "2026-04-20T23:59:00Z"
 depends_on:
   - task-013
   - task-021
 acceptance_criteria:
-  - Exported zip contains all folders: 00-context, 01-architecture, 02-execution, 03-agent-ops, 04-task-system, 05-state, 06-quality, 07-artifacts.
-  - Every folder contains at least a `README.md` or a core manifest.
-  - `03-agent-ops/AGENTS.md` is correctly seeded with the repository's contributor contract.
-last_updated: 2026-03-20
+  - "Exported zip contains all folders: 00-context, 01-architecture, 02-execution, 03-agent-ops, 04-task-system, 05-state, 06-quality, 07-artifacts."
+  - "Every folder contains at least a `README.md` or a core manifest."
+  - "`03-agent-ops/AGENTS.md` is correctly seeded with the repository's contributor contract."
+last_updated: 2026-03-21
 ---
+
 
 # Task: Populate full 00-07 directory structure in export
 
