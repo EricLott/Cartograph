@@ -40,6 +40,13 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T09:26:46-05:00 | `task-010` | `done` | Prepared task-010 closeout updates touching task-010-fix-active-pillar-synchronization-after-decision-updates.md, Sidebar.jsx, usePillarLogic.js and 1 more file(s).
+  - Evidence:
+    - `agent-pack/04-task-system/tasks/in_progress/task-010-fix-active-pillar-synchronization-after-decision-updates.md`
+    - `frontend/src/components/Sidebar.jsx`
+    - `frontend/src/hooks/usePillarLogic.js`
+    - `frontend/src/test/treeUtils.test.js`
+  - Next step: Open Pull Request for review.
 - 2026-03-20T23:21:02-05:00 | `task-022` | `done` | Seeded exported progress-log.md with initial architecture entry and updated unit tests.
   - Evidence:
     - `frontend/src/services/exportService.js`

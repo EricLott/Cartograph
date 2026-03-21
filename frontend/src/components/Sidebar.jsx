@@ -78,7 +78,7 @@ const PillarNode = ({ node, activePillarId, onSelectPillar, depth = 0 }) => {
                     animation: 'fadeIn 0.3s ease-out'
                 }}>
                     {node.subcategories.map(child => (
-                        <PillarNode key={child.id} node={child} activePillarId={activePillarId} onSelectPillar={onSelectPillar} depth={0} />
+                        <PillarNode key={child.id} node={child} activePillarId={activePillarId} onSelectPillar={onSelectPillar} depth={depth + 1} />
                     ))}
                 </div>
             )}

@@ -2,7 +2,7 @@
 id: task-010
 title: Fix active pillar synchronization after decision updates
 type: task
-status: in_progress
+status: pull_requested
 priority: P2
 owner: Eric Lott
 claim_owner: Eric Lott

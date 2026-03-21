@@ -9,7 +9,7 @@ export function usePillarLogic(state, setters) {
     setErrorMessage(null);
     const nextPillars = updateNodeDecisions(pillars, decisionId, (d) => ({ ...d, answer }));
     setPillars(nextPillars);
-    setActivePillarId(null);
+    // Removed setActivePillarId(null); to preserve UI context after update
 
     try {
       const ideaMsg = messages.find(m => m.role === 'user');
