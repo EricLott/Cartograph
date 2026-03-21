@@ -2,7 +2,7 @@
 id: task-015
 title: Add frontend automated tests for export and safe rendering paths
 type: task
-status: in_progress
+status: pull_requested
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott

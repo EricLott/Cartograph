@@ -40,6 +40,15 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T21:15:00-05:00 | `task-015` | `done` | Introduced frontend automated testing with Vitest and JSDOM. Added regression tests for ChatInterface safe rendering and exportService zip generation guardrails.
+  - Evidence:
+    - `frontend/package.json`
+    - `frontend/vite.config.js`
+    - `frontend/src/test/setup.js`
+    - `frontend/src/test/ChatInterface.test.jsx`
+    - `frontend/src/test/exportService.test.js`
+    - `frontend/src/services/exportService.js` (exported helper for testing)
+  - Next step: Run cartograph-closeout to finalize the task.
 - 2026-03-20T16:15:52+00:00 | `task-014` | `done` | Prepared task-014 closeout updates touching task-014-add-export-contract-validation-and-failure-messaging.md, App.jsx, exportService.js.
   - Evidence:
     - `agent-pack/04-task-system/tasks/in_progress/task-014-add-export-contract-validation-and-failure-messaging.md`

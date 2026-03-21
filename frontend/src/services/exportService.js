@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
-const checkAllAnswered = (nodes) => {
+export const checkAllAnswered = (nodes) => {
     return nodes.every(p => {
         const parentAns = p.decisions ? p.decisions.every(d => d.answer !== null && d.answer !== "") : true;
         const childAns = (p.subcategories && p.subcategories.length > 0) ? checkAllAnswered(p.subcategories) : true;

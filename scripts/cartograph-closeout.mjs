@@ -94,8 +94,9 @@ function parseStatusPaths(stdout) {
 }
 
 function getUncommittedChanges() {
+    const rootDir = process.cwd();
     const porcelain = runGit(['status', '--porcelain'], { allowFailure: true }).stdout;
-    return [...new Set(parseStatusPaths(porcelain))];
+    return [...new Set(parseStatusPaths(porcelain))].filter(f => fs.existsSync(path.join(rootDir, f)));
 }
 
 function todayDateString() {
@@ -431,7 +432,7 @@ async function main() {
         console.log(`\n--- Processing ${taskId} ---`);
 
         // 2. Capture progress log details and append entry
-        const suggestedEvidence = getRecentChangedFiles(options.base);
+        const suggestedEvidence = getRecentChangedFiles(options.base, rootDir);
         const progressInput = await collectProgressLogInput(taskId, options, suggestedEvidence);
         const progressResult = appendProgressLogEntry({
             rootDir,
