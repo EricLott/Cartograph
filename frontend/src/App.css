@@ -561,6 +561,46 @@
   border: 1px solid rgba(245, 158, 11, 0.2);
 }
 
+.status-conflict {
+  color: #dc2626;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: rgba(254, 226, 226, 0.8);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  white-space: nowrap;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.1);
+}
+
+.decision-card.conflict {
+  border-color: rgba(220, 38, 38, 0.4);
+  background: rgba(254, 242, 242, 0.6);
+  border-left: 4px solid #dc2626;
+}
+
+.conflict-banner {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fffafa;
+  border: 1px solid rgba(220, 38, 38, 0.1);
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: inset 0 1px 2px rgba(220, 38, 38, 0.05);
+}
+
+.conflict-banner p {
+  margin: 0;
+}
+
 .decision-input-area {
   margin-top: 1.25rem;
 }

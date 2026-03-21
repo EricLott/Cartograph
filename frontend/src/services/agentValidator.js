@@ -96,7 +96,7 @@ export const validateCategoryExpansionOutput = (output, contextLabel) => {
 
     assertArray(output.decisions, 'root.decisions', contextLabel);
     output.decisions.forEach((decision, index) =>
-        validateDecisionNode(decision, `${path}.decisions[${index}]`, contextLabel)
+        validateDecisionNode(decision, `root.decisions[${index}]`, contextLabel)
     );
 
     return output;

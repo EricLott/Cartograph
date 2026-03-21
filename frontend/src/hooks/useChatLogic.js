@@ -43,7 +43,7 @@ export function useChatLogic(state, setters) {
           return p;
         }));
         return subData;
-      } catch (err) {
+      } catch {
         return { subcategories: [], decisions: [] };
       }
     }));
@@ -62,6 +62,11 @@ export function useChatLogic(state, setters) {
     if (result.newCategories?.length > 0) nextPillars = [...nextPillars, ...result.newCategories];
     if (result.updatedDecisions?.length > 0) {
       nextPillars = updateNodeDecisions(nextPillars, result.updatedDecisions, (d, update) => ({ ...d, answer: update.answer }));
+    }
+    if (result.conflicts?.length > 0) {
+      result.conflicts.forEach(conflict => {
+        nextPillars = updateNodeDecisions(nextPillars, conflict.decisionIds, (d) => ({ ...d, conflict: conflict.description }));
+      });
     }
     setPillars(nextPillars);
     setMessages([...newMessages, { role: 'agent', content: result.reply }]);

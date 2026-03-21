@@ -1,9 +1,9 @@
-import { updateNodeDecisions, findNodeById } from '../utils/treeUtils';
+import { updateNodeDecisions } from '../utils/treeUtils';
 import { saveStateToBackend } from '../services/apiService';
 
 export function usePillarLogic(state, setters) {
   const { pillars, messages, projectId } = state;
-  const { setPillars, setProjectId, setErrorMessage, setAgentFeedback, setActivePillarId } = setters;
+  const { setPillars, setProjectId, setErrorMessage, setAgentFeedback } = setters;
 
   const handleUpdateDecision = async (pillarId, decisionId, answer) => {
     setErrorMessage(null);
@@ -17,7 +17,7 @@ export function usePillarLogic(state, setters) {
         const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId);
         if (resultData?.projectId) setProjectId(resultData.projectId);
       }
-    } catch (err) {
+    } catch {
       setErrorMessage("Failed to save decision.");
     } finally {
       setAgentFeedback([]);

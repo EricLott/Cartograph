@@ -40,6 +40,12 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-22T14:45:00-05:00 | `task-025` | `done` | Implemented architectural conflict identification and user feedback.
+  - Evidence:
+    - Updated Models and Services (conflict persistence)
+    - Updated Hooks and UI Components (conflict display)
+    - Updated exportService (conflict reporting)
+  - Next step: Run closeout.
 - 2026-03-21T09:26:46-05:00 | `task-010` | `done` | Prepared task-010 closeout updates touching task-010-fix-active-pillar-synchronization-after-decision-updates.md, Sidebar.jsx, usePillarLogic.js and 1 more file(s).
   - Evidence:
     - `agent-pack/04-task-system/tasks/in_progress/task-010-fix-active-pillar-synchronization-after-decision-updates.md`

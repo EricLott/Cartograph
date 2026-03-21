@@ -15,7 +15,8 @@ const Decision = sequelize.define('Decision', {
     decisionId: { type: DataTypes.STRING },
     question: { type: DataTypes.STRING, allowNull: false },
     context: { type: DataTypes.TEXT },
-    answer: { type: DataTypes.STRING }
+    answer: { type: DataTypes.STRING },
+    conflict: { type: DataTypes.TEXT }
 });
 
 // Associations

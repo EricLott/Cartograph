@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generatePillarsFromIdea, processChatTurn } from '../services/agentService';
 
@@ -5,7 +6,7 @@ import { generatePillarsFromIdea, processChatTurn } from '../services/agentServi
 // but here we want to test the integration of agentService with them.
 // We only need to mock the global fetch.
 
-global.fetch = vi.fn();
+vi.stubGlobal('fetch', vi.fn());
 
 describe('agentService', () => {
     beforeEach(() => {

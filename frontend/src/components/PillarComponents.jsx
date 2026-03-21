@@ -1,38 +1,4 @@
 import React from 'react';
-import { VscAzure, VscServer, VscCircuitBoard, VscHubot } from "react-icons/vsc";
-import { SiGooglecloud, SiDocker, SiKubernetes, SiPulumi, SiPodman, SiTerraform } from "react-icons/si";
-import { TbFileLambda } from "react-icons/tb";
-import { FaAws, FaRegHandPointer } from "react-icons/fa";
-import { GiWeightLiftingUp } from "react-icons/gi";
-
-export const STANDARD_DECISIONS = {
-    'infra_hosting': {
-        options: [
-            { id: 'azure', label: 'Azure', icon: <VscAzure /> },
-            { id: 'aws', label: 'AWS', icon: <FaAws /> },
-            { id: 'gcp', label: 'GCP', icon: <SiGooglecloud /> },
-            { id: 'hybrid', label: 'Hybrid', icon: <VscHubot /> },
-            { id: 'onprem', label: 'On-Premise', icon: <VscServer /> }
-        ]
-    },
-    'infra_containerization': {
-        options: [
-            { id: 'docker', label: 'Docker', icon: <SiDocker /> },
-            { id: 'k8s', label: 'Kubernetes', icon: <SiKubernetes /> },
-            { id: 'podman', label: 'Podman', icon: <SiPodman /> },
-            { id: 'none', label: 'None (Bare Metal/VM)', icon: <VscCircuitBoard /> }
-        ]
-    },
-    'infra_iac': {
-        options: [
-            { id: 'terraform', label: 'Terraform', icon: <SiTerraform /> },
-            { id: 'bicep', label: 'Bicep/ARM', icon: <GiWeightLiftingUp /> },
-            { id: 'pulumi', label: 'Pulumi', icon: <SiPulumi /> },
-            { id: 'cdk', label: 'AWS CDK', icon: <TbFileLambda /> },
-            { id: 'manual', label: 'Manual/ClickOps', icon: <FaRegHandPointer /> }
-        ]
-    }
-};
 
 export const CheckIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -45,6 +11,14 @@ export const PendingIcon = () => (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"></circle>
         <polyline points="12 6 12 12 16 14"></polyline>
+    </svg>
+);
+
+export const WarningIcon = () => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+        <line x1="12" y1="9" x2="12" y2="13"></line>
+        <line x1="12" y1="17" x2="12.01" y2="17"></line>
     </svg>
 );
 

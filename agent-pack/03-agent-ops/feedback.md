@@ -42,4 +42,15 @@ Copy this block for each new entry.
 - Impact: Missed opportunities to improve orchestration based on agent experience.
 - Proposed Improvement: Add feedback.md and update closeout script reminder.
 - Status: implemented
-- Validation: confirmed via dry-run output of closeout script
+### F-20260322-01
+- Date: 2026-03-22
+- Agent/Session: Antigravity / 21d0e348-771f-4a37-baf6-9db088140a65
+- Task ID: task-025
+- Area: orchestration / developer-experience
+- Type: friction
+- Severity: low
+- Friction Point: PowerShell terminal does not support `&&` statement separators by default in some environments, leading to command failures when agents use standard shell syntax. Also, pre-existing lint errors in refactored hooks (unused imports/variables) caused CI/Lint failures on unrelated task work.
+- Impact: Required multiple retries for terminal commands and manual cleanup of unrelated lint errors to pass quality gates.
+- Proposed Improvement: (1) Use `;` or separate command calls for Windows PowerShell environments. (2) Ensure newly refactored hooks are lint-clean before being committed to main.
+- Status: pending
+- Validation: N/A

@@ -20,7 +20,8 @@ const getProjectTree = async (projectId) => {
                     id: d.decisionId,
                     question: d.question,
                     context: d.context,
-                    answer: d.answer
+                    answer: d.answer,
+                    conflict: d.conflict
                 })),
                 subcategories: buildPillarTree(p.id)
             }));
@@ -68,6 +69,7 @@ const saveProjectState = async (idea, pillars, projectId) => {
                             question: d.question,
                             context: d.context,
                             answer: d.answer,
+                            conflict: d.conflict,
                             PillarId: pillar.id
                         }, { transaction: t });
                     }

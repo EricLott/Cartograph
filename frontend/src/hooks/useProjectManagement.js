@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { fetchLatestProject, fetchProjectById } from '../services/apiService';
 
 export function useProjectManagement(state, setters) {
@@ -25,7 +25,7 @@ export function useProjectManagement(state, setters) {
       }
     }
     hydrate();
-  }, []); // Only once on mount
+  }, [setIsWaiting, setMessages, setPillars, setProjectId]); // Only once on mount (setters are stable)
 
   const handleNewProject = () => {
     setProjectId(null);

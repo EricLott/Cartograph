@@ -84,6 +84,9 @@ export const generateBlueprintZip = async (pillars, metadata = {}) => {
                     } else {
                         taskMd += `- Implement decision: **${d.question}** as per answer choice: *${ans}*\n`;
                     }
+                    if (d.conflict) {
+                        taskMd += `  - [CONFLICT] Warning: **${d.conflict}**\n`;
+                    }
                 });
             }
             taskMd += `\n`;

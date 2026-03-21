@@ -30,7 +30,8 @@ export const updateNodeDecisions = (nodes, decisionId, updater) => {
 
 const cleanerUpdater = (decision, targetId, updater) => {
     if (Array.isArray(targetId)) {
-        const update = targetId.find(u => u.id === decision.id);
+        // Handle array of update objects (with .id) or array of raw ID strings
+        const update = targetId.find(u => (u.id === decision.id || u === decision.id));
         return update ? updater(decision, update) : decision;
     }
     if (decision.id === targetId) {

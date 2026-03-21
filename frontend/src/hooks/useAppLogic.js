@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useChatLogic } from './useChatLogic';
 import { usePillarLogic } from './usePillarLogic';
 import { useProjectManagement } from './useProjectManagement';

@@ -1,5 +1,6 @@
 import React from 'react';
-import { STANDARD_DECISIONS, ConfigOption, CheckIcon, PendingIcon } from './PillarComponents';
+import { ConfigOption, CheckIcon, PendingIcon, WarningIcon } from './PillarComponents';
+import { STANDARD_DECISIONS } from '../constants/architecture';
 
 const SubcategoriesList = ({ subcategories }) => {
     if (!subcategories || subcategories.length === 0) return null;
@@ -21,16 +22,23 @@ const SubcategoriesList = ({ subcategories }) => {
 const DecisionCard = ({ decision, index, onUpdateDecision, pillarId }) => {
     const standardConfig = STANDARD_DECISIONS[decision.id];
     return (
-        <div className={`decision-card ${decision.answer ? 'answered' : 'pending'}`} style={{ animationDelay: `${index * 0.1}s` }}>
+        <div className={`decision-card ${decision.conflict ? 'conflict' : (decision.answer ? 'answered' : 'pending')}`} style={{ animationDelay: `${index * 0.1}s` }}>
             <div className="decision-card-header">
                 <h4>{decision.question}</h4>
-                {decision.answer ? (
+                {decision.conflict ? (
+                    <span className="status-conflict"><WarningIcon /> Conflict</span>
+                ) : decision.answer ? (
                     <span className="status-resolved"><CheckIcon /> Resolved</span>
                 ) : (
                     <span className="status-pending"><PendingIcon /> Pending</span>
                 )}
             </div>
             <p className="decision-context">{decision.context}</p>
+            {decision.conflict && (
+                <div className="conflict-banner">
+                    <p>{decision.conflict}</p>
+                </div>
+            )}
             <div className="decision-input-area">
                 {decision.answer ? (
                     <div className="answered-text">
