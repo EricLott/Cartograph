@@ -2,7 +2,7 @@
 id: epic-001
 title: Core Platform Reliability Hardening
 type: epic
-status: backlog
+status: in_progress
 priority: P0
 owner: unassigned
 depends_on: []

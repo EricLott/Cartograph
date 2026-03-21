@@ -2,7 +2,7 @@
 id: feature-005
 title: Automated Test Coverage Baseline
 type: feature
-status: backlog
+status: todo
 priority: P1
 owner: unassigned
 depends_on:

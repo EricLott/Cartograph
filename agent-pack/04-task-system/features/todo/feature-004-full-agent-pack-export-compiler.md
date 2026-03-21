@@ -2,7 +2,7 @@
 id: feature-004
 title: Full Agent-Pack Export Compiler
 type: feature
-status: backlog
+status: todo
 priority: P0
 owner: unassigned
 depends_on:

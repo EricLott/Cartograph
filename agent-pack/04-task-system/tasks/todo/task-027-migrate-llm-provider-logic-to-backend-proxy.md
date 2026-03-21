@@ -25,7 +25,7 @@ last_updated: 2026-03-20
 Improve security and auditability by moving sensitive LLM communication logic from the browser to the server.
 
 ## Parent Feature
-- feature-006 (Server-side LLM Proxy)
+- feature-007 (Server-side LLM Proxy)
 
 ## Implementation Steps
 - Create `POST /api/agent/complete` endpoint in the Express backend.

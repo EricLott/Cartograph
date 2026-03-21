@@ -2,7 +2,7 @@
 id: feature-001
 title: Persistence and Retrieval API Hardening
 type: feature
-status: backlog
+status: todo
 priority: P0
 owner: unassigned
 depends_on:

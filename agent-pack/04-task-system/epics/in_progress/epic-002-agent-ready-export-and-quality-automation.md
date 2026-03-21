@@ -2,7 +2,7 @@
 id: epic-002
 title: Agent-Ready Export and Quality Automation
 type: epic
-status: backlog
+status: in_progress
 priority: P0
 owner: unassigned
 depends_on:

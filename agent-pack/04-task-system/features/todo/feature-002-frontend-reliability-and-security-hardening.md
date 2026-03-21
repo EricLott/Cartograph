@@ -2,7 +2,7 @@
 id: feature-002
 title: Frontend Reliability and Security Hardening
 type: feature
-status: backlog
+status: todo
 priority: P0
 owner: unassigned
 depends_on:

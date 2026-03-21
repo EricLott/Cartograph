@@ -2,7 +2,7 @@
 id: feature-003
 title: Provider Integration Reliability Layer
 type: feature
-status: backlog
+status: complete
 priority: P1
 owner: unassigned
 depends_on:

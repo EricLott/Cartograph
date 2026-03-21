@@ -2,7 +2,7 @@
 id: feature-006
 title: CI and Contributor Flow Enforcement
 type: feature
-status: backlog
+status: complete
 priority: P1
 owner: unassigned
 depends_on:
