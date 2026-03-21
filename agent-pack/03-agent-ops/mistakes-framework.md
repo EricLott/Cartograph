@@ -64,6 +64,32 @@ Copy this block for each new entry.
 - Owner: Eric Lott
 - Status: open
 
+### M-20260322-03
+- Date: 2026-03-22
+- Agent/session: Antigravity / 21d0e348-771f-4a37-baf6-9db088140a65
+- Task ID: task-025
+- Summary: Created a new React component file with a `.js` extension instead of `.jsx`, leading to a production build failure.
+- Impact: CI/Frontend Quality Checks failed during the `npm run build` step with an "Unexpected JSX expression" error.
+- Detection: Vite build failure in PR CI logs.
+- Root cause: Careless file naming when extracting constants that contained JSX icon components. Vite/Rolldown settings in this project strictly enforce `.jsx` for JSX syntax.
+- Prevention action: Always use `.jsx` for files containing React components or JSX elements. Updated `AGENTS.md` and `PillarWorkspace.jsx` imports to use the corrected extension.
+- Owner: Eric Lott
+- Status: mitigated
+- Verification evidence: Successful `npm run build` after renaming to `.jsx`.
+
+### M-20260322-04
+- Date: 2026-03-22
+- Agent/session: Antigravity / 21d0e348-771f-4a37-baf6-9db088140a65
+- Task ID: task-025
+- Summary: Inconsistency between the PR body template in `cartograph-closeout.mjs` and the field labels expected by `validate-task-pr.mjs`.
+- Impact: `Task PR Validation` failed in CI because `## Primary Task` did not match any of the allowed aliases for `Task ID`.
+- Detection: `validate-task-pr.mjs` error: "Task ID field in PR body is missing the primary ID: task-025".
+- Root cause: A recent refactoring of the PR body template changed the header label without updating the validation script's `FIELD_ALIASES`.
+- Prevention action: Harmonized `cartograph-closeout.mjs` to use `### Task ID` and updated `validate-task-pr.mjs` to include `Primary Task` as an alias.
+- Owner: Eric Lott
+- Status: mitigated
+- Verification evidence: PR body updated and validation passed in subsequent CI run.
+
 ## Reuse Rules For Future Agents
 - Before starting implementation, read the latest 5 entries.
 - If an entry matches your current scope, apply its prevention action before coding.
