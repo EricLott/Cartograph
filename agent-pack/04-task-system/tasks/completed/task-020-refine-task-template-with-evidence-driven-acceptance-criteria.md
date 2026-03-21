@@ -2,12 +2,12 @@
 id: task-020
 title: Refine task template with evidence-driven acceptance criteria
 type: task
-status: pull_requested
+status: completed
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-22T03:07:16.434Z"
+claim_status: released
+claim_expires_at: null
 last_updated: 2026-03-21
 ---
 
