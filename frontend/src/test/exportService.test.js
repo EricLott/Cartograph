@@ -166,5 +166,38 @@ describe('exportService', () => {
                 expect.stringContaining('- [BLOCKER] Resolve decision for question: **Q1** before final implementation.')
             );
         });
+
+        it('seeds progress-log.md with initial architecture entry', async () => {
+            const pillars = [
+                {
+                    title: 'Pillar 1',
+                    description: 'Desc 1',
+                    decisions: [{ question: 'Q1', answer: 'A1' }]
+                }
+            ];
+
+            const JSZip = (await import('jszip')).default;
+            await generateBlueprintZip(pillars);
+            
+            // Get the latest instance created
+            const mockZipInstance = vi.mocked(JSZip).mock.results[vi.mocked(JSZip).mock.results.length - 1].value;
+
+            expect(mockZipInstance.file).toHaveBeenCalledWith(
+                'progress-log.md',
+                expect.stringContaining('Architecture and Planning Phase')
+            );
+            expect(mockZipInstance.file).toHaveBeenCalledWith(
+                'progress-log.md',
+                expect.stringContaining('../00-context/vision.md')
+            );
+            expect(mockZipInstance.file).toHaveBeenCalledWith(
+                'progress-log.md',
+                expect.stringContaining('../02-execution/implementation-strategy.md')
+            );
+            expect(mockZipInstance.file).toHaveBeenCalledWith(
+                'progress-log.md',
+                expect.stringContaining('schema_version: 1')
+            );
+        });
     });
 });
