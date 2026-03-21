@@ -1,19 +1,35 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { validateBlueprint } from './validationService';
 
-export const checkAllAnswered = () => {
-    // We now allow exporting even with unanswered decisions, 
-    // as they will be tagged as blockers/risks in the tasks.
-    return true; 
+export const checkAllAnswered = (pillars) => {
+    const result = validateBlueprint({ pillars });
+    return result.isValid && result.warnings.length === 0;
 };
 
-export const generateBlueprintZip = async (pillars, metadata = {}) => {
+export const generateBlueprintZip = async (pillars, metadata = {}, force = false) => {
     if (!pillars || pillars.length === 0) {
         throw new Error("Cannot export blueprint. No architecture pillars defined. Describe your application idea first.");
     }
 
-    if (!checkAllAnswered()) {
-        throw new Error("Cannot export blueprint. There are unanswered decisions in the architecture. Please answer all decisions before exporting.");
+    const validation = validateBlueprint({ pillars });
+    
+    if (!validation.isValid) {
+        const errorList = validation.errors.join('\n- ');
+        throw new Error(`Cannot export blueprint. The following critical integrity checks failed:\n- ${errorList}\n\nPlease add the missing architectural areas.`);
+    }
+
+    if (validation.warnings.length > 0 && !force) {
+        // We throw a special error type or include warnings in the message
+        // for the UI to handle and offer a "force export" option.
+        const warningList = validation.warnings.slice(0, 3).join('\n- ');
+        const moreCount = validation.warnings.length - 3;
+        const msg = `Quality Warnings:\n- ${warningList}${moreCount > 0 ? `\n- ...and ${moreCount} more quality issues.` : ''}\n\nExporting now may result in low-quality agent execution. Continue anyway?`;
+        
+        const error = new Error(msg);
+        error.warnings = validation.warnings;
+        error.isWarning = true;
+        throw error;
     }
 
     const zip = new JSZip();

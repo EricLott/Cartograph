@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { validateBlueprint } from '../services/validationService';
 import { useChatLogic } from './useChatLogic';
 import { usePillarLogic } from './usePillarLogic';
 import { useProjectManagement } from './useProjectManagement';
@@ -45,12 +46,39 @@ export function useAppLogic() {
   const { handleSendMessage } = useChatLogic(state, setters);
   const { handleUpdateDecision } = usePillarLogic(state, setters);
 
-  const handleExport = async () => {
+  // 3. Proactive Validation
+  useEffect(() => {
+    if (pillars.length === 0) {
+      setAgentFeedback([]);
+      return;
+    }
+
+    const validation = validateBlueprint({ pillars });
+    const observations = [
+      ...validation.errors,
+      ...validation.warnings
+    ];
+    setAgentFeedback(observations);
+  }, [pillars]);
+
+  const handleExport = async (force = false) => {
     setErrorMessage(null);
     try {
-      await generateBlueprintZip(pillars, { projectId, version: '0.1.0' });
+      await generateBlueprintZip(pillars, { projectId, version: '0.1.0' }, force);
     } catch (err) {
-      setErrorMessage("Failed to generate export package: " + err.message);
+      if (err.isWarning) {
+        // Show the warning as a confirm dialog
+        if (window.confirm(err.message)) {
+          // Retry with force
+          try {
+            await generateBlueprintZip(pillars, { projectId, version: '0.1.0' }, true);
+          } catch (retryErr) {
+            setErrorMessage(retryErr.message);
+          }
+        }
+      } else {
+        setErrorMessage(err.message);
+      }
     }
   };
 
