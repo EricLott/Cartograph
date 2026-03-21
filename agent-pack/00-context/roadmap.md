@@ -25,6 +25,17 @@
 
 ---
 
+## 🎨 Phase 2.5: The Architecture Visualization Engine (Next 2-3 Months)
+*Focus: Implementing the "Decision-as-a-Node" concept and the Multi-View interface.*
+
+### Features
+* **Interactive Decision Graph**: Move from static Mermaid diagrams to an interactive node-link graph with relationship semantics (conflicts, dependencies, supersedes).
+* **Semantic Cluster View**: Implement a 2D spatial canvas grouping decisions by similarity using LLM-generated embeddings.
+* **Conflict Orchestration UI**: A dedicated lens for identifying and resolving cross-pillar architectural friction.
+
+---
+
+
 ## 🏛️ Phase 3: The Contributor Engine (Next 2-3 Months)
 *Focus: Scaling the platform for multi-agent and community contribution.*
 

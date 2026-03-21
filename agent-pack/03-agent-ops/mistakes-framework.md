@@ -90,7 +90,21 @@ Copy this block for each new entry.
 - Status: mitigated
 - Verification evidence: PR body updated and validation passed in subsequent CI run.
 
+### M-20260321-05
+- Date: 2026-03-21
+- Agent/session: Antigravity / d72093e1-dfb0-4b57-80c7-c4d0b24796fa
+- Task ID: task-031
+- Summary: Roadmap and Task System diverged from the `vision.md` (Product Mission), omitting core visualization features (Decision Graph, Semantic Clusters) from the execution backlog.
+- Impact: Architectural intent was being reduced to static text documentation instead of the promised "living decision system." Development was focusing on hygiene (stability/export) while ignoring the primary value proposition.
+- Detection: Proactive UI/UX audit in an antigravity browser compared against the `vision.md` "Multi-View Interface" requirements.
+- Root cause: Backlog drift; the task system was being populated by technical debt and infrastructure needs without regular verification against the "Multi-View Interface" strategic anchors.
+- Prevention action: Added Phase 2.5 (Visualization Engine) to `roadmap.md` and created Epic-005 to force-align execution with the Vision. Updated `AGENTS.md` guidelines to require a Vision-to-Roadmap check during task scaffolding.
+- Owner: Antigravity
+- Status: mitigated
+- Verification evidence: `roadmap.md` updated; Epic-005, Feat-014/015, and Tasks 035/036 created and staged in the backlog.
+
 ## Reuse Rules For Future Agents
+
 - Before starting implementation, read the latest 5 entries.
 - If an entry matches your current scope, apply its prevention action before coding.
 - When closing a task, verify whether a new mistake entry is required.

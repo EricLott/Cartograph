@@ -26,6 +26,8 @@ Capture current hard boundaries that materially affect Cartograph architecture a
 | cst-004 | platform | Local-first development currently depends on Docker Compose and MySQL availability. | Contributor onboarding requires container tooling; CI must mirror environment assumptions. | devops | 2026-04-20 | active |
 | cst-005 | product | Export output is still minimal and does not yet match the full agent-pack promise. | Core value proposition not yet realized in runnable product behavior. | product | 2026-04-10 | active |
 | cst-006 | governance | Open-source contributors may act concurrently via coding agents. | Requires strict task claim and expiry workflow to avoid overlap and stale ownership. | maintainer | 2026-04-15 | active |
+| cst-007 | technical | Browser memory and CPU limits for real-time node-graph rendering. | Complex systems with 1000+ decisions may experience UI lag; necessitates level-of-detail (LOD) or clustering strategies. | frontend | 2026-06-01 | active |
+
 
 ## Impact Analysis
 - `cst-001` and `cst-002` are critical-path constraints for reliability and trust.

@@ -19,10 +19,11 @@ To guide Cartograph's development and UX decisions, we focus on three primary ta
   * Incomplete or ambiguous documentation leading to rework.
   * Difficulty tracking implementation progress against the original design.
 * **Cartograph Value**: **Deterministic translation** from intent to execution-ready tasks.
-* **Primary Modes**: **Task Mode** (architecture decomposition) and **Roadmap Mode** (strategic alignment).
+* **Primary Modes**: **Task Mode** (architecture decomposition), **Roadmap Mode** (strategic alignment), and **Discover Mode** (semantic decision clusters).
 
 #### Operational Narrative
-Alex starts in **Roadmap Mode**, auditing the current project state against the long-term vision. Once a milestone is set, they switch to **Task Mode** to decompose high-level functional requirements into atomic task files with strict dependencies, ensuring **Aris** (the agent) has zero ambiguity.
+Alex starts in **Roadmap Mode**, auditing the current project state against the long-term vision. They use **Discover Mode** to visualize semantic clusters of decisions across pillars—identifying where a "Security" choice in the API might conflict with a "Data" choice in the database. Once the strategy is balanced, they switch to **Task Mode** to decompose high-level functional requirements into atomic task files with strict dependencies, ensuring **Aris** (the agent) has zero ambiguity.
+
 
 ---
 
@@ -82,7 +83,9 @@ These personas directly inform our four primary **Operating Modes** as defined i
 
 | Mode | Primary Persona | Goal |
 |---|---|---|
-| **🛠️ Work Mode** | **Aris** (Agent) | High-speed task execution and bug fixing. This is the bedrock of delivery. |
+| **🏷️ Work Mode** | **Aris** (Agent) | High-speed task execution and bug fixing. This is the bedrock of delivery. |
 | **📝 Task Mode** | **Alex** & **Sam** | Translating architectural vision into atomic, executable task units. |
 | **🗺️ Roadmap Mode** | **Alex** & **Sam** | Strategizing and aligning current execution with the high-level roadmap and vision. |
+| **🔍 Discover Mode** | **Alex** | Visualizing semantic clusters and cross-pillar dependencies to identify hidden risks. |
 | **📂 Repo Mode** | **System Guards** | Maintaining repo integrity, structure, and operational documentation. |
+
