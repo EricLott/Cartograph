@@ -1,7 +1,5 @@
 # Cartograph Contributor Agent Entry Point
 
-# Cartograph Contributor Agent Entry Point
-
 If you are a coding agent contributing to this repository, use this file as your starting point.
 
 ## Canonical Operating Contract
