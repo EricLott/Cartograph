@@ -13,8 +13,8 @@ depends_on:
   - task-014
 acceptance_criteria:
   - Export is blocked if critical pillars (Frontend/Backend/Data) are missing or empty.
-  - "Validator checks for \\\"pending decisions\\\" and warns user before export."
-  - "Validator outputs a structured report of \\\"missing metadata\\\" (descriptions, context)."
+  - "Validator checks for \\\\\\\"pending decisions\\\\\\\" and warns user before export."
+  - "Validator outputs a structured report of \\\\\\\"missing metadata\\\\\\\" (descriptions, context)."
 last_updated: 2026-03-21
 ---
 
