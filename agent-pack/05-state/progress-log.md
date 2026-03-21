@@ -40,6 +40,10 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-22T00:05:00-05:00| `task-021` | `done` | Organized exported tasks into workstream-specific sub-folders within `04-task-system/tasks/todo/`. Added a `workstreams.md` artifact to the `02-execution/` folder to provide a high-level summary of architectural domains. Updated `dependency-map.md` to reference the new bucket structure, improving navigation for long-running autonomous agents.
+  - Evidence:
+    - `frontend/src/services/exportService.js`
+  - Next step: Run cartograph-closeout for task-021.
 - 2026-03-21T23:45:00-05:00 | `task-024` | `done` | Added security guardrails and metadata to the exported blueprint pack. Implemented `cartograph-manifest.json` generation in the export root and added a `SECURITY.md` template to the `03-agent-ops/` folder. Updated `exportService.js` and `App.jsx` to handle project metadata (ID, version, time) during export. Verified that no sensitive data from `localStorage` or environment is inadvertently serialized.
   - Evidence:
     - `frontend/src/services/exportService.js`

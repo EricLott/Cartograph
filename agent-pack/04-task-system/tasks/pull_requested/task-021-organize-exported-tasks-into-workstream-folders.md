@@ -2,7 +2,7 @@
 id: task-021
 title: Organize exported tasks into workstream folders
 type: task
-status: in_progress
+status: pull_requested
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
@@ -27,9 +27,9 @@ Provide better navigation and organization for agents in the exported task syste
 - feature-004
 
 ## Implementation Steps
-- Update `exportService.js` recursive logic to create sub-directories for each top-level pillar under `tasks/todo/`.
-- Aggregate pillar summaries into a new `workstreams.md` artifact in the `02-execution/` folder.
-- Ensure task file paths in `dependency-map.md` reflect the new directory structure.
+- [x] Update `exportService.js` recursive logic to create sub-directories for each top-level pillar under `tasks/todo/`.
+- [x] Aggregate pillar summaries into a new `workstreams.md` artifact in the `02-execution/` folder.
+- [x] Ensure task file paths in `dependency-map.md` reflect the new directory structure.
 
 ## Dependencies
 - task-019

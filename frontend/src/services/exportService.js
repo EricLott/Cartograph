@@ -48,13 +48,21 @@ export const generateBlueprintZip = async (pillars, metadata = {}) => {
     const exec = root.folder("02-execution");
     exec.file("implementation-strategy.md", "# Implementation Strategy\n\n## Sequencing\n1. Foundation and Core Services\n2. Integration and API hardening\n3. Feature rollout\n4. Quality and CI Enforcement");
 
+    // Workstreams summary
+    let workstreamMd = "# Workstreams\n\n## Overview\nMajor architecture areas defined for this project.\n\n";
+    pillars.forEach(p => {
+        workstreamMd += `- **${p.title}**: ${p.description}\n`;
+    });
+    exec.file("workstreams.md", workstreamMd);
+
     let depMap = "# Dependency Map\n\n## Task Nodes\n";
     let depEdges = "## Dependency Edges\n";
     let taskCount = 1;
     const taskFiles = [];
 
-    const processPillarTasks = (ps, parentTaskId = null, parentPath = "") => {
+    const processPillarTasks = (ps, parentTaskId = null, parentPath = "", topLevelPillar = null) => {
         ps.forEach(p => {
+            const currentTopLevel = topLevelPillar || p.title.replace(/\s+/g, '-').toLowerCase();
             const taskId = `task-${String(taskCount++).padStart(3, '0')}`;
             const slug = p.title.replace(/\s+/g, '-').toLowerCase();
             const fileName = `${taskId}-${slug}.md`;
@@ -93,14 +101,14 @@ export const generateBlueprintZip = async (pillars, metadata = {}) => {
             }
             taskMd += `\n`;
 
-            taskFiles.push({ name: fileName, content: taskMd });
-            depMap += `- ${taskId}: ${p.title}\n`;
+            taskFiles.push({ name: fileName, content: taskMd, workstream: currentTopLevel });
+            depMap += `- ${taskId}: ${p.title} (Bucket: ${currentTopLevel})\n`;
             if (parentTaskId) {
                 depEdges += `- ${taskId} depends on ${parentTaskId}\n`;
             }
 
             if (p.subcategories && p.subcategories.length > 0) {
-                processPillarTasks(p.subcategories, taskId, `${parentPath}${p.title} > `);
+                processPillarTasks(p.subcategories, taskId, `${parentPath}${p.title} > `, currentTopLevel);
             }
         });
     };
@@ -132,8 +140,11 @@ If you discover a security vulnerability in this implementation, please report i
     // 5. 04-task-system
     const system = root.folder("04-task-system");
     system.file("README.md", "# Task System Contract\n\nDefines the status-folder lifecycle and metadata schema for all backlog items.");
-    const todo = system.folder("tasks/todo");
-    taskFiles.forEach(tf => todo.file(tf.name, tf.content));
+    
+    taskFiles.forEach(tf => {
+        const todo = system.folder(`tasks/todo/${tf.workstream}`);
+        todo.file(tf.name, tf.content);
+    });
 
     // 6. 05-state
     const state = root.folder("05-state");
@@ -150,4 +161,3 @@ If you discover a security vulnerability in this implementation, please report i
     const content = await zip.generateAsync({ type: "blob" });
     saveAs(content, "Cartograph_AgentPack.zip");
 };
-
