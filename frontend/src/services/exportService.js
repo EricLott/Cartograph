@@ -42,16 +42,18 @@ export const generateBlueprintZip = async (pillars) => {
     exec.file("implementation-strategy.md", "# Implementation Strategy\n\n## Sequencing\n1. Foundation and Core Services\n2. Integration and API hardening\n3. Feature rollout\n4. Quality and CI Enforcement");
 
     let depMap = "# Dependency Map\n\n## Task Nodes\n";
+    let depEdges = "## Dependency Edges\n";
     let taskCount = 1;
     const taskFiles = [];
 
-    const processPillarTasks = (ps, parentPath = "") => {
+    const processPillarTasks = (ps, parentTaskId = null, parentPath = "") => {
         ps.forEach(p => {
             const taskId = `task-${String(taskCount++).padStart(3, '0')}`;
             const slug = p.title.replace(/\s+/g, '-').toLowerCase();
             const fileName = `${taskId}-${slug}.md`;
 
-            let taskMd = `---\nid: ${taskId}\ntitle: ${p.title}\ntype: task\nstatus: todo\npriority: P1\nowner: TBD\ndepends_on: []\nlast_updated: ${new Date().toISOString().slice(0, 10)}\n---\n\n`;
+            const deps = parentTaskId ? `["${parentTaskId}"]` : "[]";
+            let taskMd = `---\nid: ${taskId}\ntitle: ${p.title}\ntype: task\nstatus: todo\npriority: P1\nowner: TBD\ndepends_on: ${deps}\nlast_updated: ${new Date().toISOString().slice(0, 10)}\n---\n\n`;
             taskMd += `# Task: ${p.title}\n\n## Goal\n${p.description}\n\n`;
 
             if (p.decisions && p.decisions.length > 0) {
@@ -64,15 +66,18 @@ export const generateBlueprintZip = async (pillars) => {
 
             taskFiles.push({ name: fileName, content: taskMd });
             depMap += `- ${taskId}: ${p.title}\n`;
+            if (parentTaskId) {
+                depEdges += `- ${taskId} depends on ${parentTaskId}\n`;
+            }
 
             if (p.subcategories && p.subcategories.length > 0) {
-                processPillarTasks(p.subcategories, `${parentPath}${p.title} > `);
+                processPillarTasks(p.subcategories, taskId, `${parentPath}${p.title} > `);
             }
         });
     };
 
     processPillarTasks(pillars);
-    exec.file("dependency-map.md", depMap);
+    exec.file("dependency-map.md", `${depMap}\n${depEdges}`);
 
     // 4. 03-agent-ops
     const ops = root.folder("03-agent-ops");

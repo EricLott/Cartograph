@@ -40,6 +40,11 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-20T21:51:20-05:00 | `task-019` | `done` | Implemented hierarchy-based dependency tracking in exportService.js and verified with Vitest.
+  - Evidence:
+    - `frontend/src/services/exportService.js`
+    - `frontend/src/test/exportService.test.js`
+  - Next step: Open Pull Request for review.
 - 2026-03-21T21:40:00-05:00 | `task-017` | `done` | Added CI workflow for lint, build, and test enforcement. Updated contributor docs (README.md, AGENTS.md, definition-of-done.md) to reflect automated quality gates.
   - Evidence:
     - `.github/workflows/ci.yml` (added)

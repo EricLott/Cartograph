@@ -3,15 +3,12 @@ import { checkAllAnswered, generateBlueprintZip } from '../services/exportServic
 
 // Mock JSZip and file-saver
 vi.mock('jszip', () => {
-    return {
-        default: class {
-            constructor() {
-                this.folder = vi.fn().mockReturnThis();
-                this.file = vi.fn().mockReturnThis();
-                this.generateAsync = vi.fn().mockResolvedValue('mock-zip-content');
-            }
-        }
-    };
+    const mockJSZip = vi.fn().mockImplementation(function() {
+        this.folder = vi.fn().mockReturnThis();
+        this.file = vi.fn().mockReturnThis();
+        this.generateAsync = vi.fn().mockResolvedValue('mock-zip-content');
+    });
+    return { default: mockJSZip };
 });
 
 vi.mock('file-saver', () => ({
@@ -97,6 +94,49 @@ describe('exportService', () => {
             // Check if saveAs was called
             const { saveAs } = await import('file-saver');
             expect(saveAs).toHaveBeenCalled();
+        });
+
+        it('generates zip with correct dependencies for nested pillars', async () => {
+            const pillars = [
+                {
+                    id: 'p1',
+                    title: 'Parent Pillar',
+                    description: 'Parent Desc',
+                    subcategories: [
+                        {
+                            id: 's1',
+                            title: 'Child Pillar',
+                            description: 'Child Desc'
+                        }
+                    ]
+                }
+            ];
+
+            // Get the mock JSZip class
+            const JSZip = (await import('jszip')).default;
+            
+            await generateBlueprintZip(pillars);
+
+            // Get the instance created by generateBlueprintZip
+            const mockZipInstance = vi.mocked(JSZip).mock.results[vi.mocked(JSZip).mock.results.length - 1].value;
+
+            // Verify task-001 (Parent) has no dependencies
+            expect(mockZipInstance.file).toHaveBeenCalledWith(
+                'task-001-parent-pillar.md',
+                expect.stringContaining('depends_on: []')
+            );
+
+            // Verify task-002 (Child) depends on task-001
+            expect(mockZipInstance.file).toHaveBeenCalledWith(
+                'task-002-child-pillar.md',
+                expect.stringContaining('depends_on: ["task-001"]')
+            );
+
+            // Verify dependency-map.md contains the edge
+            expect(mockZipInstance.file).toHaveBeenCalledWith(
+                'dependency-map.md',
+                expect.stringContaining('- task-002 depends on task-001')
+            );
         });
     });
 });
