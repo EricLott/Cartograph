@@ -33,6 +33,7 @@ function parseArgs(argv) {
         base: 'main',
         createPr: false,
         evidence: [],
+        nonInteractive: false,
     };
 
     for (let i = 0; i < argv.length; i += 1) {
@@ -54,6 +55,8 @@ function parseArgs(argv) {
             options.force = true;
         } else if (arg === '--create-pr') {
             options.createPr = true;
+        } else if (arg === '--non-interactive') {
+            options.nonInteractive = true;
         } else if (arg === '--help' || arg === '-h') {
             options.help = true;
         } else {
@@ -201,7 +204,7 @@ async function collectProgressLogInput(taskId, options, suggestedEvidence) {
         console.log(`- No changed-file evidence suggestions detected automatically.`);
     }
 
-    if ((!summary || evidence.length === 0) && canPrompt) {
+    if ((!summary || evidence.length === 0) && canPrompt && !options.nonInteractive) {
         const rl = createInterface({ input, output });
         try {
             if (!summary) {
@@ -227,7 +230,9 @@ async function collectProgressLogInput(taskId, options, suggestedEvidence) {
 
     if (!summary) {
         summary = createDefaultSummary(taskId, evidence.length > 0 ? evidence : visibleSuggestions);
-        console.log(`- No summary provided; generated summary: ${summary}`);
+        if (!options.nonInteractive) {
+            console.log(`- No summary provided; generated summary: ${summary}`);
+        }
     }
 
     if (evidence.length === 0 && visibleSuggestions.length > 0) {
@@ -283,7 +288,7 @@ function appendProgressLogEntry({ rootDir, config, taskId, summary, evidence, ne
 }
 
 function printHelp() {
-    console.log(`cartograph-closeout\n\nUsage:\n  node scripts/cartograph-closeout.mjs [options]\n\nOptions:\n  --task <task-###>           Target task ID (defaults to current branch ID)\n  --base <branch>             Base branch for validation (default: main)\n  --summary "<text>"          Progress-log summary for this closeout (auto-generated in non-interactive mode if omitted)\n  --evidence "<path>"         Evidence item (repeatable or comma-separated)\n  --next-step "<text>"        Optional next-step line for progress log entry\n  --create-pr                 Automate GitHub PR creation using gh CLI\n  --dry-run                   Preview actions without mutating files/git\n  --force                     Skip validation checks\n  --help                      Show this help\n`);
+    console.log(`cartograph-closeout\n\nUsage:\n  node scripts/cartograph-closeout.mjs [options]\n\nOptions:\n  --task <task-###>           Target task ID (defaults to current branch ID)\n  --base <branch>             Base branch for validation (default: main)\n  --summary "<text>"          Progress-log summary for this closeout (auto-generated in non-interactive mode if omitted)\n  --evidence "<path>"         Evidence item (repeatable or comma-separated)\n  --next-step "<text>"        Optional next-step line for progress log entry\n  --create-pr                 Automate GitHub PR creation using gh CLI\n  --non-interactive           Skip prompts and use generated summaries/suggested evidence\n  --dry-run                   Preview actions without mutating files/git\n  --force                     Skip validation checks\n  --help                      Show this help\n`);
 }
 
 function extractSection(body, headingName) {
@@ -539,6 +544,15 @@ async function main() {
 
     console.log(`\nNext steps:`);
     if (options.createPr) {
+        const stagedResult = runGit(['diff', '--cached', '--name-only'], { allowFailure: true });
+        const hasStaged = (stagedResult.stdout || '').trim().length > 0;
+
+        if (hasStaged) {
+            const idsString = taskIds.length > 1 ? `[${taskIds.join(', ')}]` : `[${taskIds[0]}]`;
+            console.log(`- Committing staged changes before PR creation...`);
+            runGit(['commit', '-m', `${idsString} Closeout: completion of task goals`]);
+        }
+
         await createPullRequest(taskIds, branch, taskPaths, rootDir, config, options);
     } else {
         const idsString = taskIds.length > 1 ? `[${taskIds.join(', ')}]` : `[${taskIds[0]}]`;

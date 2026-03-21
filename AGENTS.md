@@ -1,5 +1,7 @@
 # Cartograph Contributor Agent Entry Point
 
+# Cartograph Contributor Agent Entry Point
+
 If you are a coding agent contributing to this repository, use this file as your starting point.
 
 ## Canonical Operating Contract
@@ -15,6 +17,7 @@ If a human asks you to contribute, run:
 Before opening a PR, run:
 - `node scripts/cartograph-closeout.mjs --task task-###` (to prepare for PR)
 - `node scripts/cartograph-closeout.mjs --task task-### --create-pr` (to automate PR creation)
+- `node scripts/cartograph-closeout.mjs --task task-### --create-pr --non-interactive` (agent-style automated closeout)
 
 Manual validation:
 - `node scripts/validate-task-pr.mjs --self-check --task-id task-###`
