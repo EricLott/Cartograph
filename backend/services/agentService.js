@@ -45,6 +45,7 @@ const callProviderApi = async ({ providerName, url, requestInit }) => {
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), PROVIDER_REQUEST_TIMEOUT_MS);
+        const startTime = performance.now();
 
         try {
             const response = await fetch(url, { ...requestInit, signal: controller.signal });
@@ -55,7 +56,9 @@ const callProviderApi = async ({ providerName, url, requestInit }) => {
                 await wait(PROVIDER_RETRY_BASE_DELAY_MS * attempt);
                 continue;
             }
-            return result;
+
+            const latency_ms = Math.round(performance.now() - startTime);
+            return { data: result, latency_ms };
         } catch (error) {
             clearTimeout(timeoutId);
             const isRetryable = error?.name === 'AbortError' || error instanceof TypeError;
@@ -69,7 +72,7 @@ const callProviderApi = async ({ providerName, url, requestInit }) => {
 };
 
 const getOpenAICompletion = async (keys, payload) => {
-    const data = await callProviderApi({
+    const { data, latency_ms } = await callProviderApi({
         providerName: 'OpenAI',
         url: 'https://api.openai.com/v1/chat/completions',
         requestInit: {
@@ -81,14 +84,22 @@ const getOpenAICompletion = async (keys, payload) => {
             body: JSON.stringify(payload)
         }
     });
+
     if (data?.error) throw new Error(data.error.message || 'OpenAI returned an error.');
-    const content = data?.choices?.[0]?.message?.content;
-    if (typeof content !== 'string') throw new Error('OpenAI response was missing content.');
-    return content;
+    const completion = data?.choices?.[0]?.message?.content;
+    if (typeof completion !== 'string') throw new Error('OpenAI response was missing content.');
+
+    const usage = {
+        prompt_tokens: data.usage?.prompt_tokens || 0,
+        completion_tokens: data.usage?.completion_tokens || 0,
+        total_tokens: data.usage?.total_tokens || 0
+    };
+
+    return { completion, usage, latency_ms };
 };
 
 const getAnthropicCompletion = async (keys, payload) => {
-    const data = await callProviderApi({
+    const { data, latency_ms } = await callProviderApi({
         providerName: 'Anthropic',
         url: 'https://api.anthropic.com/v1/messages',
         requestInit: {
@@ -101,13 +112,21 @@ const getAnthropicCompletion = async (keys, payload) => {
             body: JSON.stringify(payload)
         }
     });
-    const content = data?.content?.[0]?.text;
-    if (typeof content !== 'string') throw new Error('Anthropic response was missing content.');
-    return content;
+
+    const completion = data?.content?.[0]?.text;
+    if (typeof completion !== 'string') throw new Error('Anthropic response was missing content.');
+
+    const usage = {
+        prompt_tokens: data.usage?.input_tokens || 0,
+        completion_tokens: data.usage?.output_tokens || 0,
+        total_tokens: (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
+    };
+
+    return { completion, usage, latency_ms };
 };
 
 const getGeminiCompletion = async (keys, payload) => {
-    const data = await callProviderApi({
+    const { data, latency_ms } = await callProviderApi({
         providerName: 'Gemini',
         url: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${keys.gemini}`,
         requestInit: {
@@ -116,9 +135,17 @@ const getGeminiCompletion = async (keys, payload) => {
             body: JSON.stringify(payload)
         }
     });
-    const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (typeof content !== 'string') throw new Error('Gemini response was missing content.');
-    return content;
+
+    const completion = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (typeof completion !== 'string') throw new Error('Gemini response was missing content.');
+
+    const usage = {
+        prompt_tokens: data.usageMetadata?.promptTokenCount || 0,
+        completion_tokens: data.usageMetadata?.candidatesTokenCount || 0,
+        total_tokens: data.usageMetadata?.totalTokenCount || 0
+    };
+
+    return { completion, usage, latency_ms };
 };
 
 const requestProviderCompletion = async ({ provider, payload, clientKeys = {} }) => {
@@ -133,12 +160,16 @@ const requestProviderCompletion = async ({ provider, payload, clientKeys = {} })
         throw new Error(`Missing API key for ${provider}. Please configure it in the backend environment or frontend settings.`);
     }
 
+    let result;
     switch (provider) {
-        case 'openai': return getOpenAICompletion(keys, payload);
-        case 'anthropic': return getAnthropicCompletion(keys, payload);
-        case 'gemini': return getGeminiCompletion(keys, payload);
+        case 'openai': result = await getOpenAICompletion(keys, payload); break;
+        case 'anthropic': result = await getAnthropicCompletion(keys, payload); break;
+        case 'gemini': result = await getGeminiCompletion(keys, payload); break;
         default: throw new Error(`Unsupported provider: ${provider}`);
     }
+
+    console.log(`[LLM Proxy] ${provider} completion: ${result.usage.total_tokens} tokens, ${result.latency_ms}ms`);
+    return result;
 };
 
 module.exports = {

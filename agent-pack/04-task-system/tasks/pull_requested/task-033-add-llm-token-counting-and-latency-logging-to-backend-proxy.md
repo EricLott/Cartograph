@@ -2,7 +2,7 @@
 id: task-033
 title: Add LLM Token Counting and Latency Logging to Backend Proxy
 type: task
-status: in_progress
+status: pull_requested
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott

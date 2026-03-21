@@ -10,8 +10,11 @@ router.post('/agent/complete', async (req, res) => {
             return res.status(400).json({ error: 'Missing provider or completion payload.' });
         }
 
-        const completion = await agentService.requestProviderCompletion({ provider, payload });
-        res.status(200).json({ completion });
+        const { completion, usage, latency_ms } = await agentService.requestProviderCompletion({ provider, payload });
+        res.status(200).json({ 
+            completion, 
+            usage: { ...usage, latency_ms } 
+        });
     } catch (err) {
         console.error('LLM Proxy error:', err);
         res.status(502).json({ 

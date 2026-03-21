@@ -40,6 +40,13 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T15:58:00-05:00 | `task-033` | `done` | Added LLM token counting and latency logging to backend proxy.
+  - Evidence:
+    - `backend/services/agentService.js` (latency measurement, usage extraction, standardized metadata)
+    - `backend/routes/agentRoutes.js` (updated `/agent/complete` to return usage object)
+    - `backend/tests/integration/agent.integration.test.js` (added success tests for OpenAI, Anthropic, Gemini with usage verification)
+    - All 6 backend integration tests passed.
+  - Next step: Run `node scripts/cartograph-closeout.mjs --task task-033`.
 - 2026-03-21T15:30:00-05:00 | `task-031` | `done` | Implement Scaffolding Generation in `exportService.js`
   - Evidence:
     - `frontend/src/services/exportService.js` (refactored `processPillarTasks` for decision-task mapping)
