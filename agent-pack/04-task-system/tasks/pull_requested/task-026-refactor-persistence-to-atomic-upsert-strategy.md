@@ -2,7 +2,7 @@
 id: task-026
 title: Refactor persistence to atomic upsert strategy
 type: task
-status: in_progress
+status: pull_requested
 priority: P0
 owner: Eric Lott
 claim_owner: Eric Lott
@@ -18,6 +18,7 @@ acceptance_criteria:
   - Database transactions ensure atomicity across the entire tree.
 last_updated: 2026-03-21
 ---
+
 
 
 # Task: Refactor persistence to atomic upsert strategy

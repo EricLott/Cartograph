@@ -38,6 +38,12 @@ status: active
 ```
 
 ## Active Decisions
+- `dec-006` (2026-03-21): Implement ID-based upsert synchronization for Pillar and Decision persistence.
+  - Options considered: complete reconstruction (destroy/recreate) vs ID-based synchronization.
+  - Chosen: ID-based synchronization.
+  - Rationale: Preserves historical metadata (e.g., `createdAt` timestamps, system IDs) and maintains stable references for external integrations or future versioning. Replaces the destructive "clear and rebuild" pattern while ensuring atomicity via transactions.
+  - Linked items: `task-026`.
+
 - `dec-005` (2026-03-20): Relax `exportService` guard to allow "in-progress" blueprint exports with automated blocker tagging.
   - Options considered: strict "all-answered" export vs permissive "blocker-tagged" export.
   - Chosen: permissive "blocker-tagged" export.

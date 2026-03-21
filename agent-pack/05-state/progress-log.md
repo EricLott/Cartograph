@@ -40,6 +40,12 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T13:45:00-05:00 | `task-026` | `done` | Refactored project state persistence to use an atomic upsert strategy. Replaced destructive `destroy` logic with a record synchronization loop that preserves existing Pillar and Decision IDs and their `createdAt` timestamps.
+  - Evidence:
+    - Updated `backend/services/projectService.js` (upsert + cleanup logic)
+    - Added `backend/tests/integration/upsert.integration.test.js` (validation of timestamp preservation and removal behavior)
+    - All backend integration tests passed (7/7).
+  - Next step: Run cartograph-closeout.
 - 2026-03-21T10:40:00-05:00 | `task-030` | `done` | Fixed eligibility check in `cartograph-contribute.mjs` to include `released` claim status.
   - Evidence:
     - Updated `cartograph-contribute.mjs`
