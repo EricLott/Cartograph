@@ -217,6 +217,12 @@ A task can move to `completed` only when:
 4. Evidence is recorded in `../05-state/progress-log.md`.
 5. No unresolved blocker remains linked to the task.
 
+### Continuous Integration
+The following checks are automated in GitHub Actions on all PRs to `main`:
+- **Frontend Quality**: ESLint, build success, and Vitest coverage.
+- **Backend Quality**: Jest API coverage.
+- **Contract Enforcement**: Task ID consistency across branch, PR title, body, and backlog moves.
+
 ## Contribution Quality Checklist
 Before closing a task, ensure:
 - Changes are scoped to the task goal and dependencies.
