@@ -2,21 +2,22 @@
 id: task-020
 title: Refine task template with evidence-driven acceptance criteria
 type: task
-status: todo
+status: in_progress
 priority: P1
-owner: unassigned
-claim_owner: unassigned
-claim_status: unclaimed
-claim_expires_at: null
-sla_due_at: 2026-05-15T23:59:00Z
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-22T03:07:16.434Z"
+sla_due_at: "2026-05-15T23:59:00Z"
 depends_on:
   - task-014
 acceptance_criteria:
-  - Exported tasks include a structured `## Acceptance Criteria` section.
+  - "Exported tasks include a structured `## Acceptance Criteria` section."
   - Acceptance criteria are automatically derived from decision answers and pillar goals.
-  - Include an `## Evidence Required` section in every task markdown.
-last_updated: 2026-03-19
+  - "Include an `## Evidence Required` section in every task markdown."
+last_updated: 2026-03-21
 ---
+
 
 # Task: Refine task template with evidence-driven acceptance criteria
 
