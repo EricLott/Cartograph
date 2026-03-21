@@ -2,7 +2,7 @@
 id: task-022
 title: Seed progress log with initialization evidence in export
 type: task
-status: in_progress
+status: pull_requested
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
@@ -12,7 +12,7 @@ sla_due_at: "2026-05-25T23:59:00Z"
 depends_on:
   - task-021
 acceptance_criteria:
-  - "The exported `progress-log.md` contains at least one entry for \"Architecture and Planning Phase\"."
+  - "The exported `progress-log.md` contains at least one entry for \\\\\\\"Architecture and Planning Phase\\\\\\\"."
   - "Evidence links point to the generated `vision.md` and `implementation-strategy.md`."
 last_updated: 2026-03-21
 ---
