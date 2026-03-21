@@ -10,7 +10,8 @@ The full mission-ready contract, including task metadata schemas, escalation rul
 
 ## One-Command Contributor Flow
 If a human asks you to contribute, run:
-- `node scripts/cartograph-contribute.mjs --auto` (to pick and claim a task)
+- `node scripts/cartograph-loop.mjs` (for recursive autonomous execution)
+- `node scripts/cartograph-contribute.mjs --auto` (to pick and claim a single task)
 - `node scripts/cartograph-contribute.mjs --task task-### --resume` (to resume work)
 
 ## Local Preflight & Closeout
