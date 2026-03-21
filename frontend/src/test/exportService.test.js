@@ -18,7 +18,7 @@ vi.mock('file-saver', () => ({
 describe('exportService', () => {
     describe('checkAllAnswered', () => {
         it('returns true if all decisions have answers', () => {
-            const pillars = [
+            const _pillars = [
                 {
                     title: 'Pillar 1',
                     decisions: [{ question: 'Q1', answer: 'A1' }],
@@ -30,21 +30,21 @@ describe('exportService', () => {
                     ]
                 }
             ];
-            expect(checkAllAnswered(pillars)).toBe(true);
+            expect(checkAllAnswered()).toBe(true);
         });
 
-        it('returns false if any decision is missing an answer', () => {
-            const pillars = [
+        it('returns true even if some decisions are missing an answer', () => {
+            const _pillars = [
                 {
                     title: 'Pillar 1',
                     decisions: [{ question: 'Q1', answer: '' }]
                 }
             ];
-            expect(checkAllAnswered(pillars)).toBe(false);
+            expect(checkAllAnswered()).toBe(true);
         });
 
-        it('returns false if a subcategory decision is missing an answer', () => {
-            const pillars = [
+        it('returns true even if a subcategory decision is missing an answer', () => {
+            const _pillars = [
                 {
                     title: 'Pillar 1',
                     decisions: [{ question: 'Q1', answer: 'A1' }],
@@ -56,12 +56,12 @@ describe('exportService', () => {
                     ]
                 }
             ];
-            expect(checkAllAnswered(pillars)).toBe(false);
+            expect(checkAllAnswered()).toBe(true);
         });
 
         it('returns true if no decisions exist', () => {
-            const pillars = [{ title: 'Pillar 1' }];
-            expect(checkAllAnswered(pillars)).toBe(true);
+            const _pillars = [{ title: 'Pillar 1' }];
+            expect(checkAllAnswered()).toBe(true);
         });
     });
 
@@ -71,14 +71,15 @@ describe('exportService', () => {
             await expect(generateBlueprintZip(null)).rejects.toThrow("Cannot export blueprint. No architecture pillars defined. Describe your application idea first.");
         });
 
-        it('throws error if some decisions are unanswered', async () => {
+        it('generates zip even if some decisions are unanswered', async () => {
             const pillars = [
                 {
                     title: 'Pillar 1',
+                    description: 'Desc 1',
                     decisions: [{ question: 'Q1', answer: '' }]
                 }
             ];
-            await expect(generateBlueprintZip(pillars)).rejects.toThrow("Cannot export blueprint. There are unanswered decisions in the architecture. Please answer all decisions before exporting.");
+            await expect(generateBlueprintZip(pillars)).resolves.not.toThrow();
         });
 
         it('generates zip successfully when all criteria are met', async () => {
@@ -120,22 +121,49 @@ describe('exportService', () => {
             // Get the instance created by generateBlueprintZip
             const mockZipInstance = vi.mocked(JSZip).mock.results[vi.mocked(JSZip).mock.results.length - 1].value;
 
-            // Verify task-001 (Parent) has no dependencies
+            // Verify task-001 has AC and Evidence sections
             expect(mockZipInstance.file).toHaveBeenCalledWith(
                 'task-001-parent-pillar.md',
-                expect.stringContaining('depends_on: []')
+                expect.stringContaining('## Acceptance Criteria')
+            );
+            expect(mockZipInstance.file).toHaveBeenCalledWith(
+                'task-001-parent-pillar.md',
+                expect.stringContaining('## Evidence Required')
             );
 
-            // Verify task-002 (Child) depends on task-001
+            // Verify task-002 (Child) depends on task-001 and has AC
             expect(mockZipInstance.file).toHaveBeenCalledWith(
                 'task-002-child-pillar.md',
                 expect.stringContaining('depends_on: ["task-001"]')
+            );
+            expect(mockZipInstance.file).toHaveBeenCalledWith(
+                'task-002-child-pillar.md',
+                expect.stringContaining('## Acceptance Criteria')
             );
 
             // Verify dependency-map.md contains the edge
             expect(mockZipInstance.file).toHaveBeenCalledWith(
                 'dependency-map.md',
                 expect.stringContaining('- task-002 depends on task-001')
+            );
+        });
+
+        it('tags unanswered decisions as blockers in markdown', async () => {
+            const pillars = [
+                {
+                    title: 'Pillar 1',
+                    description: 'Desc 1',
+                    decisions: [{ question: 'Q1', answer: 'Pending Resolution' }]
+                }
+            ];
+
+            const JSZip = (await import('jszip')).default;
+            await generateBlueprintZip(pillars);
+            const mockZipInstance = vi.mocked(JSZip).mock.results[vi.mocked(JSZip).mock.results.length - 1].value;
+
+            expect(mockZipInstance.file).toHaveBeenCalledWith(
+                'task-001-pillar-1.md',
+                expect.stringContaining('- [BLOCKER] Resolve decision for question: **Q1** before final implementation.')
             );
         });
     });

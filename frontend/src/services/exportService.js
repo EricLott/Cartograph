@@ -1,12 +1,10 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
-export const checkAllAnswered = (nodes) => {
-    return nodes.every(p => {
-        const parentAns = p.decisions ? p.decisions.every(d => d.answer !== null && d.answer !== "") : true;
-        const childAns = (p.subcategories && p.subcategories.length > 0) ? checkAllAnswered(p.subcategories) : true;
-        return parentAns && childAns;
-    });
+export const checkAllAnswered = () => {
+    // We now allow exporting even with unanswered decisions, 
+    // as they will be tagged as blockers/risks in the tasks.
+    return true; 
 };
 
 export const generateBlueprintZip = async (pillars) => {
@@ -14,7 +12,7 @@ export const generateBlueprintZip = async (pillars) => {
         throw new Error("Cannot export blueprint. No architecture pillars defined. Describe your application idea first.");
     }
 
-    if (!checkAllAnswered(pillars)) {
+    if (!checkAllAnswered()) {
         throw new Error("Cannot export blueprint. There are unanswered decisions in the architecture. Please answer all decisions before exporting.");
     }
 
@@ -56,13 +54,35 @@ export const generateBlueprintZip = async (pillars) => {
             let taskMd = `---\nid: ${taskId}\ntitle: ${p.title}\ntype: task\nstatus: todo\npriority: P1\nowner: TBD\ndepends_on: ${deps}\nlast_updated: ${new Date().toISOString().slice(0, 10)}\n---\n\n`;
             taskMd += `# Task: ${p.title}\n\n## Goal\n${p.description}\n\n`;
 
+            // Build Acceptance Criteria
+            taskMd += `## Acceptance Criteria\n`;
+            taskMd += `- Satisfy the core pillar goal: ${p.description}\n`;
+            
             if (p.decisions && p.decisions.length > 0) {
-                taskMd += `## Decisions to Implement\n`;
                 p.decisions.forEach(d => {
-                    taskMd += `- [ ] **${d.question}**: ${d.answer || 'Pending Resolution'}\n`;
-                    if (d.context) taskMd += `  - *Context*: ${d.context}\n`;
+                    const ans = d.answer?.trim();
+                    const isUnresolved = !ans || ans === 'Pending Resolution';
+                    if (isUnresolved) {
+                        taskMd += `- [BLOCKER] Resolve decision for question: **${d.question}** before final implementation.\n`;
+                    } else {
+                        taskMd += `- Implement decision: **${d.question}** as per answer choice: *${ans}*\n`;
+                    }
                 });
             }
+            taskMd += `\n`;
+
+            // Build Evidence Required
+            taskMd += `## Evidence Required\n`;
+            taskMd += `- [ ] Proof of implementation for ${p.title} matching architectural intent.\n`;
+            if (p.decisions && p.decisions.length > 0) {
+                p.decisions.forEach(d => {
+                   const ans = d.answer?.trim();
+                   if (ans && ans !== 'Pending Resolution') {
+                       taskMd += `  - [ ] Decision satisfied: ${d.question}\n`;
+                   }
+                });
+            }
+            taskMd += `\n`;
 
             taskFiles.push({ name: fileName, content: taskMd });
             depMap += `- ${taskId}: ${p.title}\n`;

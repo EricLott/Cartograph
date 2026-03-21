@@ -38,6 +38,12 @@ status: active
 ```
 
 ## Active Decisions
+- `dec-005` (2026-03-20): Relax `exportService` guard to allow "in-progress" blueprint exports with automated blocker tagging.
+  - Options considered: strict "all-answered" export vs permissive "blocker-tagged" export.
+  - Chosen: permissive "blocker-tagged" export.
+  - Rationale: Standardizes task quality and provides clear, observable objectives for agents even when some decisions are still pending. This allows for incremental architecture planning and execution.
+  - Linked items: `task-020`.
+
 - `dec-004` (2026-03-21): Enforce automated quality gates (lint/build/test) and task metadata contracts via GitHub Actions.
   - Options considered: manual pre-merge checks vs mandatory CI enforcement.
   - Chosen: mandatory CI enforcement.

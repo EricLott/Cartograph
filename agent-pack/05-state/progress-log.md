@@ -40,6 +40,11 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-20T22:15:00-05:00 | `task-020` | `done` | Refined task template in `exportService.js` to include structured `Acceptance Criteria` and `Evidence Required` sections. AC are now automatically derived from pillar goals and decision answers, with unanswered decisions tagged as `[BLOCKER]`. Relaxed `checkAllAnswered` to allow incremental blueprint exports.
+  - Evidence:
+    - `frontend/src/services/exportService.js`
+    - `frontend/src/test/exportService.test.js`
+  - Next step: Run own closeout to finalize the task.
 - 2026-03-20T21:51:20-05:00 | `task-019` | `done` | Implemented hierarchy-based dependency tracking in exportService.js and verified with Vitest.
   - Evidence:
     - `frontend/src/services/exportService.js`
