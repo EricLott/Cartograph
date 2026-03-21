@@ -2,12 +2,12 @@
 id: task-025
 title: Implement decision conflict identification and user feedback
 type: task
-status: pull_requested
+status: completed
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-22T14:36:57.810Z"
+claim_status: released
+claim_expires_at: null
 sla_due_at: "2026-06-15T23:59:00Z"
 depends_on:
   - task-010
