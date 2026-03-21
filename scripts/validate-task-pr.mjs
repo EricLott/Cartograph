@@ -13,7 +13,7 @@ import {
 } from './lib/workflow-config.mjs';
 
 const FIELD_ALIASES = {
-  'Task ID': ['Task ID', 'ID'],
+  'Task ID': ['Task ID', 'ID', 'Primary Task'],
   'Task File Path': ['Task File Path', 'Link', 'File Path'],
   'Task Title': ['Task Title', 'Title'],
   'Acceptance Criteria': ['Acceptance Criteria'],

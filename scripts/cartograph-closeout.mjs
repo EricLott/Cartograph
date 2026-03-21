@@ -399,7 +399,8 @@ async function createPullRequest(taskId, branch, taskPath, rootDir, config, opti
     const goal = extractSection(body, 'Task Goal') || 'See task file.';
     const evidence = extractProgressLogEvidence(rootDir, config, taskId) || 'Add evidence details here.';
 
-    const prBody = `## Primary Task: ${taskId}
+    const prBody = `## Primary Tasks
+### Task ID: ${taskId}
 **Link**: [${path.relative(rootDir, taskPath).replace(/\\/g, '/')}](${path.relative(rootDir, taskPath).replace(/\\/g, '/')})
 **Title**: ${frontmatter.title}
 
