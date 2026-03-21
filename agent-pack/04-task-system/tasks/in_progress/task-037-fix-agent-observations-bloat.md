@@ -2,21 +2,21 @@
 id: task-037
 title: Fix Agent Observations notification bloat
 type: task
-status: todo
+status: in_progress
 priority: P1
-owner: frontend-ops
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-22T21:03:48.355Z"
+sla_due_at: 2026-03-24
 depends_on: []
 acceptance_criteria:
   - Observations are grouped by type or by Pillar.
-  - Observations are filtered to show only those relevant to the *active* pillar in the `Details` view.
+  - "Observations are filtered to show only those relevant to the *active* pillar in the `Details` view."
   - Added a summary view at the top level when no pillar is selected.
   - Implemented a collapsible/expandable UI for the observations list.
   - Verified that the workspace header and core content are visible in the initial viewport.
 last_updated: 2026-03-21
-claim_owner: null
-claim_status: unclaimed
-claim_expires_at: null
-sla_due_at: 2026-03-24
 ---
 
 # Task 037: Fix Agent Observations notification bloat
