@@ -31,9 +31,11 @@ export function getPrStatus(branch) {
 }
 
 export function syncMain() {
-    console.log('- Syncing main branch...');
+    console.log('- Hard-syncing main branch to origin/main...');
     runGit(['checkout', 'main']);
-    runGit(['pull', 'origin', 'main']);
+    runGit(['fetch', 'origin', 'main']);
+    // Hard reset ensures local main is bit-for-bit identical to source of truth.
+    runGit(['reset', '--hard', 'origin/main']);
 }
 
 export function deleteBranch(branch) {

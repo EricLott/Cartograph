@@ -18,6 +18,7 @@ import {
   joinWorkflowPath,
   toAbsolutePath,
 } from './lib/workflow-config.mjs';
+import { syncMain } from './lib/git-helper.mjs';
 
 function assertDependencies(rootDir) {
   const folders = ['frontend', 'backend'];
@@ -457,15 +458,19 @@ async function main() {
     if (canClaimNow) {
       console.log(`\n[CLAIM] Initializing global claim on branch ${options.base}...`);
 
-      // 1. Ensure we are on base branch and synced
-      const currentBranch = runGit(['rev-parse', '--abbrev-ref', 'HEAD']).stdout.trim();
-      if (currentBranch !== options.base) {
-        console.log(`- Switching to ${options.base}...`);
-        runGit(['switch', options.base]);
+      // Ensure we are synced to the target base (default: main)
+      if (options.base === 'main') {
+        syncMain(); 
+      } else {
+        const currentBranch = runGit(['rev-parse', '--abbrev-ref', 'HEAD']).stdout.trim();
+        if (currentBranch !== options.base) {
+          console.log(`- Switching to base branch ${options.base}...`);
+          runGit(['switch', options.base]);
+        }
+        console.log(`- Fetching and resetting to origin/${options.base}...`);
+        runGit(['fetch', 'origin', options.base]);
+        runGit(['reset', '--hard', `origin/${options.base}`]);
       }
-
-      console.log(`- Syncing with origin/${options.base}...`);
-      runGit(['pull', 'origin', options.base], { allowFailure: true });
 
       // 2. Perform the claim (update file)
       console.log(`- Claiming ${taskId} for ${owner}...`);

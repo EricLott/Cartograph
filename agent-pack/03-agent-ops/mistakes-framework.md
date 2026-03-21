@@ -40,7 +40,18 @@ Copy this block for each new entry.
 
 ## Mistake Log
 
-_No entries yet. Add the first entry using the template above._
+### M-20260320-01
+- Date: 2026-03-20
+- Agent/session: Antigravity / 56d03d57-167c-4cef-9c97-9b2e76b3ac65
+- Task ID: task-021 / task-024
+- Summary: Local `main` branch not synchronized with `origin/main` before starting a new task, leading to "shadow diffs" from previously merged tasks appearing as new changes in a subsequent task.
+- Impact: Validation failed due to strict mode violations (files changed outside of task scope), stalling the autonomous cycle.
+- Detection: `validate-task-pr.mjs` failed with `Strict mode violation: other backlog item files changed` and `PR spans multiple primary items`.
+- Root cause: Agent failed to hard-sync local `main` before claiming/implementing a task, leading to an incorrect base for diff calculation. Local artifacts also blocked branch switching.
+- Prevention action: Update `cartograph-loop.mjs` and `AGENTS.md` to mandate a hard-sync of local `main` to `origin/main` before starting any new work item.
+- Owner: Eric Lott
+- Status: mitigated
+- Verification evidence: Successful closeout and PR creation for task-021 after manual `git reset --hard origin/main`.
 
 ## Reuse Rules For Future Agents
 - Before starting implementation, read the latest 5 entries.
