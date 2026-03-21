@@ -53,12 +53,20 @@ export const validateBlueprint = (project) => {
         // Decisions
         if (p.decisions) {
             p.decisions.forEach(d => {
+                // 1. Conflict Check
+                if (d.conflict) {
+                    warnings.push(`Conflict: ${d.conflict}`);
+                    metadataReport.push({ id: d.id, type: 'decision', field: 'conflict', title: d.question, parentTitle: p.title, issue: 'conflict' });
+                }
+
+                // 2. Answer Completion
                 const hasAnswer = d.answer && d.answer.trim().length > 0;
                 if (!hasAnswer) {
                     warnings.push(`Pending decision in "${p.title}": "${d.question}"`);
                     metadataReport.push({ id: d.id, type: 'decision', field: 'answer', title: d.question, parentTitle: p.title, issue: 'unresolved' });
                 }
                 
+                // 3. Metadata Context
                 if (!d.context || d.context.trim().length < 10) {
                     metadataReport.push({ id: d.id, type: 'decision', field: 'context', title: d.question, parentTitle: p.title, issue: 'thin_context' });
                 }
