@@ -2,7 +2,7 @@
 id: task-029
 title: Populate full 00-07 directory structure in export
 type: task
-status: in_progress
+status: pull_requested
 priority: P0
 owner: Eric Lott
 claim_owner: Eric Lott
