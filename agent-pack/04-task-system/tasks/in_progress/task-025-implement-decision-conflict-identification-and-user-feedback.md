@@ -2,21 +2,22 @@
 id: task-025
 title: Implement decision conflict identification and user feedback
 type: task
-status: todo
+status: in_progress
 priority: P1
-owner: unassigned
-claim_owner: unassigned
-claim_status: unclaimed
-claim_expires_at: null
-sla_due_at: 2026-06-15T23:59:00Z
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-22T14:36:57.810Z"
+sla_due_at: "2026-06-15T23:59:00Z"
 depends_on:
   - task-010
 acceptance_criteria:
   - The UI highlights conflicting or logically inconsistent decisions within a pillar.
   - Users receive actionable feedback/suggestions to resolve identified conflicts.
   - Conflict hints are persisted and included in the exported pack metadata.
-last_updated: 2026-03-19
+last_updated: 2026-03-21
 ---
+
 
 # Task: Implement decision conflict identification and user feedback
 
