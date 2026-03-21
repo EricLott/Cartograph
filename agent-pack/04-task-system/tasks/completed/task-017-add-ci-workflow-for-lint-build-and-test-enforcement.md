@@ -2,12 +2,12 @@
 id: task-017
 title: Add CI workflow for lint build and test enforcement
 type: task
-status: in_progress
+status: completed
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-22T02:33:32.384Z"
+claim_status: released
+claim_expires_at: null
 sla_due_at: "2026-05-05T23:59:00Z"
 depends_on:
   - task-015

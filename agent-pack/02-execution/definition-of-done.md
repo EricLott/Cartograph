@@ -22,9 +22,10 @@ Define objective completion gates for tasks, features, and milestones in Cartogr
 A task is `completed` only when all are true:
 1. Acceptance criteria in the task file are satisfied.
 2. Required commands for scope pass (lint/build/tests/manual checks as applicable).
-3. Task metadata is updated (`status: completed`, claim released).
-4. Evidence recorded in `../05-state/progress-log.md`.
-5. No unresolved blocker is linked to task ID.
+3. Automated CI quality and contract checks pass on the pull request.
+4. Task metadata is updated (`status: completed`, claim released).
+5. Evidence recorded in `../05-state/progress-log.md`.
+6. No unresolved blocker is linked to task ID.
 
 ## Feature-Level Done Criteria
 - All child tasks are `done`.
