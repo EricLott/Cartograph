@@ -2,12 +2,12 @@
 id: task-035
 title: Enhance Decision Model with Semantic Relationships
 type: task
-status: pull_requested
+status: completed
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-23T01:57:31.195Z"
+claim_status: released
+claim_expires_at: null
 sla_due_at: 2026-03-24
 depends_on:
   - task-026
