@@ -1,6 +1,10 @@
+process.env.NODE_ENV = 'test';
+process.env.DB_DIALECT = 'sqlite';
+process.env.DB_STORAGE = ':memory:';
+
 const request = require('supertest');
 const { app, sequelize } = require('../../server');
-const { Project, Pillar, Decision, DecisionRelationship } = require('../../models');
+const { DecisionRelationship } = require('../../models');
 
 describe('Task-035: Decision Relationships Integration', () => {
     beforeAll(async () => {
