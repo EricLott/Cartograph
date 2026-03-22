@@ -774,3 +774,40 @@
   border: 2px solid white;
   padding: 0 4px;
 }
+
+.decision-card.active-highlight {
+  border-color: #3b82f6 !important;
+  background: rgba(59, 130, 246, 0.08) !important;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2) !important;
+  transform: scale(1.02) !important;
+  z-index: 10;
+}
+
+.graph-view-wrapper {
+  height: 100%;
+  width: 100%;
+  background: #fafafa;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.react-flow__node-decision {
+  cursor: pointer;
+}
+
+.react-flow__handle {
+  width: 8px;
+  height: 8px;
+  background: #3b82f6 !important;
+  border: 2px solid #fff !important;
+}
+
+.react-flow__controls button {
+  background: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.react-flow__controls button:hover {
+  background: #fff;
+}

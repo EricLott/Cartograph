@@ -19,10 +19,22 @@ const SubcategoriesList = ({ subcategories }) => {
     );
 };
 
-const DecisionCard = ({ decision, index, onUpdateDecision, pillarId }) => {
+const DecisionCard = ({ decision, index, onUpdateDecision, pillarId, isActive }) => {
     const standardConfig = STANDARD_DECISIONS[decision.id];
+    const cardRef = React.useRef(null);
+
+    React.useEffect(() => {
+        if (isActive && cardRef.current) {
+            cardRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }, [isActive]);
+
     return (
-        <div className={`decision-card ${decision.conflict ? 'conflict' : (decision.answer ? 'answered' : 'pending')}`} style={{ animationDelay: `${index * 0.1}s` }}>
+        <div 
+            ref={cardRef}
+            className={`decision-card ${decision.conflict ? 'conflict' : (decision.answer ? 'answered' : 'pending')} ${isActive ? 'active-highlight' : ''}`} 
+            style={{ animationDelay: `${index * 0.1}s` }}
+        >
             <div className="decision-card-header">
                 <h4>{decision.question}</h4>
                 {decision.conflict ? (
@@ -65,7 +77,7 @@ const DecisionCard = ({ decision, index, onUpdateDecision, pillarId }) => {
     );
 };
 
-export default function PillarWorkspace({ pillar, onBack, onUpdateDecision }) {
+export default function PillarWorkspace({ pillar, onBack, onUpdateDecision, activeDecisionId }) {
     if (!pillar) return null;
     return (
         <div className="pillar-workspace glass-panel">
@@ -79,7 +91,14 @@ export default function PillarWorkspace({ pillar, onBack, onUpdateDecision }) {
                 <h3 className="section-title">Key Architectural Decisions</h3>
                 <div className="decision-list">
                     {pillar.decisions?.map((d, i) => (
-                        <DecisionCard key={d.id} decision={d} index={i} onUpdateDecision={onUpdateDecision} pillarId={pillar.id} />
+                        <DecisionCard 
+                            key={d.id} 
+                            decision={d} 
+                            index={i} 
+                            onUpdateDecision={onUpdateDecision} 
+                            pillarId={pillar.id}
+                            isActive={d.id === activeDecisionId}
+                        />
                     ))}
                 </div>
             </div>

@@ -5,7 +5,7 @@ import ChatInterface from './components/ChatInterface';
 import PillarWorkspace from './components/PillarWorkspace';
 import SettingsModal from './components/SettingsModal';
 import ProjectsPanel from './components/ProjectsPanel';
-import DependencyGraph from './components/DependencyGraph';
+import GraphView from './components/GraphView';
 import { VscFileSubmodule, VscGraph, VscBell, VscClose, VscChevronDown, VscChevronUp } from 'react-icons/vsc';
 import { useAppLogic } from './hooks/useAppLogic';
 
@@ -16,6 +16,8 @@ function App() {
     pillars,
     activePillarId,
     setActivePillarId,
+    activeDecisionId,
+    setActiveDecisionId,
     activePillar,
     agentFeedback,
     projectId,
@@ -131,14 +133,25 @@ function App() {
         />
 
         <div className="workspace-content" style={{ display: 'flex', gap: '1rem', height: 'calc(100vh - 120px)' }}>
-          <div className="pillar-details-pane" style={{ flex: 1, overflowY: 'auto' }}>
+          <div className="pillar-details-pane" style={{ flex: 1, overflowY: viewMode === 'graph' ? 'hidden' : 'auto', display: 'flex', flexDirection: 'column' }}>
             {viewMode === 'graph' ? (
-              <DependencyGraph pillars={pillars} />
+              <GraphView 
+                pillars={pillars} 
+                onSelectDecision={(pillarId, decisionId) => {
+                  setActivePillarId(pillarId);
+                  setActiveDecisionId(decisionId);
+                  setViewMode('pillar');
+                }} 
+              />
             ) : activePillar ? (
               <PillarWorkspace
                 pillar={activePillar}
+                activeDecisionId={activeDecisionId}
                 onUpdateDecision={handleUpdateDecision}
-                onBack={() => setActivePillarId(null)}
+                onBack={() => {
+                  setActivePillarId(null);
+                  setActiveDecisionId(null);
+                }}
               />
             ) : (
               <div className="glass-panel" style={{ padding: '2rem', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center', opacity: 0.7 }}>

@@ -62,6 +62,16 @@ const validateDecisionNode = (node, path, contextLabel) => {
     assertNonEmptyString(node.question, `${path}.question`, contextLabel);
     assertNonEmptyString(node.context, `${path}.context`, contextLabel);
     assertNullableString(node.answer, `${path}.answer`, contextLabel);
+    
+    if (node.links) {
+        assertArray(node.links, `${path}.links`, contextLabel);
+        node.links.forEach((link, i) => {
+            const linkPath = `${path}.links[${i}]`;
+            assertPlainObject(link, linkPath, contextLabel);
+            assertNonEmptyString(link.id, `${linkPath}.id`, contextLabel);
+            assertNonEmptyString(link.type, `${linkPath}.type`, contextLabel);
+        });
+    }
 };
 
 export const validateCategoryNode = (node, path, contextLabel) => {

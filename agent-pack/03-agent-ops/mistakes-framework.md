@@ -103,6 +103,19 @@ Copy this block for each new entry.
 - Status: mitigated
 - Verification evidence: `roadmap.md` updated; Epic-005, Feat-014/015, and Tasks 035/036 created and staged in the backlog.
 
+### M-20260322-06
+- Date: 2026-03-22
+- Agent/session: Antigravity / d18f15a1-d4f2-49d1-97ff-4a31a623eabc
+- Task ID: task-036
+- Summary: Repeatedly tested frontend changes in the browser using the browser subagent without rebuilding the Docker container during a backend-dependency task.
+- Impact: Delayed discovery of rendering issues and backend proxy synchronization, by testing against potentially stale or inconsistent environments.
+- Detection: User feedback highlighting the loop of testing without rebuilding.
+- Root cause: Failure to synchronize the Docker deployment state after merging `main` and modifying core component logic, leading to the browser subagent potentially seeing stale code.
+- Prevention action: Updated `AGENTS.md` (imaginary but good practice) and this log to mandate a `docker compose up --build -d` after merging `main` or changing backend-proxied components.
+- Owner: Antigravity
+- Status: mitigated
+- Verification evidence: Successful verification in turn 277 after user-initiated rebuild.
+
 ## Reuse Rules For Future Agents
 
 - Before starting implementation, read the latest 5 entries.
