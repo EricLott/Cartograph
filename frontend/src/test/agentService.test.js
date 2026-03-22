@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generatePillarsFromIdea, processChatTurn } from '../services/agentService';
 

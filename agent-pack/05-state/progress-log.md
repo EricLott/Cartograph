@@ -40,6 +40,23 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T22:28:48-05:00 | `task-036` | `done` | Prepared task-036 closeout updates focusing on Decision Graph node semantics and React Flow integration.
+  - Evidence:
+    - `agent-pack/03-agent-ops/mistakes-framework.md`
+    - `agent-pack/04-task-system/tasks/pull_requested/task-036-implement-graph-view-node-semantics.md`
+    - `frontend/package-lock.json`
+    - `frontend/package.json`
+    - `frontend/src/App.css`
+    - `frontend/src/App.jsx`
+    - `frontend/src/components/GraphView.jsx`
+    - `frontend/src/components/PillarWorkspace.jsx`
+    - `frontend/src/hooks/useAppLogic.js`
+    - `frontend/src/services/agentValidator.js`
+    - `frontend/src/test/agentService.test.js`
+    - `frontend/src/test/graphUtils.test.js`
+    - `frontend/src/utils/graphUtils.js`
+    - `frontend/vite.config.js`
+  - Next step: Open Pull Request for review.
 - 2026-03-21T21:05:00-05:00 | `task-035` | `done` | Enhanced Decision model with semantic relationships (rationale, constraints, tags) and introduced `DecisionRelationship` for self-referential many-to-many linking.
   - Evidence:
     - `backend/models/index.js` (updated models and associations)

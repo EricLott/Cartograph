@@ -14,6 +14,7 @@ export function useAppLogic() {
   const [isWaiting, setIsWaiting] = useState(false);
   const [pillars, setPillars] = useState([]);
   const [activePillarId, setActivePillarId] = useState(null);
+  const [activeDecisionId, setActiveDecisionId] = useState(null);
   const [projectId, setProjectId] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
@@ -31,13 +32,13 @@ export function useAppLogic() {
 
   // 2. Logic Containers
   const setters = {
-    setMessages, setIsWaiting, setPillars, setActivePillarId,
+    setMessages, setIsWaiting, setPillars, setActivePillarId, setActiveDecisionId,
     setProjectId, setErrorMessage, setIsProjectsOpen,
     setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig
   };
 
   const state = {
-    messages, isWaiting, pillars, activePillarId,
+    messages, isWaiting, pillars, activePillarId, activeDecisionId,
     projectId, errorMessage, isProjectsOpen,
     viewMode, isSettingsOpen, isNotificationsOpen, llmConfig
   };
@@ -78,7 +79,7 @@ export function useAppLogic() {
   return {
     ...state,
     agentFeedback,
-    setActivePillarId, setErrorMessage, setIsProjectsOpen,
+    setActivePillarId, setActiveDecisionId, setErrorMessage, setIsProjectsOpen,
     setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig,
     handleNewProject, handleSelectProject,
     handleSendMessage, handleUpdateDecision, handleExport,
