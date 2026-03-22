@@ -2,21 +2,21 @@
 id: task-032
 title: Create Governance Dashboard Page in Frontend
 type: task
-status: todo
+status: in_progress
 priority: P2
-owner: product-ops
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-23T02:17:35.770Z"
+sla_due_at: 2026-03-24
 depends_on:
   - feat-009
 acceptance_criteria:
-  - New route `/governance` in the frontend application.
-  - Table or graph view displaying all project tasks, their status, and their current claim owner.
+  - "New route `/governance` in the frontend application."
+  - "Table or graph view displaying all project tasks, their status, and their current claim owner."
   - Visual indicator for tasks with expired claims.
   - Filter by Feature or Workstream.
-last_updated: 2026-03-21
-claim_owner: null
-claim_status: unclaimed
-claim_expires_at: null
-sla_due_at: 2026-03-24
+last_updated: 2026-03-22
 ---
 
 # Task: Create Governance Dashboard Page in Frontend
