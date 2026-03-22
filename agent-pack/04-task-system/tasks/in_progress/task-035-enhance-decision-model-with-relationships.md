@@ -2,17 +2,21 @@
 id: task-035
 title: Enhance Decision Model with Semantic Relationships
 type: task
-status: todo
+status: in_progress
 priority: P1
-owner: backend-specialist
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-23T01:57:31.195Z"
+sla_due_at: 2026-03-24
 depends_on:
   - task-026
 acceptance_criteria:
-  - Update `Decision` model in `backend/models/index.js` to include `rationale`, `constraints`, and metadata tags.
-  - Create a new `Relationship` model to store directed edges between decisions.
-  - CRUD support for relationship types (depends_on, conflicts, supersedes).
+  - "Update `Decision` model in `backend/models/index.js` to include `rationale`, `constraints`, and metadata tags."
+  - "Create a new `Relationship` model to store directed edges between decisions."
+  - "CRUD support for relationship types (depends_on, conflicts, supersedes)."
   - Backend migration preserves existing data.
-last_updated: 2026-03-21
+last_updated: 2026-03-22
 ---
 
 # Task: Enhance Decision Model with Semantic Relationships
