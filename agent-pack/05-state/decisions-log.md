@@ -38,6 +38,12 @@ status: active
 ```
 
 ## Active Decisions
+- `dec-008` (2026-03-21): Adopted self-referential many-to-many junction for Decision relationships.
+  - Options considered: flat array of IDs in Decision model vs explicit junction table.
+  - Chosen: junction table (`DecisionRelationship`).
+  - Rationale: Supports arbitrary graph edges (depends_on, conflicts, supersedes) with stability and type-safety. Allows decisions to communicate across pillars without linear hierarchy constraints.
+  - Linked items: `task-035`.
+
 - `dec-007` (2026-03-21): Implement multi-tiered blueprint integrity validation.
   - Options considered: strict "all-pass" export vs multi-tiered error/warning system.
   - Chosen: multi-tiered system.

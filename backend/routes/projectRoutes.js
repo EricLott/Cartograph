@@ -1,7 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const { Project } = require('../models');
-const { getProjectTree, saveProjectState } = require('../services/projectService');
+const { 
+    getProjectTree, 
+    saveProjectState, 
+    linkDecisions, 
+    getDecisionGraph 
+} = require('../services/projectService');
 
 // Get all projects
 router.get('/projects', async (req, res) => {
@@ -64,6 +69,34 @@ router.post('/save-state', async (req, res) => {
 
         const resultId = await saveProjectState(idea, pillars, projectId);
         res.json({ success: true, projectId: resultId });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Link decisions
+router.post('/decisions/:id/link', async (req, res) => {
+    try {
+        const { toId, type, strength } = req.body;
+        const fromId = req.params.id;
+        
+        if (!toId || !type) {
+            return res.status(400).json({ error: 'Missing toId or type.' });
+        }
+
+        const link = await linkDecisions(fromId, toId, type, strength);
+        res.json({ success: true, link });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get decision graph
+router.get('/decisions/:id/graph', async (req, res) => {
+    try {
+        const graph = await getDecisionGraph(req.params.id);
+        if (!graph) return res.status(404).json({ error: 'Decision not found.' });
+        res.json(graph);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

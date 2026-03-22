@@ -40,6 +40,13 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-21T21:05:00-05:00 | `task-035` | `done` | Enhanced Decision model with semantic relationships (rationale, constraints, tags) and introduced `DecisionRelationship` for self-referential many-to-many linking.
+  - Evidence:
+    - `backend/models/index.js` (updated models and associations)
+    - `backend/services/projectService.js` (logic for link retrieval and persistence)
+    - `backend/routes/projectRoutes.js` (added `/link` and `/graph` endpoints)
+    - `backend/tests/integration/task-035.integration.test.js` (all 3 tests passed)
+  - Next step: Run `node scripts/cartograph-closeout.mjs --task task-035`.
 - 2026-03-21T16:45:00-05:00 | `task-037` | `done` | Fixed Agent Observations notification bloat by moving observations to a toggleable Notification Tray. Enhanced `validationService.js` with structured report metadata for pillar-level filtering. Added a notification icon with badge count to the Header.
   - Evidence:
     - `frontend/src/services/validationService.js` (added structured reports with `pillarId`)

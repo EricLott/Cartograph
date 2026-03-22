@@ -1,4 +1,4 @@
-const { Project, Pillar, Decision, sequelize } = require('../models');
+const { Project, Pillar, Decision, DecisionRelationship, sequelize } = require('../models');
 
 const getProjectTree = async (projectId) => {
     const project = await Project.findByPk(projectId);
@@ -6,7 +6,10 @@ const getProjectTree = async (projectId) => {
 
     const allPillars = await Pillar.findAll({
         where: { ProjectId: project.id },
-        include: [Decision]
+        include: [{
+            model: Decision,
+            include: [{ model: Decision, as: 'linkedTo', through: 'DecisionRelationship' }]
+        }]
     });
 
     const buildPillarTree = (parentId = null) => {
@@ -21,7 +24,15 @@ const getProjectTree = async (projectId) => {
                     question: d.question,
                     context: d.context,
                     answer: d.answer,
-                    conflict: d.conflict
+                    conflict: d.conflict,
+                    rationale: d.rationale,
+                    constraints: d.constraints,
+                    tags: d.tags,
+                    links: d.linkedTo ? d.linkedTo.map(lt => ({
+                        id: lt.decisionId,
+                        type: lt.DecisionRelationship.type,
+                        strength: lt.DecisionRelationship.strength
+                    })) : []
                 })),
                 subcategories: buildPillarTree(p.id)
             }));
@@ -90,7 +101,10 @@ const saveProjectState = async (idea, pillars, projectId) => {
                                 question: d.question,
                                 context: d.context,
                                 answer: d.answer,
-                                conflict: d.conflict
+                                conflict: d.conflict,
+                                rationale: d.rationale,
+                                constraints: d.constraints,
+                                tags: d.tags
                             }, { transaction: t });
                         } else {
                             decision = await Decision.create({
@@ -99,6 +113,9 @@ const saveProjectState = async (idea, pillars, projectId) => {
                                 context: d.context,
                                 answer: d.answer,
                                 conflict: d.conflict,
+                                rationale: d.rationale,
+                                constraints: d.constraints,
+                                tags: d.tags,
                                 PillarId: pillar.id
                             }, { transaction: t });
                         }
@@ -137,7 +154,72 @@ const saveProjectState = async (idea, pillars, projectId) => {
     });
 };
 
+const linkDecisions = async (fromDecisionId, toDecisionId, type, strength = 1.0) => {
+    return await sequelize.transaction(async (t) => {
+        const from = await Decision.findOne({ where: { decisionId: fromDecisionId }, transaction: t });
+        const to = await Decision.findOne({ where: { decisionId: toDecisionId }, transaction: t });
+
+        if (!from || !to) {
+            throw new Error('One or both decisions not found.');
+        }
+
+        // Check if relationship already exists
+        const existing = await DecisionRelationship.findOne({
+            where: { fromId: from.id, toId: to.id },
+            transaction: t
+        });
+
+        if (existing) {
+            await existing.update({ type, strength }, { transaction: t });
+            return existing;
+        }
+
+        return await DecisionRelationship.create({
+            fromId: from.id,
+            toId: to.id,
+            type,
+            strength
+        }, { transaction: t });
+    });
+};
+
+const getDecisionGraph = async (decisionId) => {
+    const decision = await Decision.findOne({
+        where: { decisionId },
+        include: [
+            { model: Decision, as: 'linkedTo' },
+            { model: Decision, as: 'linkedBy' }
+        ]
+    });
+
+    if (!decision) return null;
+
+    return {
+        decision: {
+            id: decision.decisionId,
+            question: decision.question,
+            status: decision.answer ? 'resolved' : 'pending'
+        },
+        links: [
+            ...(decision.linkedTo || []).map(lt => ({
+                id: lt.decisionId,
+                direction: 'out',
+                type: lt.DecisionRelationship.type,
+                strength: lt.DecisionRelationship.strength
+            })),
+            ...(decision.linkedBy || []).map(lb => ({
+                id: lb.decisionId,
+                direction: 'in',
+                type: lb.DecisionRelationship.type,
+                strength: lb.DecisionRelationship.strength
+            }))
+        ]
+    };
+};
+
 module.exports = {
     getProjectTree,
-    saveProjectState
+    saveProjectState,
+    linkDecisions,
+    getDecisionGraph
 };

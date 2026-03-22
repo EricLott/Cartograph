@@ -16,7 +16,18 @@ const Decision = sequelize.define('Decision', {
     question: { type: DataTypes.STRING, allowNull: false },
     context: { type: DataTypes.TEXT },
     answer: { type: DataTypes.STRING },
-    conflict: { type: DataTypes.TEXT }
+    conflict: { type: DataTypes.TEXT },
+    rationale: { type: DataTypes.TEXT },
+    constraints: { type: DataTypes.TEXT },
+    tags: { type: DataTypes.JSON, defaultValue: [] }
+});
+
+const DecisionRelationship = sequelize.define('DecisionRelationship', {
+    type: { 
+        type: DataTypes.ENUM('depends_on', 'conflicts', 'supersedes'), 
+        allowNull: false 
+    },
+    strength: { type: DataTypes.FLOAT, defaultValue: 1.0 }
 });
 
 // Associations
@@ -27,9 +38,24 @@ Decision.belongsTo(Pillar);
 Pillar.hasMany(Pillar, { as: 'subcategories', foreignKey: 'parentId', onDelete: 'CASCADE' });
 Pillar.belongsTo(Pillar, { as: 'parent', foreignKey: 'parentId' });
 
+// Self-referential Many-to-Many for Decisions
+Decision.belongsToMany(Decision, { 
+    as: 'linkedTo', 
+    through: DecisionRelationship, 
+    foreignKey: 'fromId', 
+    otherKey: 'toId' 
+});
+Decision.belongsToMany(Decision, { 
+    as: 'linkedBy', 
+    through: DecisionRelationship, 
+    foreignKey: 'toId', 
+    otherKey: 'fromId' 
+});
+
 module.exports = {
     sequelize,
     Project,
     Pillar,
-    Decision
+    Decision,
+    DecisionRelationship
 };

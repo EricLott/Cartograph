@@ -34,6 +34,9 @@ impact: What behavior or plan changed.
 ```
 
 ## Recent Changes
+- 2026-03-21 | `chg-009` | Backend Architecture: Enhanced Decision model with rationale, constraints, and tags; introduced self-referential linking for cross-pillar semantic relationships.
+  - Linked items: `task-035`, `dec-008`
+  - Impact: Supports "Decision-as-a-Node" vision by allowing arbitrary graph connections between decisions.
 - 2026-03-21 | `chg-008` | UI/UX Improvement: Moved Agent Observations to a dedicated Notification Tray to prevent layout bloat and improve focus on core workspace content.
   - Linked items: `task-037`
   - Impact: Improved initial viewport visibility for "Architecture Blueprint" and added contextual filtering of observations by active pillar.
