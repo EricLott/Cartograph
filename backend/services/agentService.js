@@ -161,15 +161,20 @@ const requestProviderCompletion = async ({ provider, payload, clientKeys = {} })
     }
 
     let result;
-    switch (provider) {
-        case 'openai': result = await getOpenAICompletion(keys, payload); break;
-        case 'anthropic': result = await getAnthropicCompletion(keys, payload); break;
-        case 'gemini': result = await getGeminiCompletion(keys, payload); break;
-        default: throw new Error(`Unsupported provider: ${provider}`);
-    }
+    try {
+        switch (provider) {
+            case 'openai': result = await getOpenAICompletion(keys, payload); break;
+            case 'anthropic': result = await getAnthropicCompletion(keys, payload); break;
+            case 'gemini': result = await getGeminiCompletion(keys, payload); break;
+            default: throw new Error(`Unsupported provider: ${provider}`);
+        }
 
-    console.log(`[LLM Proxy] ${provider} completion: ${result.usage.total_tokens} tokens, ${result.latency_ms}ms`);
-    return result;
+        console.log(`[LLM Proxy] ${provider} SUCCESS: ${result.usage.total_tokens} tokens, ${result.latency_ms}ms`);
+        return result;
+    } catch (err) {
+        console.error(`[LLM Proxy] ${provider} ERROR:`, err.message);
+        throw err;
+    }
 };
 
 module.exports = {
