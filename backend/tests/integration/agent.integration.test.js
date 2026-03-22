@@ -144,4 +144,33 @@ describe('Backend integration: Agent LLM Proxy', () => {
         expect(response.body.detail).toContain('Gemini request failed');
         expect(response.body.detail).toContain('Quota exceeded');
     });
+
+    test('uses clientKeys when they are provided in the request body', async () => {
+        delete process.env.OPENAI_API_KEY;
+        
+        const mockResponse = {
+            ok: true,
+            status: 200,
+            json: async () => ({
+                choices: [{ message: { content: 'Success' } }],
+                usage: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 }
+            })
+        };
+        fetchSpy.mockResolvedValue(mockResponse);
+
+        const response = await request(app)
+            .post('/api/agent/complete')
+            .send({
+                provider: 'openai',
+                payload: { model: 'gpt-4o', messages: [] },
+                clientKeys: { openai: 'frontend-provided-key' }
+            });
+
+        expect(response.status).toBe(200);
+        expect(response.body.completion).toBe('Success');
+        
+        // Verify fetch was called with the correct Authorization header
+        const fetchArgs = fetchSpy.mock.calls[0];
+        expect(fetchArgs[1].headers.Authorization).toBe('Bearer frontend-provided-key');
+    });
 });

@@ -5,12 +5,12 @@ const agentService = require('../services/agentService');
 
 router.post('/agent/complete', async (req, res) => {
     try {
-        const { provider, payload } = req.body;
+        const { provider, payload, clientKeys } = req.body;
         if (!provider || !payload) {
             return res.status(400).json({ error: 'Missing provider or completion payload.' });
         }
 
-        const { completion, usage, latency_ms } = await agentService.requestProviderCompletion({ provider, payload });
+        const { completion, usage, latency_ms } = await agentService.requestProviderCompletion({ provider, payload, clientKeys });
         res.status(200).json({ 
             completion, 
             usage: { ...usage, latency_ms } 
