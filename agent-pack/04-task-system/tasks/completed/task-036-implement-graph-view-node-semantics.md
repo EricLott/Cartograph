@@ -2,19 +2,19 @@
 id: task-036
 title: Implement Decision Graph Node Semantics (High Fidelity)
 type: task
-status: pull_requested
+status: completed
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-23T02:20:07.529Z"
+claim_status: released
+claim_expires_at: null
 depends_on:
   - task-035
 acceptance_criteria:
   - "Replace the current static Mermaid `DependencyGraph` with an interactive D3 or React Flow canvas."
   - Nodes sized and colored by status (Resolved vs. Pending).
   - "Edges visually styled by relationship type (solid, dashed, red)."
-  - "Synchronize \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Active Decision\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" between the graph selection and the workspace detail pane."
+  - "Synchronize \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Active Decision\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" between the graph selection and the workspace detail pane."
 last_updated: 2026-03-22
 ---
 
