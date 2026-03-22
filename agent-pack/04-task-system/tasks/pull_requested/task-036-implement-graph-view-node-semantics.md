@@ -14,7 +14,7 @@ acceptance_criteria:
   - "Replace the current static Mermaid `DependencyGraph` with an interactive D3 or React Flow canvas."
   - Nodes sized and colored by status (Resolved vs. Pending).
   - "Edges visually styled by relationship type (solid, dashed, red)."
-  - "Synchronize \\\\\\\\\\\\\\\"Active Decision\\\\\\\\\\\\\\\" between the graph selection and the workspace detail pane."
+  - "Synchronize \\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\"Active Decision\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\" between the graph selection and the workspace detail pane."
 last_updated: 2026-03-22
 ---
 
