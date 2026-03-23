@@ -52,7 +52,7 @@ export function useChatLogic(state, setters) {
     const finalPillars = generatedPillars.map((p, idx) => ({
       ...p, subcategories: results[idx].subcategories || [], decisions: results[idx].decisions || []
     }));
-    const resultData = await saveStateToBackend(content, finalPillars, null);
+    const resultData = await saveStateToBackend(content, finalPillars, null, true);
     if (resultData?.projectId) setProjectId(resultData.projectId);
   };
 
@@ -73,7 +73,7 @@ export function useChatLogic(state, setters) {
 
     const ideaMsg = newMessages.find(m => m.role === 'user');
     if (ideaMsg) {
-      const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId);
+      const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId, true);
       if (resultData?.projectId) setProjectId(resultData.projectId);
     }
   };

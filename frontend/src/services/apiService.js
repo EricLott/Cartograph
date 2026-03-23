@@ -1,9 +1,9 @@
-export const saveStateToBackend = async (idea, pillars, projectId = null) => {
+export const saveStateToBackend = async (idea, pillars, projectId = null, isAgent = false) => {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const response = await fetch(`${apiUrl}/api/save-state`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea, pillars, projectId })
+        body: JSON.stringify({ idea, pillars, projectId, isAgent })
     });
     if (!response.ok) {
         const errData = await response.json().catch(() => ({}));
