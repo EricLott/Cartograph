@@ -30,6 +30,12 @@ const DecisionRelationship = sequelize.define('DecisionRelationship', {
     strength: { type: DataTypes.FLOAT, defaultValue: 1.0 }
 });
 
+const AuditLog = sequelize.define('AuditLog', {
+    action: { type: DataTypes.STRING, allowNull: false },
+    summary: { type: DataTypes.TEXT },
+    isAgent: { type: DataTypes.BOOLEAN, defaultValue: false }
+});
+
 // Associations
 Project.hasMany(Pillar, { onDelete: 'CASCADE' });
 Pillar.belongsTo(Project);
@@ -37,6 +43,8 @@ Pillar.hasMany(Decision, { onDelete: 'CASCADE' });
 Decision.belongsTo(Pillar);
 Pillar.hasMany(Pillar, { as: 'subcategories', foreignKey: 'parentId', onDelete: 'CASCADE' });
 Pillar.belongsTo(Pillar, { as: 'parent', foreignKey: 'parentId' });
+Project.hasMany(AuditLog, { onDelete: 'SET NULL' });
+AuditLog.belongsTo(Project);
 
 // Self-referential Many-to-Many for Decisions
 Decision.belongsToMany(Decision, { 
@@ -57,5 +65,6 @@ module.exports = {
     Project,
     Pillar,
     Decision,
-    DecisionRelationship
+    DecisionRelationship,
+    AuditLog
 };

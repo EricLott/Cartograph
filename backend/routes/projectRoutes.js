@@ -58,7 +58,7 @@ router.delete('/projects/:id', async (req, res) => {
 // Save project state (new or update)
 router.post('/save-state', async (req, res) => {
     try {
-        const { idea, pillars, projectId } = req.body;
+        const { idea, pillars, projectId, isAgent } = req.body;
 
         if (!idea || typeof idea !== 'string' || !idea.trim()) {
             return res.status(400).json({ error: 'Missing or empty idea.' });
@@ -67,7 +67,7 @@ router.post('/save-state', async (req, res) => {
             return res.status(400).json({ error: 'pillars must be an array.' });
         }
 
-        const resultId = await saveProjectState(idea, pillars, projectId);
+        const resultId = await saveProjectState(idea, pillars, projectId, isAgent);
         res.json({ success: true, projectId: resultId });
     } catch (err) {
         res.status(500).json({ error: err.message });

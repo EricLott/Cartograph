@@ -1,4 +1,4 @@
-const { Project, Pillar, Decision, DecisionRelationship, sequelize } = require('../models');
+const { Project, Pillar, Decision, DecisionRelationship, AuditLog, sequelize } = require('../models');
 
 const getProjectTree = async (projectId) => {
     const project = await Project.findByPk(projectId);
@@ -46,13 +46,15 @@ const getProjectTree = async (projectId) => {
     };
 };
 
-const saveProjectState = async (idea, pillars, projectId) => {
+const saveProjectState = async (idea, pillars, projectId, isAgent = false) => {
     return await sequelize.transaction(async (t) => {
         let project;
+        let action = 'CREATE_PROJECT';
         if (projectId) {
             project = await Project.findByPk(projectId, { transaction: t });
             if (project) {
                 await project.update({ idea }, { transaction: t });
+                action = 'UPDATE_PROJECT';
             }
         }
 
@@ -149,6 +151,13 @@ const saveProjectState = async (idea, pillars, projectId) => {
             },
             transaction: t
         });
+
+        await AuditLog.create({
+            action,
+            summary: `${action === 'CREATE_PROJECT' ? 'Created' : 'Updated'} project state: ${idea.substring(0, 50)}...`,
+            isAgent,
+            ProjectId: project.id
+        }, { transaction: t });
 
         return project.id;
     });

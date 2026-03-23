@@ -292,7 +292,7 @@ function generateHeuristicSummary(taskId, evidence, baseBranch, rootDir) {
     return `Task ${taskId} changes: ${summary.length > 200 ? summary.slice(0, 197) + '...' : summary}`;
 }
 
-async function collectProgressLogInput(taskId, options, suggestedEvidence) {
+async function collectProgressLogInput(taskId, options, suggestedEvidence, rootDir) {
     let summary = String(options.summary || '').trim();
     let evidence = normalizeListFromArgs(options.evidence);
     const nextStep = String(options.nextStep || 'Open Pull Request for review.').trim();
@@ -610,7 +610,7 @@ async function main() {
 
     // 2. Capture progress log details and append entry
     const suggestedEvidence = getRecentChangedFiles(options.base, rootDir);
-    const progressInput = await collectProgressLogInput(taskId, options, suggestedEvidence);
+    const progressInput = await collectProgressLogInput(taskId, options, suggestedEvidence, rootDir);
     const progressResult = appendProgressLogEntry({
         rootDir,
         config,

@@ -5,7 +5,7 @@ const { sequelize } = db;
 const projectRoutes = require('./routes/projectRoutes');
 const agentRoutes = require('./routes/agentRoutes');
 
-const models = { Project: db.Project, Pillar: db.Pillar, Decision: db.Decision };
+const models = { Project: db.Project, Pillar: db.Pillar, Decision: db.Decision, AuditLog: db.AuditLog };
 
 const app = express();
 app.use(cors());

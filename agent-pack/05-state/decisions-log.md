@@ -38,6 +38,12 @@ status: active
 ```
 
 ## Active Decisions
+- `dec-009` (2026-03-23): Adopted Sequelize-based AuditLog table for project state change tracking.
+  - Options considered: file-based logs vs database-backed audit table.
+  - Chosen: database-backed table (`AuditLog`).
+  - Rationale: Provides structured, queryable, and durable evidence of state changes. Integrates naturally into existing project persistence transactions, ensuring atomicity (audit entry and project save succeed or fail together).
+  - Linked items: `task-034`.
+
 - `dec-008` (2026-03-21): Adopted self-referential many-to-many junction for Decision relationships.
   - Options considered: flat array of IDs in Decision model vs explicit junction table.
   - Chosen: junction table (`DecisionRelationship`).
