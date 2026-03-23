@@ -93,7 +93,6 @@ function assertRepoStructure(rootDir, config) {
 
   const required = [
     'AGENTS.md',
-    joinWorkflowPath(agentPackRoot, '03-agent-ops', 'AGENTS.md'),
     joinWorkflowPath(agentPackRoot, '04-task-system', 'README.md'),
     joinWorkflowPath(tasksRoot, 'README.md'),
     joinWorkflowPath(stateRoot, 'progress-log.md'),
