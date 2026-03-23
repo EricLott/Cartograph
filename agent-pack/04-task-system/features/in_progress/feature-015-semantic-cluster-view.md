@@ -2,7 +2,7 @@
 id: feature-015
 title: Semantic Cluster View
 type: feature
-status: todo
+status: in_progress
 priority: P2
 owner: ai-specialist
 depends_on:
@@ -11,7 +11,7 @@ acceptance_criteria:
   - Decisions are grouped on a 2D spatial canvas based on semantic similarity.
   - Integration with LLM embeddings (e.g., text-embedding-3-small) to generate "proximity" scores.
   - Hovering a cluster parent node highlights its constituent decisions across pillars.
-last_updated: 2026-03-21
+last_updated: 2026-03-23
 ---
 
 # Feature: Semantic Cluster View
@@ -27,6 +27,11 @@ Standard hierarchy (Pillars) doesn't capture lateral themes like "Security," "Pe
 ## Dependencies
 - feat-007 (Server Proxy)
 - task-034 (Vector Store Seed)
+
+## Child Task IDs
+- task-039
+- task-040
+- task-041
 
 ## Notes
 The goal is "Discovery Layer" as per the vision.md. "Vectors tell you 'these feel related,' but graph edges tell you 'this blocks that.'"

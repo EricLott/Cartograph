@@ -2,7 +2,7 @@
 id: feature-009
 title: Task Governance Dashboard
 type: feature
-status: todo
+status: in_progress
 priority: P2
 owner: product-ops
 depends_on:
@@ -26,3 +26,4 @@ As the number of tasks and agents grows, it becomes difficult to track work-in-p
 
 ## Dependencies
 - feat-007
+

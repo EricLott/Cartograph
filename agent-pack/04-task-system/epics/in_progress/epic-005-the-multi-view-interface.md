@@ -1,7 +1,7 @@
 ---
 id: epic-005
 title: The Multi-View Interface
-status: todo
+status: in_progress
 priority: P1
 owner: product-architect
 depends_on:
@@ -29,3 +29,4 @@ This epic directly implements the "Multi-View Interface" and "Living Decision Sy
 - [ ] Decision graph correctly renders relationships beyond simple hierarchy.
 - [ ] Red edges appear between conflicting nodes.
 - [ ] "Cluster mode" spatial layout reflects semantic similarity scores.
+

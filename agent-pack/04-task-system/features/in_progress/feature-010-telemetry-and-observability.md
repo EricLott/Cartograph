@@ -2,7 +2,7 @@
 id: feature-010
 title: Telemetry & Observability
 type: feature
-status: todo
+status: in_progress
 priority: P2
 owner: product-ops
 depends_on:
@@ -11,7 +11,7 @@ acceptance_criteria:
   - "Backend requests and LLM latency are logged and traceable."
   - "Frontend error tracking (e.g., Sentry) is integrated."
   - "Basic usage analytics (sessions, export counts) are recorded."
-last_updated: 2026-03-21
+last_updated: 2026-03-23
 ---
 
 # Feature: Telemetry & Observability
@@ -27,3 +27,10 @@ We lack quantitative data on how agents and humans interact with the platform, m
 ## Dependencies
 - feat-007
 - feat-009
+
+## Child Task IDs
+- task-033
+- task-042
+
+## Notes
+Every LLM completion is already logged with token counts and latency (task-033).

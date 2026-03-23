@@ -2,7 +2,7 @@
 id: epic-003
 title: The Contributor Engine
 type: epic
-status: todo
+status: in_progress
 priority: P1
 owner: product-ops
 depends_on:
@@ -28,3 +28,4 @@ Scaling Cartograph for multi-agent and community contribution by providing the n
 - Hardened CI/CD pipelines via GitHub Actions.
 - New admin view for tracking task claims and status.
 - Integration of logging/monitoring tools (e.g., Sentry, OpenTelemetry).
+
