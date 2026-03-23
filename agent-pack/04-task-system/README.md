@@ -1,7 +1,7 @@
 # Task System Contract
 
 > [!CAUTION]
-> **READ BEFORE TOUCHING TASKS**: If you are an autonomous agent, you MUST follow the [Operating Contract](file:///C:/Users/Lott/source/repos/Cartograph/agent-pack/03-agent-ops/AGENTS.md).
+> **READ BEFORE TOUCHING TASKS**: If you are an autonomous agent, you MUST follow the [Operating Contract](../../AGENTS.md).
 > - **NO DIRECT PUSH TO MAIN**: All work must happen on `task/task-###-*` branches.
 > - **USE BOOTSTRAP**: Run `node scripts/cartograph-contribute.mjs --auto` to begin.
 > - **CHECK MISTAKES**: Read [`mistakes-framework.md`](file:///C:/Users/Lott/source/repos/Cartograph/agent-pack/03-agent-ops/mistakes-framework.md) before coding.
@@ -10,7 +10,7 @@
 Define how work items are represented, named, and progressed across epics, features, tasks, bugs, and spikes.
 
 ## Inputs
-- `../03-agent-ops/AGENTS.md`
+- ../../AGENTS.md
 - `../02-execution/implementation-strategy.md`
 
 ## Outputs

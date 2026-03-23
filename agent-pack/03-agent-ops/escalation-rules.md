@@ -40,6 +40,6 @@ A blocker resolves only when a named owner provides a decision or explicit direc
 Update when escalation policy or ownership model changes.
 
 ## Source of Truth References
-- `./AGENTS.md`
+- ../../AGENTS.md
 - `../05-state/blockers.md`
 - `../05-state/open-questions.md`

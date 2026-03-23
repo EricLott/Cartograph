@@ -56,6 +56,6 @@ Define implementation standards agents must follow when executing technical task
 Update when stack conventions or quality requirements change.
 
 ## Source of Truth References
-- `./AGENTS.md`
+- ../../AGENTS.md
 - `../06-quality/testing-strategy.md`
 - `../06-quality/security-checklist.md`

@@ -9,7 +9,7 @@ If you are an autonomous agent getting context from this directory, you MUST adh
 3. **Task-linked State**: All commits, progress entries, and decisions MUST be linked to exactly ONE primary task ID.
 
 ## 🔗 Critical References
-- [AGENTS Operating Contract](file:///C:/Users/Lott/source/repos/Cartograph/agent-pack/03-agent-ops/AGENTS.md)
+- [AGENTS Operating Contract](../../AGENTS.md)
 - [Mistakes Framework & Safeguards](file:///C:/Users/Lott/source/repos/Cartograph/agent-pack/03-agent-ops/mistakes-framework.md)
 
 Failure to follow these steps will result in validation breakage and architectural integrity violations.

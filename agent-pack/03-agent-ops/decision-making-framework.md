@@ -37,5 +37,5 @@ Update when governance model or risk posture changes.
 
 ## Source of Truth References
 - `../05-state/decisions-log.md`
-- `./AGENTS.md`
+- ../../AGENTS.md
 - `../00-context/constraints.md`

@@ -4,7 +4,7 @@
 Define day-to-day behavioral rules for autonomous execution consistent with `AGENTS.md`.
 
 ## Inputs
-- `./AGENTS.md`
+- ../../AGENTS.md
 - Active task metadata and quality gates
 
 ## Outputs
@@ -37,6 +37,6 @@ Define day-to-day behavioral rules for autonomous execution consistent with `AGE
 Update when operational behavior or risk policy changes.
 
 ## Source of Truth References
-- `./AGENTS.md`
+- ../../AGENTS.md
 - `./escalation-rules.md`
 - `../05-state/progress-log.md`

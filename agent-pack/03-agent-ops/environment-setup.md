@@ -80,4 +80,4 @@ Update whenever setup steps, scripts, or environment variables change.
 ## Source of Truth References
 - `../../README.md`
 - `../06-quality/testing-strategy.md`
-- `./AGENTS.md`
+- ../../AGENTS.md
