@@ -93,7 +93,6 @@ function assertRepoStructure(rootDir, config) {
 
   const required = [
     'AGENTS.md',
-    joinWorkflowPath(agentPackRoot, '03-agent-ops', 'AGENTS.md'),
     joinWorkflowPath(agentPackRoot, '04-task-system', 'README.md'),
     joinWorkflowPath(tasksRoot, 'README.md'),
     joinWorkflowPath(stateRoot, 'progress-log.md'),
@@ -267,7 +266,7 @@ function getFastVerifyCommands(itemType, taskId) {
 function buildContextBundle(task, owner, branchName, config) {
   const fm = task.frontmatter;
   const agentPackRoot = getWorkflowPath(config, 'agent_pack_root');
-  const readPath1 = joinWorkflowPath(agentPackRoot, '03-agent-ops', 'AGENTS.md');
+  const readPath1 = 'AGENTS.md';
   const readPath2 = joinWorkflowPath(agentPackRoot, '02-execution', 'implementation-strategy.md');
   const readPath3 = joinWorkflowPath(agentPackRoot, '02-execution', 'dependency-map.md');
 
@@ -303,11 +302,10 @@ ${dependsOn}
 ${acceptance}
 
 ## Source-of-Truth Read Order
-1. AGENTS.md
-2. ${readPath1}
-3. ${readPath2}
-4. ${readPath3}
-5. ${task.relativePath}
+1. ${readPath1}
+2. ${readPath2}
+3. ${readPath3}
+4. ${task.relativePath}
 
 ## PR Contract Checklist
 - [ ] **Branch Check**: I am NOT on \`main\`. My branch is \`${branchName}\`.
@@ -323,7 +321,7 @@ ${acceptance}
 ${fastVerify}
 
 ## Ready Prompt
-**STOP**: Verify you are on branch \`${branchName}\`. Read AGENTS.md and ${readPath1}. Implement only ${fm.id} (${fm.title}). Keep scope to this primary task plus required state logs. Do not modify other backlog items. Produce evidence aligned to acceptance criteria and keep PR title/body linked to ${fm.id}.
+**STOP**: Verify you are on branch \`${branchName}\`. Read ${readPath1}. Implement only ${fm.id} (${fm.title}). Keep scope to this primary task plus required state logs. Do not modify other backlog items. Produce evidence aligned to acceptance criteria and keep PR title/body linked to ${fm.id}.
 `;
 }
 

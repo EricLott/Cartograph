@@ -2,7 +2,7 @@
 id: task-038
 title: Remove redundant AGENTS.md check in cartograph-contribute.mjs
 type: task
-status: in_progress
+status: pull_requested
 priority: P0
 owner: Eric Lott
 claim_owner: Eric Lott
