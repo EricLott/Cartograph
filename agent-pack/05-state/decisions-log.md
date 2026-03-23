@@ -1,7 +1,7 @@
 ---
 doc_type: state_log
 schema_version: 1
-last_updated: 2026-03-19
+last_updated: 2026-03-23
 ---
 
 # Decisions Log
@@ -38,6 +38,12 @@ status: active
 ```
 
 ## Active Decisions
+- `dec-010` (2026-03-23): Realign Phase 2.5 execution to full Multi-View coverage and normalize duplicate backlog identifiers.
+  - Options considered: keep current backlog as-is vs perform immediate alignment edits.
+  - Chosen: immediate alignment edits.
+  - Rationale: The audit found roadmap-to-backlog drift (missing explicit Mind Map and Dependency Path coverage), plus duplicate epic/feature IDs that reduce deterministic agent execution. Realignment updates were applied to roadmap, priority ordering, and backlog IDs, and missing Multi-View tasks were added.
+  - Linked items: `task-043`, `task-044`, `task-045`.
+
 - `dec-009` (2026-03-23): Adopted Sequelize-based AuditLog table for project state change tracking.
   - Options considered: file-based logs vs database-backed audit table.
   - Chosen: database-backed table (`AuditLog`).

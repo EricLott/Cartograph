@@ -6,7 +6,7 @@ status: todo
 priority: P2
 owner: product-enterprise
 depends_on:
-  - epic-004
+  - epic-006
 acceptance_criteria:
   - Full revision history available for every Decision and Pillar.
   - Snapshotting system for "frozen" blueprints.

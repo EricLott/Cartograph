@@ -32,6 +32,8 @@
 * **Interactive Decision Graph**: Move from static Mermaid diagrams to an interactive node-link graph with relationship semantics (conflicts, dependencies, supersedes).
 * **Semantic Cluster View**: Implement a 2D spatial canvas grouping decisions by similarity using LLM-generated embeddings.
 * **Conflict Orchestration UI**: A dedicated lens for identifying and resolving cross-pillar architectural friction.
+* **Dependency Path View**: Show prerequisite and downstream impact chains for a selected decision to guide execution planning.
+* **Mind Map / Hierarchy View**: Provide an executive-oriented hierarchy lens for product and feature planning.
 
 ---
 

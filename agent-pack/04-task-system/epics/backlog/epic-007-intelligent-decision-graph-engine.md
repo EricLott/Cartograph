@@ -1,5 +1,5 @@
 ---
-id: epic-003
+id: epic-007
 title: Intelligent Decision Graph Engine
 type: epic
 status: backlog
@@ -32,8 +32,8 @@ Move beyond a simple tree structure to a rich, semantic graph of architectural d
 - Real-time collaborative graph editing (beyond simple save/refresh).
 
 ## Child Feature IDs
-- feature-008
-- feature-011
+- feature-018
+- feature-021
 
 ## Risks
 - Embedding quality variance for ultra-specific technical jargon.

@@ -10,7 +10,7 @@ claim_status: released
 claim_expires_at: null
 sla_due_at: 2026-03-22
 depends_on:
-  - feat-008
+  - feature-008
 acceptance_criteria:
   - "`exportService.js` now iterates through all Decisions to create individual tasks in `04-tasks/tasks`."
   - "Task content includes `Acceptance Criteria` and `Inputs` sections by default."

@@ -6,7 +6,7 @@ status: todo
 priority: P3
 owner: product-enterprise
 depends_on:
-  - epic-004
+  - epic-006
 acceptance_criteria:
   - Automated one-click export and sync with GitHub Issues.
   - Two-way sync with Jira and ADO task backlogs.

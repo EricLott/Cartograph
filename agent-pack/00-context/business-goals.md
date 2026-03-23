@@ -26,7 +26,7 @@ Define concrete outcomes for evolving Cartograph from a working prototype into a
 | bg-003 | Increase autonomous execution reliability | Agent runs that complete without manual clarification in first hour | No production task backlog exists; docs were placeholders | >= 80% first-hour autonomous progress using seeded tasks + AGENTS contract | 2026-05-15 | P1 |
 | bg-004 | Improve contributor throughput and reduce overlap | PRs linked to task file + no conflicting duplicate work on same task | No claim lifecycle existed before current docs update | 100% behavior PRs include task file; claim expiry workflow consistently used | 2026-04-20 | P1 |
 | bg-005 | Establish enforceable quality gates | CI pass rate across lint/build/tests | Frontend lint currently fails; no automated backend tests | Lint/build green by default + baseline frontend/backend automated tests in CI | 2026-05-10 | P0 |
-| bg-006 | Enable Architectural Observability | Interactive Decision Graph available in UX with semantic relationship metadata | Currently only basic Mermaid tree of pillars exists | First-class "node-based" decision graph with visual conflict/dependency indicators | 2026-05-25 | P1 |
+| bg-006 | Enable Multi-View Architectural Observability | Graph + Cluster + Conflict + Dependency + Hierarchy views are available in UX with semantic relationship metadata | Currently only basic Mermaid tree of pillars exists | First-class multi-view workspace with conflict/dependency indicators and cross-view selection sync | 2026-06-10 | P1 |
 
 
 ## Success Metrics

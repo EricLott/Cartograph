@@ -10,7 +10,7 @@ claim_status: claimed
 claim_expires_at: "2026-03-23T02:17:35.770Z"
 sla_due_at: 2026-03-24
 depends_on:
-  - feat-009
+  - feature-009
 acceptance_criteria:
   - "New route `/governance` in the frontend application."
   - "Table or graph view displaying all project tasks, their status, and their current claim owner."

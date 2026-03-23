@@ -3,7 +3,7 @@ id: epic-003
 title: The Contributor Engine
 type: epic
 status: in_progress
-priority: P1
+priority: P2
 owner: product-ops
 depends_on:
   - epic-002
@@ -11,7 +11,7 @@ acceptance_criteria:
   - Automated quality gates (lint/build/test) are strictly enforced in CI.
   - Task governance dashboard visualizes the lifecycle of all work items.
   - Basic telemetry and observability are implemented for core flows.
-last_updated: 2026-03-21
+last_updated: 2026-03-23
 ---
 
 # Epic: The Contributor Engine (Phase 3)

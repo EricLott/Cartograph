@@ -11,7 +11,7 @@ claim_expires_at: null
 sla_due_at: 2026-03-23
 depends_on:
   - task-027
-  - feat-010
+  - feature-010
 acceptance_criteria:
   - Backend now calculates input/output tokens for each LLM provider completion.
   - Latency is measured from request start to completion response.

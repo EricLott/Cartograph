@@ -1,17 +1,17 @@
 ---
-id: feature-008
+id: feature-018
 title: Decision Vectorization and Similarity Search
 type: feature
 status: backlog
 priority: P1
 owner: architecture
 depends_on:
-  - epic-003
+  - epic-007
 acceptance_criteria:
   - Decision content (title, summary, rationale) is vectorized.
   - Integration with Gemini/OpenAI embedding APIs is functional.
   - Backend can return top-N similar decisions for a given node.
-last_updated: 2026-03-20
+last_updated: 2026-03-23
 ---
 
 # Feature: Decision Vectorization and Similarity Search
@@ -31,5 +31,5 @@ Decisions are currently text blobs. The system cannot "understand" when two choi
 - Similarity endpoint available at `GET /api/decisions/:id/similar`.
 
 ## Child Task IDs
-- task-030
-- task-031
+- task-039
+- task-040

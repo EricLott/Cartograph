@@ -1,12 +1,12 @@
 ---
-id: feature-011
+id: feature-021
 title: Agent-Driven Relationship Inference
 type: feature
 status: backlog
 priority: P1
 owner: artificial-intelligence
 depends_on:
-  - epic-003
+  - epic-007
 acceptance_criteria:
   - The system identifies potential conflicts or dependencies using LLM analysis.
   - Proposas appear as "Dashed" edges in the graph with "Confirm" buttons.

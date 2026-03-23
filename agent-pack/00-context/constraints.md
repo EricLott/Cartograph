@@ -27,6 +27,7 @@ Capture current hard boundaries that materially affect Cartograph architecture a
 | cst-005 | product | Export output is still minimal and does not yet match the full agent-pack promise. | Core value proposition not yet realized in runnable product behavior. | product | 2026-04-10 | active |
 | cst-006 | governance | Open-source contributors may act concurrently via coding agents. | Requires strict task claim and expiry workflow to avoid overlap and stale ownership. | maintainer | 2026-04-15 | active |
 | cst-007 | technical | Browser memory and CPU limits for real-time node-graph rendering. | Complex systems with 1000+ decisions may experience UI lag; necessitates level-of-detail (LOD) or clustering strategies. | frontend | 2026-06-01 | active |
+| cst-008 | product | Multi-view parity is incomplete (Graph exists, but Conflict, Dependency Path, and Mind Map views are not yet available). | Strategic risk of shipping a partial "living decision system" that does not fulfill the full vision contract. | product | 2026-05-15 | active |
 
 
 ## Impact Analysis
@@ -34,6 +35,7 @@ Capture current hard boundaries that materially affect Cartograph architecture a
 - `cst-003` blocks safe autonomous velocity and increases regression risk.
 - `cst-005` blocks delivery of the project's central differentiator.
 - `cst-006` affects process quality and contributor SLA predictability.
+- `cst-008` creates roadmap drift risk and requires focused P1 execution on missing Multi-View modes.
 
 ## Constraint Owners
 - `architecture`: maintains API, provider, and system boundary decisions.

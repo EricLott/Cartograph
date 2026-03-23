@@ -3,7 +3,7 @@ id: feature-015
 title: Semantic Cluster View
 type: feature
 status: in_progress
-priority: P2
+priority: P1
 owner: ai-specialist
 depends_on:
   - epic-005
@@ -25,8 +25,8 @@ Standard hierarchy (Pillars) doesn't capture lateral themes like "Security," "Pe
 - Spatial "clouds" identify emerging topics with clear labels.
 
 ## Dependencies
-- feat-007 (Server Proxy)
-- task-034 (Vector Store Seed)
+- task-039
+- task-040
 
 ## Child Task IDs
 - task-039

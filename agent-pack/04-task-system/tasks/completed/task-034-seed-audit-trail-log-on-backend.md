@@ -10,7 +10,7 @@ claim_status: released
 claim_expires_at: null
 sla_due_at: 2026-03-25
 depends_on:
-  - feat-011
+  - feature-011
 acceptance_criteria:
   - "New log file/table `audit-trail.log` or equivalent backend record."
   - "Every project save event is logged with: `timestamp`, `action`, `project_id`, `summary_of_changes`."

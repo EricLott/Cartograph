@@ -10,7 +10,7 @@ claim_status: unclaimed
 claim_expires_at: null
 sla_due_at: 2026-03-29
 depends_on:
-  - feat-002
+  - feature-010
 acceptance_criteria:
   - "Sentry SDK initialized in `frontend/src/main.jsx`."
   - "Uncaught exceptions and React Error Boundaries report to Sentry."

@@ -40,6 +40,17 @@ next_step: Add retrieval endpoint and integration tests.
 ```
 
 ## Latest Entries
+- 2026-03-23T12:07:53-05:00 | `task-043` | `todo` | Completed Alignment Mode audit and realigned Multi-View execution backlog to close vision gaps (Conflict, Dependency Path, and Mind Map views), while normalizing duplicate epic/feature IDs.
+  - Evidence:
+    - `agent-pack/00-context/roadmap.md`
+    - `agent-pack/00-context/business-goals.md`
+    - `agent-pack/04-task-system/epics/in_progress/epic-005-the-multi-view-interface.md`
+    - `agent-pack/04-task-system/features/backlog/feature-016-conflict-orchestration-dashboard.md`
+    - `agent-pack/04-task-system/features/backlog/feature-017-dependency-path-and-hierarchy-views.md`
+    - `agent-pack/04-task-system/tasks/todo/task-043-add-conflict-view-mode-for-unresolved-decision-edges.md`
+    - `agent-pack/04-task-system/tasks/todo/task-044-add-dependency-path-view-for-selected-decisions.md`
+    - `agent-pack/04-task-system/tasks/todo/task-045-add-mind-map-hierarchy-mode-to-main-canvas.md`
+  - Next step: Claim and implement `task-043`, then proceed with `task-044` and `task-045` in dependency order.
 - 2026-03-23T11:15:00-05:00 | `task-038` | `done` | Removed redundant AGENTS.md check from cartograph-contribute.mjs and updated all references in contextual instructions.
   - Evidence:
     - `scripts/cartograph-contribute.mjs`

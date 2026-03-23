@@ -2,16 +2,16 @@
 id: epic-004
 title: Multi-Mode Architectural UI
 type: epic
-status: backlog
-priority: P1
+status: cancelled
+priority: P2
 owner: unassigned
 depends_on:
-  - epic-003
+  - epic-007
 acceptance_criteria:
   - Users can toggle between Graph, Semantic Cluster, and Mind Map views.
   - The UI remains performant with >100 decision nodes.
   - Interactive elements (drag-and-drop, zoom, focus) are fluid.
-last_updated: 2026-03-20
+last_updated: 2026-03-23
 ---
 
 # Epic: Multi-Mode Architectural UI
@@ -34,9 +34,12 @@ Deliver the multi-view lens promised in the vision. Architecture isn't one-dimen
 - High-fidelity SVG/PDF exports of every specialized view (initially).
 
 ## Child Feature IDs
-- feature-009
-- feature-010
+- feature-019
+- feature-020
 
 ## Risks
 - Frontend performance issues with complex graph layouts.
 - Data visualization library selection and learning curve.
+
+## Cancellation Note
+Superseded by `epic-005` ("The Multi-View Interface"), which now tracks active execution for graph, cluster, conflict, dependency, and hierarchy modes.

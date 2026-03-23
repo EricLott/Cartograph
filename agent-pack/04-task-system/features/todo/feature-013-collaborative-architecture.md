@@ -6,7 +6,7 @@ status: todo
 priority: P3
 owner: product-enterprise
 depends_on:
-  - epic-004
+  - epic-006
 acceptance_criteria:
   - Multiple users/agents can edit the architecture graph simultaneously.
   - Real-time cursor presence and activity indicators in the UI.

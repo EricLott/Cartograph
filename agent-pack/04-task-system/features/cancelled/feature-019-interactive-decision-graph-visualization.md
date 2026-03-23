@@ -1,17 +1,17 @@
 ---
-id: feature-009
+id: feature-019
 title: Interactive Decision Graph Visualization
 type: feature
-status: backlog
-priority: P1
+status: cancelled
+priority: P2
 owner: frontend
 depends_on:
-  - epic-004
+  - feature-014
 acceptance_criteria:
   - Directed graph shows decisions as nodes and relations as edges.
   - Edges are color-coded (red for conflicts, solid for dependencies).
   - Graph is interactive (pan/zoom/click to select).
-last_updated: 2026-03-20
+last_updated: 2026-03-23
 ---
 
 # Feature: Interactive Decision Graph Visualization
@@ -31,5 +31,7 @@ A tree view hides circular dependencies and conflicts. A graph is required to se
 - Real-time layout updates when adding/linking decisions.
 
 ## Child Task IDs
-- task-032
-- task-033
+- task-036
+
+## Cancellation Note
+Superseded by `feature-014` and completed implementation in `task-036`. Kept as historical reference to avoid losing backlog intent context.
