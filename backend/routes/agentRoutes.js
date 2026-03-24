@@ -4,9 +4,11 @@ const router = express.Router();
 const agentService = require('../services/agentService');
 
 router.post('/agent/complete', async (req, res) => {
+    console.log(`[Backend] /agent/complete - Provider: ${req.body.provider}`);
     try {
         const { provider, payload, clientKeys } = req.body;
         if (!provider || !payload) {
+            console.warn('[Backend] Missing provider or payload');
             return res.status(400).json({ error: 'Missing provider or completion payload.' });
         }
 
@@ -16,7 +18,7 @@ router.post('/agent/complete', async (req, res) => {
             usage: { ...usage, latency_ms } 
         });
     } catch (err) {
-        console.error('LLM Proxy error:', err);
+        console.error('[Backend] LLM Proxy Error detail:', err);
         res.status(502).json({ 
             error: 'Failed to retrieve completion from LLM provider.',
             detail: err.message

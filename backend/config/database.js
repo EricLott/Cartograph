@@ -1,12 +1,12 @@
 const { Sequelize } = require('sequelize');
 
 const createSequelize = () => {
-    const dialect = process.env.DB_DIALECT || 'mysql';
+    const dialect = process.env.DB_DIALECT || (process.env.DB_HOST ? 'mysql' : 'sqlite');
 
     if (dialect === 'sqlite') {
         return new Sequelize({
             dialect: 'sqlite',
-            storage: process.env.DB_STORAGE || ':memory:',
+            storage: process.env.DB_STORAGE || './database.sqlite',
             logging: false
         });
     }
