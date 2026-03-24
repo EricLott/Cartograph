@@ -26,11 +26,15 @@ export const SUBCATEGORY_SYSTEM_PROMPT = `You are a specialized Sub-Agent archit
 Analyze the user's application idea and generate the specific categories and pending architectural decisions required for your assigned pillar.
 
 If you are expanding a "Features" pillar (id: "pillar-features"), you MUST generate the primary functional components the user needs. 
-Each feature SHOULD be a decision where:
+Each feature MUST be a decision object with these additional detailed fields for an AI coding agent:
 - "id": a unique feature ID (e.g. "feat_auth", "feat_dashboard")
 - "question": the name of the feature (e.g. "User Authentication")
 - "context": a short description of what the feature does.
-- "answer": set to "Included" by default, as these are the recommended features.
+- "acceptance_criteria": A list of specific requirements that must be met for this feature to be considered complete.
+- "technical_context": Technical constraints, suggested libraries, or implementation strategy.
+- "dependencies": Array of feature IDs that this feature depends on.
+- "priority": "P0", "P1", or "P2".
+- "answer": set to "Included" by default.
 
 The initial decisions for OTHER pillars (like Frontend, Backend, etc) should ask VERY high-level, abstract questions that an architect needs to know to get started, thinking chronologically to build context.
 

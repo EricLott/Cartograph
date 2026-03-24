@@ -42,3 +42,10 @@ export const deleteProject = async (id) => {
     if (!response.ok) throw new Error(`Failed to delete project ${id} (Status ${response.status})`);
     return await response.json();
 };
+
+export const archiveProject = async (id) => {
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/projects/${id}/archive`, { method: 'PUT' });
+    if (!response.ok) throw new Error(`Failed to archive project ${id} (Status ${response.status})`);
+    return await response.json();
+};

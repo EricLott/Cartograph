@@ -3,6 +3,7 @@ const sequelize = require('../config/database');
 
 const Project = sequelize.define('Project', {
     idea: { type: DataTypes.TEXT, allowNull: false },
+    archived: { type: DataTypes.BOOLEAN, defaultValue: false }
 });
 
 const Pillar = sequelize.define('Pillar', {

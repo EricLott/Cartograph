@@ -160,31 +160,46 @@ Translate architectural intent into an execution path that autonomous contributo
                     const decisionSlug = (d.question || 'decision').replace(/[^\w\s]/g, '').replace(/\s+/g, '-').toLowerCase().slice(0, 50);
                     const decisionFileName = `${decisionTaskId}-${decisionSlug}.md`;
 
-                    let dTaskMd = `---\nid: ${decisionTaskId}\ntitle: Decision Task: ${d.question}\ntype: task\nstatus: todo\npriority: P2\nowner: TBD\ndepends_on: ["${taskId}"]\nlast_updated: ${new Date().toISOString().slice(0, 10)}\nworkstream: ${currentTopLevel}\nfeature: ${currentFeature}\n---\n\n`;
-                    dTaskMd += `# Task: Resolve Decision - ${d.question}\n\n`;
-                    dTaskMd += `## Goal\nImplement the architectural resolution for "${d.question}" within the ${currentFeature} context.\n\n`;
+                    const isFeature = currentTopLevel === 'pillar-features' || p.id === 'pillar-features';
+                    const priority = isFeature ? (d.priority || 'P1') : 'P2';
+                    const dependencies = isFeature && d.dependencies?.length > 0 ? [...d.dependencies, taskId] : [taskId];
+
+                    let dTaskMd = `---\nid: ${decisionTaskId}\ntitle: ${isFeature ? 'Feature' : 'Decision'}: ${d.question}\ntype: task\nstatus: todo\npriority: ${priority}\nowner: TBD\ndepends_on: ${JSON.stringify(dependencies)}\nlast_updated: ${new Date().toISOString().slice(0, 10)}\nworkstream: ${currentTopLevel}\nfeature: ${currentFeature}\n---\n\n`;
+                    dTaskMd += `# Task: ${isFeature ? 'Implement Feature' : 'Resolve Decision'} - ${d.question}\n\n`;
+                    dTaskMd += `## Goal\n${isFeature ? d.context : `Implement the architectural resolution for "${d.question}" within the ${currentFeature} context.`}\n\n`;
                     
                     dTaskMd += `## Inputs\n`;
                     dTaskMd += `- Feature: ${currentFeature}\n`;
                     dTaskMd += `- Decision ID: ${d.id || 'N/A'}\n`;
-                    dTaskMd += `- Context: ${d.context || 'Refer to architectural pillar description.'}\n\n`;
+                    if (!isFeature) dTaskMd += `- Context: ${d.context || 'Refer to architectural pillar description.'}\n`;
+                    if (isFeature && d.technical_context) {
+                        dTaskMd += `\n### Technical Context\n${d.technical_context}\n`;
+                    }
+                    dTaskMd += `\n`;
 
                     dTaskMd += `## Acceptance Criteria\n`;
-                    const ans = d.answer?.trim();
-                    const isUnresolved = !ans || ans === 'Pending Resolution';
-                    if (isUnresolved) {
-                        dTaskMd += `- [BLOCKER] Resolve decision for question: **${d.question}** before implementation.\n`;
+                    if (isFeature && d.acceptance_criteria && Array.isArray(d.acceptance_criteria) && d.acceptance_criteria.length > 0) {
+                        d.acceptance_criteria.forEach(ac => {
+                            dTaskMd += `- [ ] ${ac}\n`;
+                        });
                     } else {
-                        dTaskMd += `- Implement decision: **${d.question}** as per answer choice: *${ans}*\n`;
+                        const ans = d.answer?.trim();
+                        const isUnresolved = !ans || ans === 'Pending Resolution';
+                        if (isUnresolved) {
+                            dTaskMd += `- [BLOCKER] Resolve decision for question: **${d.question}** before implementation.\n`;
+                        } else {
+                            dTaskMd += `- Implement decision: **${d.question}** as per answer choice: *${ans}*\n`;
+                        }
                     }
                     if (d.conflict) {
                         dTaskMd += `- [CONFLICT] Resolve conflict: **${d.conflict}**\n`;
                     }
-                    dTaskMd += `- Evidence of implementation matching the chosen answer.\n\n`;
+                    dTaskMd += `- Evidence of implementation matching the requirements.\n\n`;
 
                     dTaskMd += `## Evidence Required\n`;
-                    dTaskMd += `- [ ] Verification of decision: ${d.question}\n`;
+                    dTaskMd += `- [ ] Verification of ${isFeature ? 'feature functionality' : `decision: ${d.question}`}\n`;
                     dTaskMd += `\n`;
+
 
                     taskFiles.push({ name: decisionFileName, content: dTaskMd, workstream: currentTopLevel });
                     depMap += `- ${decisionTaskId}: Decision: ${d.question} (Bucket: ${currentTopLevel})\n`;

@@ -13,6 +13,7 @@ const { getProjectClusters } = require('../services/clusteringService');
 router.get('/projects', async (req, res) => {
     try {
         const projects = await Project.findAll({
+            where: { archived: false },
             attributes: ['id', 'idea', 'createdAt'],
             order: [['createdAt', 'DESC']]
         });
@@ -50,6 +51,20 @@ router.delete('/projects/:id', async (req, res) => {
     try {
         const deleted = await Project.destroy({ where: { id: req.params.id } });
         if (!deleted) return res.status(404).json({ error: 'Project not found' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Archive project (soft delete)
+router.put('/projects/:id/archive', async (req, res) => {
+    try {
+        const updated = await Project.update(
+            { archived: true },
+            { where: { id: req.params.id } }
+        );
+        if (!updated[0]) return res.status(404).json({ error: 'Project not found' });
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });

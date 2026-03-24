@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { fetchAllProjects, deleteProject } from '../services/apiService';
+import { fetchAllProjects, deleteProject, archiveProject } from '../services/apiService';
+import DeleteProjectModal from './DeleteProjectModal';
 
 const FolderIcon = () => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -33,6 +34,7 @@ const PlusIcon = () => (
 export default function ProjectsPanel({ onSelectProject, currentProjectId, isOpen, onToggle, onNewProject }) {
     const [projects, setProjects] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [projectToConfirm, setProjectToConfirm] = useState(null);
 
     useEffect(() => {
         if (isOpen) {
@@ -52,12 +54,28 @@ export default function ProjectsPanel({ onSelectProject, currentProjectId, isOpe
         }
     };
 
-    const handleDelete = async (e, id) => {
+    const handleDeleteTrigger = (e, project) => {
         e.stopPropagation();
-        if (!window.confirm("Are you sure you want to delete this project?")) return;
+        setProjectToConfirm(project);
+    };
+
+    const handleArchive = async () => {
+        if (!projectToConfirm) return;
         try {
-            await deleteProject(id);
-            setProjects(projects.filter(p => p.id !== id));
+            await archiveProject(projectToConfirm.id);
+            setProjects(projects.filter(p => p.id !== projectToConfirm.id));
+            setProjectToConfirm(null);
+        } catch (err) {
+            alert("Failed to archive project: " + err.message);
+        }
+    };
+
+    const handleDeletePermanent = async () => {
+        if (!projectToConfirm) return;
+        try {
+            await deleteProject(projectToConfirm.id);
+            setProjects(projects.filter(p => p.id !== projectToConfirm.id));
+            setProjectToConfirm(null);
         } catch (err) {
             alert("Failed to delete project: " + err.message);
         }
@@ -148,7 +166,7 @@ export default function ProjectsPanel({ onSelectProject, currentProjectId, isOpe
                                 </div>
                                 <button
                                     className="btn-delete"
-                                    onClick={(e) => handleDelete(e, p.id)}
+                                    onClick={(e) => handleDeleteTrigger(e, p)}
                                     style={{
                                         position: 'absolute',
                                         top: '0.4rem',
@@ -171,6 +189,16 @@ export default function ProjectsPanel({ onSelectProject, currentProjectId, isOpe
                     )}
                 </div>
             </div>
+
+            {projectToConfirm && (
+                <DeleteProjectModal 
+                    projectTitle={projectToConfirm.idea}
+                    onArchive={handleArchive}
+                    onDelete={handleDeletePermanent}
+                    onClose={() => setProjectToConfirm(null)}
+                />
+            )}
+
             <style>{`
                 .project-item:hover {
                     transform: translateY(-1px);

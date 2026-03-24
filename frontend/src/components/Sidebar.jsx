@@ -29,7 +29,7 @@ const SettingsIcon = () => (
 
 const PillarNode = ({ node, activePillarId, onSelectPillar, depth = 0 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const hasChildren = node.subcategories && node.subcategories.length > 0;
+    const hasChildren = (node.subcategories && node.subcategories.length > 0) || (node.id === 'pillar-features' && node.decisions && node.decisions.length > 0);
     const isActive = activePillarId === node.id;
 
     return (
@@ -82,8 +82,19 @@ const PillarNode = ({ node, activePillarId, onSelectPillar, depth = 0 }) => {
                     marginTop: '4px',
                     animation: 'fadeIn 0.3s ease-out'
                 }}>
-                    {node.subcategories.map(child => (
+                    {node.subcategories?.map(child => (
                         <PillarNode key={child.id} node={child} activePillarId={activePillarId} onSelectPillar={onSelectPillar} depth={depth + 1} />
+                    ))}
+                    {node.id === 'pillar-features' && node.decisions?.map(feat => (
+                        <div key={feat.id} style={{ marginLeft: '24px', marginTop: '2px', display: 'flex', alignItems: 'center' }}>
+                            <div className={`priority-dot ${(feat.priority || 'P1').toLowerCase()}`} style={{ 
+                                width: '6px', height: '6px', borderRadius: '50%', marginRight: '8px', flexShrink: 0,
+                                background: feat.priority === 'P0' ? '#ef4444' : (feat.priority === 'P2' ? '#3b82f6' : '#f59e0b')
+                            }} />
+                            <span style={{ fontSize: '0.85rem', opacity: 0.8, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {feat.question}
+                            </span>
+                        </div>
                     ))}
                 </div>
             )}
