@@ -2,12 +2,12 @@
 id: task-041
 title: Add Semantic Cluster View to Frontend
 type: task
-status: todo
+status: in_progress
 priority: P1
-owner: frontend-specialist
-claim_owner: null
-claim_status: unclaimed
-claim_expires_at: null
+owner: Eric Lott
+claim_owner: Eric Lott
+claim_status: claimed
+claim_expires_at: "2026-03-25T21:04:47.834Z"
 sla_due_at: 2026-03-28
 depends_on:
   - task-040
@@ -16,8 +16,8 @@ acceptance_criteria:
   - "New 'Cluster View' mode toggle in the `GraphView` component."
   - "Nodes reposition themselves on a 2D canvas based on the `/api/projects/:id/clusters` data."
   - "Cluster labels or colored 'clouds' appear around groups of similar decisions."
-  - "Hovering a node highlights others in the same cluster."
-last_updated: 2026-03-23
+  - Hovering a node highlights others in the same cluster.
+last_updated: 2026-03-24
 ---
 
 # Task: Add Semantic Cluster View to Frontend
