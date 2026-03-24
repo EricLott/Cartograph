@@ -6,6 +6,21 @@ const normalizeArray = (value) => {
     return [value];
 };
 
+const normalizeChatHistory = (chatHistory) => {
+    if (!Array.isArray(chatHistory)) return [];
+    return chatHistory
+        .filter((msg) => msg && typeof msg === 'object')
+        .map((msg) => {
+            const role = typeof msg.role === 'string' ? msg.role : 'agent';
+            const content = typeof msg.content === 'string' ? msg.content : String(msg.content ?? '');
+            const cleaned = { role, content };
+            if (msg.artifact && typeof msg.artifact === 'object') {
+                cleaned.artifact = msg.artifact;
+            }
+            return cleaned;
+        });
+};
+
 const buildDecisionPersistenceShape = (decisionInput = {}) => {
     const acceptanceCriteria = decisionInput.acceptance_criteria ?? decisionInput.acceptanceCriteria;
     const technicalContext = decisionInput.technical_context ?? decisionInput.technicalContext;
@@ -94,25 +109,27 @@ const getProjectTree = async (projectId) => {
     return {
         projectId: project.id,
         idea: project.idea,
+        chatHistory: Array.isArray(project.chatHistory) ? project.chatHistory : [],
         pillars: buildPillarTree(null),
         createdAt: project.createdAt
     };
 };
 
-const saveProjectState = async (idea, pillars, projectId, isAgent = false) => {
+const saveProjectState = async (idea, pillars, projectId, isAgent = false, chatHistory = []) => {
     return await sequelize.transaction(async (t) => {
         let project;
         let action = 'CREATE_PROJECT';
+        const normalizedChatHistory = normalizeChatHistory(chatHistory);
         if (projectId) {
             project = await Project.findByPk(projectId, { transaction: t });
             if (project) {
-                await project.update({ idea }, { transaction: t });
+                await project.update({ idea, chatHistory: normalizedChatHistory }, { transaction: t });
                 action = 'UPDATE_PROJECT';
             }
         }
 
         if (!project) {
-            project = await Project.create({ idea }, { transaction: t });
+            project = await Project.create({ idea, chatHistory: normalizedChatHistory }, { transaction: t });
         }
 
         const seenPillarIds = new Set();

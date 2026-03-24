@@ -11,6 +11,7 @@ describe('graphUtils', () => {
           id: 'd1',
           question: 'Question 1',
           answer: 'Answer 1',
+          dependencies: ['d2'],
           links: [
             { id: 'd2', type: 'depends_on' }
           ]
@@ -18,7 +19,15 @@ describe('graphUtils', () => {
         {
           id: 'd2',
           question: 'Question 2',
-          answer: null
+          answer: null,
+          conflict: 'sample conflict'
+        },
+        {
+          id: 'd3',
+          question: 'Question 3',
+          context: 'Similar to Question 2 for overlap',
+          answer: null,
+          conflict: 'sample conflict'
         }
       ]
     }
@@ -27,7 +36,7 @@ describe('graphUtils', () => {
   describe('buildGraphFromPillars', () => {
     it('should correctly map pillars to nodes', () => {
       const { nodes } = buildGraphFromPillars(mockPillars);
-      expect(nodes).toHaveLength(2);
+      expect(nodes).toHaveLength(3);
       expect(nodes[0].id).toBe('d1');
       expect(nodes[0].data.label).toBe('Question 1');
       expect(nodes[0].data.pillarTitle).toBe('Pillar 1');
@@ -36,11 +45,9 @@ describe('graphUtils', () => {
 
     it('should correctly map links to edges', () => {
       const { edges } = buildGraphFromPillars(mockPillars);
-      expect(edges).toHaveLength(1);
-      expect(edges[0].source).toBe('d1');
-      expect(edges[0].target).toBe('d2');
-      expect(edges[0].label).toBe('depends_on');
-      expect(edges[0].animated).toBe(true);
+      const dependencyEdge = edges.find((edge) => edge.source === 'd1' && edge.target === 'd2' && edge.label === 'depends_on');
+      expect(dependencyEdge).toBeDefined();
+      expect(dependencyEdge.animated).toBe(true);
     });
 
     it('should handle nested subcategories', () => {
@@ -60,6 +67,12 @@ describe('graphUtils', () => {
         const { nodes } = buildGraphFromPillars(nestedPillars);
         expect(nodes).toHaveLength(1);
         expect(nodes[0].id).toBe('ds1');
+    });
+
+    it('should infer conflict edges for shared conflict messages', () => {
+      const { edges } = buildGraphFromPillars(mockPillars);
+      const conflictEdge = edges.find((edge) => edge.label === 'conflicts' && ((edge.source === 'd2' && edge.target === 'd3') || (edge.source === 'd3' && edge.target === 'd2')));
+      expect(conflictEdge).toBeDefined();
     });
   });
 

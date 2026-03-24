@@ -10,7 +10,7 @@ export function usePillarLogic(state, setters) {
     try {
       const ideaMsg = messages.find(m => m.role === 'user');
       if (ideaMsg) {
-        const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId);
+        const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId, false, messages);
         if (resultData?.projectId) setProjectId(resultData.projectId);
       }
     } catch {

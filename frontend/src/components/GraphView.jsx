@@ -15,12 +15,15 @@ import { buildGraphFromPillars, getLayoutedElements } from '../utils/graphUtils'
 const DecisionNode = ({ data }) => {
   const isResolved = !!data.answer;
   const isConflict = !!data.conflict;
+  const isFeature = data.kind === 'feature';
   
   const nodeStyle = {
     padding: '10px 15px',
     borderRadius: '8px',
-    background: isConflict ? 'rgba(239, 68, 68, 0.2)' : (isResolved ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.1)'),
-    border: `2px solid ${isConflict ? '#ef4444' : (isResolved ? '#3b82f6' : 'rgba(255, 255, 255, 0.3)')}`,
+    background: isConflict
+      ? 'rgba(239, 68, 68, 0.2)'
+      : (isFeature ? 'rgba(16, 185, 129, 0.2)' : (isResolved ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.1)')),
+    border: `2px solid ${isConflict ? '#ef4444' : (isFeature ? '#10b981' : (isResolved ? '#3b82f6' : 'rgba(255, 255, 255, 0.3)'))}`,
     color: '#fff',
     fontSize: '12px',
     fontWeight: '500',
@@ -38,6 +41,11 @@ const DecisionNode = ({ data }) => {
         {data.pillarTitle}
       </div>
       <div style={{ wordBreak: 'break-word', color: '#fff' }}>{data.label}</div>
+      {isFeature && !isConflict && (
+        <div style={{ marginTop: '6px', fontSize: '10px', color: '#10b981', fontWeight: 'bold' }}>
+          FEATURE {data.priority ? `· ${data.priority}` : ''}
+        </div>
+      )}
       {isConflict && (
         <div style={{ marginTop: '8px', fontSize: '10px', color: '#ef4444', fontWeight: 'bold' }}>
           CONFLICT
@@ -99,6 +107,7 @@ const GraphView = ({ pillars, onSelectDecision }) => {
         <MiniMap 
             nodeColor={(node) => {
                 if (node.data.conflict) return '#ef4444';
+                if (node.data.kind === 'feature') return '#10b981';
                 if (node.data.answer) return '#3b82f6';
                 return '#666';
             }}

@@ -71,7 +71,19 @@ describe('agentService', () => {
                         }
                     }
                 ],
-                conflicts: []
+                conflicts: [],
+                uiActions: [
+                    { type: 'focus_decision', decisionId: 'feat_stripe_subscriptions' }
+                ],
+                artifact: {
+                    type: 'adaptive_card',
+                    json: {
+                        type: 'AdaptiveCard',
+                        version: '1.5',
+                        body: [{ type: 'TextBlock', text: 'Store decision options' }],
+                        $schema: 'http://adaptivecards.io/schemas/adaptive-card.json'
+                    }
+                }
             });
             const mockResponse = {
                 ok: true,
@@ -87,6 +99,9 @@ describe('agentService', () => {
 
             expect(result.reply).toBe('Hello');
             expect(result.newDecisions).toHaveLength(1);
+            expect(result.uiActions).toHaveLength(1);
+            expect(result.uiActions[0].type).toBe('focus_decision');
+            expect(result.artifact?.type).toBe('adaptive_card');
             expect(fetch).toHaveBeenCalledWith('/api/agent/complete', expect.any(Object));
         });
     });

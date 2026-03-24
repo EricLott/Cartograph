@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icon, loadIcon } from '@iconify/react';
+import { getIconCandidates } from '../../utils/iconResolver';
 
 // Memory cache for the current session
 const iconCache = new Map();
@@ -28,29 +29,57 @@ const DynamicIcon = ({
   useEffect(() => {
     let mounted = true;
 
-    if (!name) return;
-
-    if (iconCache.has(name)) {
-      setIconData(iconCache.get(name));
+    if (!name) {
+      setIconData(null);
       setLoading(false);
+      setFailed(false);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    const candidates = getIconCandidates(name);
+    const cachedCandidate = candidates.find((candidate) => iconCache.has(candidate));
+
+    if (cachedCandidate) {
+      const cachedData = iconCache.get(cachedCandidate);
+      iconCache.set(name, cachedData);
+      setIconData(cachedData);
+      setLoading(false);
+      setFailed(false);
       return;
     }
 
+    setIconData(null);
     setLoading(true);
     setFailed(false);
 
-    loadIcon(name)
-      .then((data) => {
-        if (!mounted) return;
-        iconCache.set(name, data);
-        setIconData(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        setFailed(true);
-        setLoading(false);
-      });
+    const loadFirstAvailable = async () => {
+      for (const candidate of candidates) {
+        try {
+          const data = await loadIcon(candidate);
+          if (!mounted || !data) return;
+          iconCache.set(candidate, data);
+          iconCache.set(name, data);
+          setIconData(data);
+          setLoading(false);
+          setFailed(false);
+          return;
+        } catch {
+          // Keep trying next candidate.
+        }
+      }
+
+      if (!mounted) return;
+      setFailed(true);
+      setLoading(false);
+    };
+
+    loadFirstAvailable().catch(() => {
+      if (!mounted) return;
+      setFailed(true);
+      setLoading(false);
+    });
 
     return () => {
       mounted = false;

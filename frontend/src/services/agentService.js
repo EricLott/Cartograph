@@ -182,5 +182,6 @@ const mockChatTurn = async () => ({
     updatedDecisions: [],
     newCategories: [],
     newDecisions: [],
-    conflicts: []
+    conflicts: [],
+    artifact: null
 });

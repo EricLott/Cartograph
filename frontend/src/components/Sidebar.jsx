@@ -29,7 +29,9 @@ const SettingsIcon = () => (
 
 const PillarNode = ({ node, activePillarId, onSelectPillar, depth = 0 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const hasChildren = (node.subcategories && node.subcategories.length > 0) || (node.id === 'pillar-features' && node.decisions && node.decisions.length > 0);
+    const hasSubcategories = node.subcategories && node.subcategories.length > 0;
+    const hasDecisionChildren = node.decisions && node.decisions.length > 0;
+    const hasChildren = hasSubcategories || hasDecisionChildren;
     const isActive = activePillarId === node.id;
 
     return (
@@ -85,14 +87,23 @@ const PillarNode = ({ node, activePillarId, onSelectPillar, depth = 0 }) => {
                     {node.subcategories?.map(child => (
                         <PillarNode key={child.id} node={child} activePillarId={activePillarId} onSelectPillar={onSelectPillar} depth={depth + 1} />
                     ))}
-                    {node.id === 'pillar-features' && node.decisions?.map(feat => (
-                        <div key={feat.id} style={{ marginLeft: '24px', marginTop: '2px', display: 'flex', alignItems: 'center' }}>
-                            <div className={`priority-dot ${(feat.priority || 'P1').toLowerCase()}`} style={{ 
-                                width: '6px', height: '6px', borderRadius: '50%', marginRight: '8px', flexShrink: 0,
-                                background: feat.priority === 'P0' ? '#ef4444' : (feat.priority === 'P2' ? '#3b82f6' : '#f59e0b')
-                            }} />
+                    {node.decisions?.map(decision => (
+                        <div key={decision.id} style={{ marginLeft: '24px', marginTop: '2px', display: 'flex', alignItems: 'center' }}>
+                            <div
+                                className={`priority-dot ${(decision.priority || 'P1').toLowerCase()}`}
+                                style={{
+                                    width: '6px',
+                                    height: '6px',
+                                    borderRadius: '50%',
+                                    marginRight: '8px',
+                                    flexShrink: 0,
+                                    background: decision.conflict
+                                        ? '#ef4444'
+                                        : (decision.priority === 'P0' ? '#ef4444' : (decision.priority === 'P2' ? '#3b82f6' : '#f59e0b'))
+                                }}
+                            />
                             <span style={{ fontSize: '0.85rem', opacity: 0.8, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {feat.question}
+                                {decision.question}
                             </span>
                         </div>
                     ))}

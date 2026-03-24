@@ -1,6 +1,7 @@
 import { generatePillarsFromIdea, processChatTurn, generateCategoriesForPillar } from '../services/agentService';
 import { saveStateToBackend } from '../services/apiService';
 import { addDecisionToPillar, findNodeById, updateNodeDecisions } from '../utils/treeUtils';
+import { normalizeFeatureDecision } from '../utils/featureNormalization';
 
 const normalizeText = (value = '') => value.toLowerCase();
 
@@ -26,13 +27,33 @@ const decisionMatches = (decision, matcher) => {
 const upsertDecisionOnNode = (pillars, targetId, decision, matcher = {}) => {
   const target = findNodeById(pillars, targetId);
   if (!target) return pillars;
+  const isFeatureTarget = target.id === 'pillar-features';
+  const normalizedDecision = isFeatureTarget ? normalizeFeatureDecision(decision) : decision;
 
-  const existing = (target.decisions || []).find((d) => decisionMatches(d, matcher) || d.id === decision.id);
+  const existing = (target.decisions || []).find((d) => decisionMatches(d, matcher) || d.id === normalizedDecision.id);
   if (existing) {
-    return updateNodeDecisions(pillars, existing.id, (d) => ({ ...d, ...decision, id: d.id }));
+    return updateNodeDecisions(pillars, existing.id, (d) => ({ ...d, ...normalizedDecision, id: d.id }));
   }
 
-  return addDecisionToPillar(pillars, targetId, decision);
+  return addDecisionToPillar(pillars, targetId, normalizedDecision);
+};
+
+const findDecisionLocation = (pillars, decisionId) => {
+  for (const pillar of pillars) {
+    const stack = [{ node: pillar }];
+    while (stack.length > 0) {
+      const { node } = stack.pop();
+      if ((node.decisions || []).some((decision) => decision.id === decisionId)) {
+        return { pillarId: pillar.id, decisionId };
+      }
+      (node.subcategories || []).forEach((child) => stack.push({ node: child }));
+    }
+  }
+  return null;
+};
+
+const userRequestedNavigation = (text = '') => {
+  return /\b(open|link|documentation|docs|navigate|take me|go to|show me)\b/i.test(text);
 };
 
 const applyRealtimeStripeFallback = (pillars, message) => {
@@ -49,12 +70,18 @@ const applyRealtimeStripeFallback = (pillars, message) => {
     next = upsertDecisionOnNode(
       next,
       featuresNode.id,
-      {
+      normalizeFeatureDecision({
         id: 'feat_stripe_subscriptions',
         question: 'Stripe subscription payments',
         context: 'Support recurring subscriptions via Stripe Checkout/Billing and synchronize status to user accounts.',
-        answer: 'Included'
-      },
+        answer: 'Included',
+        acceptance_criteria: [
+          'Customers can start, manage, and cancel Stripe subscriptions.',
+          'Subscription status is synchronized and reflected in product access controls.'
+        ],
+        technical_context: 'Implement Stripe Checkout/Billing flows and webhook-driven state reconciliation.',
+        priority: 'P1'
+      }),
       { pattern: /stripe.*subscription|subscription.*stripe|stripe.*billing/ }
     );
   }
@@ -154,7 +181,16 @@ const buildDatastoreConflict = (pillars, latestUserMessage) => {
 
 export function useChatLogic(state, setters) {
   const { messages, pillars, projectId, llmConfig } = state;
-  const { setMessages, setPillars, setIsWaiting, setProjectId, setErrorMessage } = setters;
+  const {
+    setMessages,
+    setPillars,
+    setIsWaiting,
+    setProjectId,
+    setErrorMessage,
+    setActivePillarId,
+    setActiveDecisionId,
+    setViewMode
+  } = setters;
 
   const handleSendMessage = async (content) => {
     setErrorMessage(null);
@@ -179,7 +215,8 @@ export function useChatLogic(state, setters) {
 
   const handleInitialIdea = async (content, newMessages) => {
     const generatedPillars = await generatePillarsFromIdea(content, llmConfig);
-    setMessages([...newMessages, { role: 'agent', content: "Extracting pillars..." }]);
+    const extractingMessage = { role: 'agent', content: "Extracting pillars..." };
+    setMessages([...newMessages, extractingMessage]);
     setPillars(generatedPillars);
     setIsWaiting(false);
 
@@ -198,11 +235,13 @@ export function useChatLogic(state, setters) {
       }
     }));
 
-    setMessages(msgs => [...msgs, { role: 'agent', content: "All set!" }]);
+    const completionMessage = { role: 'agent', content: "All set!" };
+    setMessages(msgs => [...msgs, completionMessage]);
     const finalPillars = generatedPillars.map((p, idx) => ({
       ...p, subcategories: results[idx].subcategories || [], decisions: results[idx].decisions || []
     }));
-    const resultData = await saveStateToBackend(content, finalPillars, null, true);
+    const finalMessages = [...newMessages, extractingMessage, completionMessage];
+    const resultData = await saveStateToBackend(content, finalPillars, null, true, finalMessages);
     if (resultData?.projectId) setProjectId(resultData.projectId);
   };
 
@@ -237,11 +276,45 @@ export function useChatLogic(state, setters) {
     const finalReply = sanitizeAgentReply(baseReply, { updatedDecisionsCount: result.updatedDecisions?.length || 0 });
 
     setPillars(nextPillars);
-    setMessages([...newMessages, { role: 'agent', content: finalReply }]);
+    const responseMessage = { role: 'agent', content: finalReply, artifact: result.artifact || null };
+    const nextMessages = [...newMessages, responseMessage];
+    setMessages(nextMessages);
+
+    if (Array.isArray(result.uiActions) && result.uiActions.length > 0) {
+      const canOpenExternal = userRequestedNavigation(latestUserMessage);
+      let openedExternal = false;
+
+      result.uiActions.forEach((action) => {
+        if (!action || !action.type) return;
+
+        if (action.type === 'focus_pillar' && action.pillarId) {
+          setViewMode('pillar');
+          setActivePillarId(action.pillarId);
+          setActiveDecisionId(null);
+          return;
+        }
+
+        if (action.type === 'focus_decision' && action.decisionId) {
+          const location = findDecisionLocation(nextPillars, action.decisionId);
+          if (!location) return;
+          setViewMode('pillar');
+          setActivePillarId(location.pillarId);
+          setActiveDecisionId(location.decisionId);
+          return;
+        }
+
+        if (action.type === 'open_url' && action.url && !openedExternal && canOpenExternal) {
+          if (/^https?:\/\//i.test(action.url) && typeof window !== 'undefined' && typeof window.open === 'function') {
+            window.open(action.url, '_blank', 'noopener,noreferrer');
+            openedExternal = true;
+          }
+        }
+      });
+    }
 
     const ideaMsg = newMessages.find(m => m.role === 'user');
     if (ideaMsg) {
-      const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId, true);
+      const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId, true, nextMessages);
       if (resultData?.projectId) setProjectId(resultData.projectId);
     }
   };

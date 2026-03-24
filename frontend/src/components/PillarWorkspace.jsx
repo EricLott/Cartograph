@@ -3,6 +3,8 @@ import { ConfigOption, CheckIcon, PendingIcon, WarningIcon } from './PillarCompo
 import { STANDARD_DECISIONS } from '../constants/architecture';
 import DynamicIcon from './common/DynamicIcon';
 import { VscAdd, VscTrash, VscEdit, VscCheck, VscClose, VscNote, VscPass, VscSettingsGear, VscListOrdered, VscReferences } from 'react-icons/vsc';
+import { normalizeFeatureDecision } from '../utils/featureNormalization';
+import { getRelatedDecisionsForTarget } from '../utils/decisionRelations';
 
 const SubcategoriesList = ({ subcategories }) => {
     if (!subcategories || subcategories.length === 0) return null;
@@ -89,7 +91,7 @@ const DecisionCard = ({ decision, index, onUpdateDecision, pillarId, isActive })
     );
 };
 
-const FeatureCard = ({ feature, onEdit, onDelete, pillarId }) => {
+const FeatureCard = ({ feature, onEdit, onDelete, pillarId, relatedDecisions = [], onJumpToDecision }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState({ 
         question: feature.question, 
@@ -209,6 +211,25 @@ const FeatureCard = ({ feature, onEdit, onDelete, pillarId }) => {
                                     </div>
                                 </div>
                             )}
+
+                            {relatedDecisions.length > 0 && (
+                                <div className="feature-detail-section">
+                                    <h5><VscListOrdered /> Related Decisions</h5>
+                                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                                        {relatedDecisions.map((related) => (
+                                            <button
+                                                key={related.decisionId}
+                                                className="btn-secondary"
+                                                style={{ padding: '0.2rem 0.45rem', fontSize: '0.75rem' }}
+                                                onClick={() => onJumpToDecision?.(related.pillarId, related.decisionId)}
+                                                title={`${related.pillarTitle} · ${related.relationTypes.join(', ')}`}
+                                            >
+                                                {related.question}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -290,7 +311,17 @@ const FeatureCard = ({ feature, onEdit, onDelete, pillarId }) => {
     );
 };
 
-export default function PillarWorkspace({ pillar, onBack, onUpdateDecision, activeDecisionId, onAddFeature, onDeleteFeature, onEditFeature }) {
+export default function PillarWorkspace({
+    pillar,
+    allPillars = [],
+    onBack,
+    onUpdateDecision,
+    activeDecisionId,
+    onAddFeature,
+    onDeleteFeature,
+    onEditFeature,
+    onJumpToDecision
+}) {
     const [showAddForm, setShowAddForm] = useState(false);
     const [newFeature, setNewFeature] = useState({ 
         question: '', 
@@ -304,6 +335,14 @@ export default function PillarWorkspace({ pillar, onBack, onUpdateDecision, acti
     if (!pillar) return null;
 
     const isFeatures = pillar.id === 'pillar-features';
+    const relatedByFeatureId = React.useMemo(() => {
+        if (!isFeatures) return {};
+        const map = {};
+        (pillar.decisions || []).forEach((decision) => {
+            map[decision.id] = getRelatedDecisionsForTarget(allPillars, decision.id, { maxResults: 5 });
+        });
+        return map;
+    }, [isFeatures, pillar.decisions, allPillars]);
 
     const handleAdd = () => {
         if (!newFeature.question) return;
@@ -431,10 +470,12 @@ export default function PillarWorkspace({ pillar, onBack, onUpdateDecision, acti
                         isFeatures ? (
                             <FeatureCard 
                                 key={d.id} 
-                                feature={d} 
+                                feature={normalizeFeatureDecision(d)} 
                                 pillarId={pillar.id}
                                 onEdit={onEditFeature}
                                 onDelete={onDeleteFeature}
+                                relatedDecisions={relatedByFeatureId[d.id] || []}
+                                onJumpToDecision={onJumpToDecision}
                             />
                         ) : (
                             <DecisionCard 

@@ -3,6 +3,7 @@ import { fetchLatestProject, fetchProjectById } from '../services/apiService';
 
 export function useProjectManagement(state, setters) {
   const { setMessages, setPillars, setActivePillarId, setIsWaiting, setErrorMessage, setIsProjectsOpen, setProjectId } = setters;
+  const fallbackWelcome = { role: 'agent', content: "Hello! I'm your Cartograph Agent. Describe the application you want to build, and I'll generate the architectural pillars for us to work through." };
 
   useEffect(() => {
     async function hydrate() {
@@ -12,11 +13,14 @@ export function useProjectManagement(state, setters) {
         if (data && data.projectId) {
           setProjectId(data.projectId);
           setPillars(data.pillars || []);
-          setMessages([
-            { role: 'agent', content: "Hello! I'm your Cartograph Agent. Describe the application you want to build, and I'll generate the architectural pillars for us to work through." },
-            { role: 'user', content: data.idea },
-            { role: 'agent', content: "I've restored your latest session. The architectural framework is fully staged! Which area would you like to discuss first?" }
-          ]);
+          const restoredMessages = Array.isArray(data.chatHistory) && data.chatHistory.length > 0
+            ? data.chatHistory
+            : [
+              fallbackWelcome,
+              { role: 'user', content: data.idea },
+              { role: 'agent', content: "I've restored your latest session. The architectural framework is fully staged! Which area would you like to discuss first?" }
+            ];
+          setMessages(restoredMessages);
         }
       } catch (err) {
         console.error("Hydration failed:", err);
@@ -46,11 +50,14 @@ export function useProjectManagement(state, setters) {
         setProjectId(data.projectId);
         setPillars(data.pillars || []);
         setActivePillarId(null);
-        setMessages([
-          { role: 'agent', content: "I've restored your session." },
-          { role: 'user', content: data.idea },
-          { role: 'agent', content: "Restored from your project history. What would you like to refine?" }
-        ]);
+        const restoredMessages = Array.isArray(data.chatHistory) && data.chatHistory.length > 0
+          ? data.chatHistory
+          : [
+            { role: 'agent', content: "I've restored your session." },
+            { role: 'user', content: data.idea },
+            { role: 'agent', content: "Restored from your project history. What would you like to refine?" }
+          ];
+        setMessages(restoredMessages);
       }
     } catch (err) {
       console.error("Failed to load project:", err);

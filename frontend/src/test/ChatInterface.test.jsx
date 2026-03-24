@@ -44,4 +44,40 @@ describe('ChatInterface', () => {
         expect(bubble).toBeInTheDocument();
         // If it was rendered as HTML, getByText wouldn't find the raw script tags as text
     });
+
+    it('renders adaptive card artifact JSON when present', () => {
+        const messages = [
+            {
+                role: 'agent',
+                content: 'Here is a structured recommendation.',
+                artifact: {
+                    type: 'adaptive_card',
+                    json: {
+                        type: 'AdaptiveCard',
+                        version: '1.5',
+                        body: [{ type: 'TextBlock', text: 'Choose datastore' }]
+                    }
+                }
+            }
+        ];
+
+        render(<ChatInterface messages={messages} onSendMessage={() => {}} isWaiting={false} />);
+        expect(screen.getByText('Artifact: Adaptive Card')).toBeInTheDocument();
+        expect(screen.getByText('Choose datastore')).toBeInTheDocument();
+        expect(screen.getByText('View JSON')).toBeInTheDocument();
+    });
+
+    it('focuses the prompt input when focusTrigger changes', () => {
+        const messages = [{ role: 'agent', content: 'hello' }];
+        const { rerender } = render(
+            <ChatInterface messages={messages} onSendMessage={() => {}} isWaiting={false} focusTrigger={0} />
+        );
+
+        rerender(
+            <ChatInterface messages={messages} onSendMessage={() => {}} isWaiting={false} focusTrigger={1} />
+        );
+
+        const input = screen.getByPlaceholderText('Describe your architecture requirements...');
+        expect(document.activeElement).toBe(input);
+    });
 });

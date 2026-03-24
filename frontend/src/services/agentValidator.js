@@ -56,6 +56,58 @@ const assertNullableString = (value, path, contextLabel) => {
     }
 };
 
+const validateAdaptiveCardArtifact = (artifact, path, contextLabel) => {
+    if (artifact === null || artifact === undefined) return null;
+    assertPlainObject(artifact, path, contextLabel);
+    assertNonEmptyString(artifact.type, `${path}.type`, contextLabel);
+    if (artifact.type !== 'adaptive_card') {
+        throw createSchemaError(contextLabel, `"${path}.type" must be "adaptive_card".`);
+    }
+    assertPlainObject(artifact.json, `${path}.json`, contextLabel);
+    assertNonEmptyString(artifact.json.type, `${path}.json.type`, contextLabel);
+    if (artifact.json.type !== 'AdaptiveCard') {
+        throw createSchemaError(contextLabel, `"${path}.json.type" must be "AdaptiveCard".`);
+    }
+    return artifact;
+};
+
+const validateUiActions = (uiActions, path, contextLabel) => {
+    const allowedTypes = new Set(['focus_decision', 'focus_pillar', 'open_url']);
+    const safeActions = [];
+
+    if (uiActions === null || uiActions === undefined) return safeActions;
+    assertArray(uiActions, path, contextLabel);
+
+    uiActions.forEach((action, index) => {
+        const actionPath = `${path}[${index}]`;
+        assertPlainObject(action, actionPath, contextLabel);
+        assertNonEmptyString(action.type, `${actionPath}.type`, contextLabel);
+
+        if (!allowedTypes.has(action.type)) {
+            throw createSchemaError(contextLabel, `"${actionPath}.type" must be one of focus_decision|focus_pillar|open_url.`);
+        }
+
+        if (action.type === 'focus_decision') {
+            assertNonEmptyString(action.decisionId, `${actionPath}.decisionId`, contextLabel);
+            safeActions.push({ type: action.type, decisionId: action.decisionId });
+            return;
+        }
+
+        if (action.type === 'focus_pillar') {
+            assertNonEmptyString(action.pillarId, `${actionPath}.pillarId`, contextLabel);
+            safeActions.push({ type: action.type, pillarId: action.pillarId });
+            return;
+        }
+
+        if (action.type === 'open_url') {
+            assertNonEmptyString(action.url, `${actionPath}.url`, contextLabel);
+            safeActions.push({ type: action.type, url: action.url });
+        }
+    });
+
+    return safeActions;
+};
+
 const validateDecisionNode = (node, path, contextLabel) => {
     assertPlainObject(node, path, contextLabel);
     assertNonEmptyString(node.id, `${path}.id`, contextLabel);
@@ -159,6 +211,9 @@ export const validateChatTurnOutput = (output, contextLabel) => {
             assertNonEmptyString(id, `${path}.decisionIds[${idIndex}]`, contextLabel)
         );
     });
+
+    output.uiActions = validateUiActions(output.uiActions, 'root.uiActions', contextLabel);
+    output.artifact = validateAdaptiveCardArtifact(output.artifact, 'root.artifact', contextLabel);
 
     return output;
 };

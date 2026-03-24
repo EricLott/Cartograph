@@ -10,6 +10,7 @@ import { VscFileSubmodule, VscGraph, VscBell, VscClose, VscChevronDown, VscChevr
 import { useAppLogic } from './hooks/useAppLogic';
 
 function App() {
+  const [chatFocusTrigger, setChatFocusTrigger] = React.useState(0);
   const {
     messages,
     isWaiting,
@@ -49,7 +50,10 @@ function App() {
         currentProjectId={projectId}
         isOpen={isProjectsOpen}
         onSelectProject={handleSelectProject}
-        onNewProject={handleNewProject}
+        onNewProject={() => {
+          handleNewProject();
+          setChatFocusTrigger((value) => value + 1);
+        }}
         onToggle={() => setIsProjectsOpen(!isProjectsOpen)}
       />
 
@@ -151,11 +155,17 @@ function App() {
             ) : activePillar ? (
               <PillarWorkspace
                 pillar={activePillar}
+                allPillars={pillars}
                 activeDecisionId={activeDecisionId}
                 onUpdateDecision={handleUpdateDecision}
                 onAddFeature={handleAddFeature}
                 onDeleteFeature={handleDeleteFeature}
                 onEditFeature={handleEditFeature}
+                onJumpToDecision={(pillarId, decisionId) => {
+                  setActivePillarId(pillarId);
+                  setActiveDecisionId(decisionId);
+                  setViewMode('pillar');
+                }}
                 onBack={() => {
                   setActivePillarId(null);
                   setActiveDecisionId(null);
@@ -173,6 +183,7 @@ function App() {
               messages={messages}
               onSendMessage={handleSendMessage}
               isWaiting={isWaiting}
+              focusTrigger={chatFocusTrigger}
             />
           </div>
         </div>
