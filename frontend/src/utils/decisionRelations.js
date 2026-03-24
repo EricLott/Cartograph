@@ -53,20 +53,23 @@ const flattenDecisionText = (decision) => {
 export const flattenDecisionNodes = (pillars) => {
     const records = [];
 
-    const walk = (nodes, parentPillar = null) => {
+    const walk = (nodes, topLevelPillar = null, lineage = []) => {
         if (!Array.isArray(nodes)) return;
         nodes.forEach((node) => {
-            const owningPillar = parentPillar || node;
+            const owningPillar = topLevelPillar || node;
+            const nextLineage = [...lineage, node.title];
             (node.decisions || []).forEach((decision) => {
                 records.push({
                     id: decision.id,
                     decision,
                     pillarId: owningPillar.id,
                     pillarTitle: owningPillar.title,
+                    topLevelTitle: owningPillar.title,
+                    breadcrumb: nextLineage.join(' > '),
                     isFeature: String(decision.id || '').startsWith('feat_')
                 });
             });
-            walk(node.subcategories || [], owningPillar);
+            walk(node.subcategories || [], owningPillar, nextLineage);
         });
     };
 
@@ -92,6 +95,8 @@ export const getRelatedDecisionsForTarget = (pillars, targetDecisionId, { maxRes
             question: candidate.decision.question,
             pillarId: candidate.pillarId,
             pillarTitle: candidate.pillarTitle,
+            topLevelTitle: candidate.topLevelTitle,
+            breadcrumb: candidate.breadcrumb,
             relationTypes: new Set(),
             score: 0
         };

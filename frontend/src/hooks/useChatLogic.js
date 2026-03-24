@@ -299,7 +299,7 @@ export function useChatLogic(state, setters) {
         if (action.type === 'focus_decision' && action.decisionId) {
           const location = findDecisionLocation(nextPillars, action.decisionId);
           if (!location) return;
-          setViewMode('pillar');
+          setViewMode('decision');
           setActivePillarId(location.pillarId);
           setActiveDecisionId(location.decisionId);
           return;

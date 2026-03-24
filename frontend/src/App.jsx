@@ -7,6 +7,7 @@ import SettingsModal from './components/SettingsModal';
 import ProjectsPanel from './components/ProjectsPanel';
 import GraphView from './components/GraphView';
 import ProjectOverview from './components/ProjectOverview';
+import DecisionFocusView from './components/DecisionFocusView';
 import { VscFileSubmodule, VscGraph, VscBook, VscBell, VscClose, VscChevronDown, VscChevronUp } from 'react-icons/vsc';
 import { useAppLogic } from './hooks/useAppLogic';
 
@@ -71,6 +72,11 @@ function App() {
         pillars={pillars}
         activePillarId={activePillarId}
         onSelectPillar={(node) => setActivePillarId(node.id)}
+        onSelectDecision={(pillarId, decisionId) => {
+          setActivePillarId(pillarId);
+          setActiveDecisionId(decisionId);
+          setViewMode('decision');
+        }}
         onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
@@ -119,6 +125,22 @@ function App() {
             >
               <VscBook /> Overview
             </button>
+            {activeDecisionId && (
+              <button
+                className={`btn-secondary ${viewMode === 'decision' ? 'active' : ''}`}
+                style={{
+                  padding: '0.25rem 0.5rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  borderColor: viewMode === 'decision' ? '#ef4444' : 'rgba(255,255,255,0.1)'
+                }}
+                onClick={() => setViewMode('decision')}
+                title="Decision Focus"
+              >
+                Focus
+              </button>
+            )}
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <h3 style={{ margin: 0 }}>Architecture Blueprint</h3>
@@ -165,8 +187,19 @@ function App() {
                 onSelectDecision={(pillarId, decisionId) => {
                   setActivePillarId(pillarId);
                   setActiveDecisionId(decisionId);
-                  setViewMode('pillar');
+                  setViewMode('decision');
                 }} 
+              />
+            ) : viewMode === 'decision' ? (
+              <DecisionFocusView
+                pillars={pillars}
+                decisionId={activeDecisionId}
+                onExitFocus={() => setViewMode('pillar')}
+                onJumpToDecision={(pillarId, decisionId) => {
+                  setActivePillarId(pillarId);
+                  setActiveDecisionId(decisionId);
+                  setViewMode('decision');
+                }}
               />
             ) : viewMode === 'overview' ? (
               <ProjectOverview markdown={projectOverview} />

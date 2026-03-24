@@ -27,7 +27,52 @@ const SettingsIcon = () => (
     </svg>
 );
 
-const PillarNode = ({ node, activePillarId, onSelectPillar, depth = 0 }) => {
+const toTitleCase = (value = '') =>
+    String(value)
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+
+const toBriefTitle = (question = '') => {
+    const text = String(question).trim().replace(/\?+$/, '');
+    if (!text) return 'Untitled Decision';
+
+    const semanticPatterns = [
+        /^what\s+(?:are|is)\s+(?:the\s+)?(.+?)\s+(?:strateg(?:y|ies)|approach(?:es)?|method(?:s)?|framework(?:s)?|model(?:s)?|pattern(?:s)?|principles?|policy|policies|architecture)\s+(?:for|to|in|of)\b/i,
+        /^what\s+(?:type|types)\s+of\s+(.+?)\s+(?:should|will|is|are)\b/i,
+        /^which\s+(.+?)\s+(?:should|will|is|are)\b/i,
+        /^how\s+(?:will|should|can|do|does)\s+(.+?)\s+(?:be|to|is|are)\b/i
+    ];
+
+    for (const pattern of semanticPatterns) {
+        const match = text.match(pattern);
+        if (match?.[1]) {
+            const phrase = match[1]
+                .replace(/\b(the|a|an)\b/gi, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+            if (phrase) return toTitleCase(phrase);
+        }
+    }
+
+    const normalized = text
+        .replace(/^what\s+/i, '')
+        .replace(/^how\s+/i, '')
+        .replace(/^which\s+/i, '')
+        .replace(/^will\s+/i, '')
+        .replace(/^should\s+/i, '')
+        .replace(/^do\s+/i, '')
+        .replace(/^does\s+/i, '')
+        .replace(/^is\s+/i, '')
+        .trim();
+
+    const words = normalized.split(/\s+/).filter(Boolean);
+    const compact = words.slice(0, 3).join(' ');
+    return toTitleCase(`${compact}${words.length > 3 ? '...' : ''}`);
+};
+
+const PillarNode = ({ node, activePillarId, onSelectPillar, onSelectDecision, depth = 0 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const hasSubcategories = node.subcategories && node.subcategories.length > 0;
     const hasDecisionChildren = node.decisions && node.decisions.length > 0;
@@ -78,34 +123,48 @@ const PillarNode = ({ node, activePillarId, onSelectPillar, depth = 0 }) => {
             {isExpanded && hasChildren && (
                 <div className="pillar-children" style={{
                     position: 'relative',
-                    marginLeft: '12px',
-                    paddingLeft: '4px',
+                    marginLeft: '10px',
+                    paddingLeft: '6px',
                     borderLeft: '1px solid var(--border-color)',
-                    marginTop: '4px',
+                    marginTop: '3px',
                     animation: 'fadeIn 0.3s ease-out'
                 }}>
                     {node.subcategories?.map(child => (
-                        <PillarNode key={child.id} node={child} activePillarId={activePillarId} onSelectPillar={onSelectPillar} depth={depth + 1} />
+                        <PillarNode key={child.id} node={child} activePillarId={activePillarId} onSelectPillar={onSelectPillar} onSelectDecision={onSelectDecision} depth={depth + 1} />
                     ))}
                     {node.decisions?.map(decision => (
-                        <div key={decision.id} style={{ marginLeft: '24px', marginTop: '2px', display: 'flex', alignItems: 'center' }}>
+                        <button
+                            key={decision.id}
+                            className="sidebar-decision-row"
+                            onClick={() => onSelectDecision?.(node.id, decision.id)}
+                            style={{
+                                marginLeft: '16px',
+                                marginTop: '1px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '7px',
+                                cursor: 'pointer',
+                                width: 'calc(100% - 18px)',
+                                textAlign: 'left'
+                            }}
+                            title={decision.question}
+                        >
                             <div
                                 className={`priority-dot ${(decision.priority || 'P1').toLowerCase()}`}
                                 style={{
-                                    width: '6px',
-                                    height: '6px',
+                                    width: '7px',
+                                    height: '7px',
                                     borderRadius: '50%',
-                                    marginRight: '8px',
                                     flexShrink: 0,
                                     background: decision.conflict
-                                        ? '#ef4444'
-                                        : (decision.priority === 'P0' ? '#ef4444' : (decision.priority === 'P2' ? '#3b82f6' : '#f59e0b'))
+                                        ? '#ef4444' // conflict
+                                        : (decision.answer ? '#10b981' : '#f59e0b') // resolved : pending
                                 }}
                             />
-                            <span style={{ fontSize: '0.85rem', opacity: 0.8, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {decision.question}
+                            <span className="sidebar-decision-label" style={{ fontSize: '0.83rem', opacity: 0.84, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {depth >= 2 ? toBriefTitle(decision.question) : decision.question}
                             </span>
-                        </div>
+                        </button>
                     ))}
                 </div>
             )}
@@ -113,7 +172,7 @@ const PillarNode = ({ node, activePillarId, onSelectPillar, depth = 0 }) => {
     );
 };
 
-export default function Sidebar({ pillars, activePillarId, onSelectPillar, onOpenSettings }) {
+export default function Sidebar({ pillars, activePillarId, onSelectPillar, onSelectDecision, onOpenSettings }) {
     return (
         <aside className="sidebar glass-panel" style={{ border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column' }}>
             <div className="sidebar-header" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
@@ -123,7 +182,7 @@ export default function Sidebar({ pillars, activePillarId, onSelectPillar, onOpe
                 {pillars && pillars.length > 0 ? (
                     <nav className="pillar-nav">
                         {pillars.map(p => (
-                            <PillarNode key={p.id} node={p} activePillarId={activePillarId} onSelectPillar={onSelectPillar} />
+                            <PillarNode key={p.id} node={p} activePillarId={activePillarId} onSelectPillar={onSelectPillar} onSelectDecision={onSelectDecision} />
                         ))}
                     </nav>
                 ) : (
@@ -147,6 +206,24 @@ export default function Sidebar({ pillars, activePillarId, onSelectPillar, onOpe
                 @keyframes fadeIn {
                     from { opacity: 0; transform: translateY(-4px); }
                     to { opacity: 1; transform: translateY(0); }
+                }
+                .sidebar-decision-row {
+                    border: none;
+                    background: transparent;
+                    padding: 2px 4px;
+                    border-radius: 6px;
+                    transition: background-color 0.15s ease;
+                    min-height: 22px;
+                }
+                .sidebar-decision-row:hover {
+                    background: rgba(59, 130, 246, 0.08);
+                }
+                .sidebar-decision-row:focus-visible {
+                    outline: 1px solid rgba(59, 130, 246, 0.55);
+                    outline-offset: 1px;
+                }
+                .sidebar-decision-label {
+                    line-height: 1.15;
                 }
             `}</style>
         </aside>
