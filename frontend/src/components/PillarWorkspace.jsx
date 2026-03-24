@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ConfigOption, CheckIcon, PendingIcon, WarningIcon } from './PillarComponents';
 import { STANDARD_DECISIONS } from '../constants/architecture';
+import DynamicIcon from './common/DynamicIcon';
 import { VscAdd, VscTrash, VscEdit, VscCheck, VscClose } from 'react-icons/vsc';
 
 const SubcategoriesList = ({ subcategories }) => {
@@ -37,7 +38,10 @@ const DecisionCard = ({ decision, index, onUpdateDecision, pillarId, isActive })
             style={{ animationDelay: `${index * 0.1}s` }}
         >
             <div className="decision-card-header">
-                <h4>{decision.question}</h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {decision.icon && <DynamicIcon name={decision.icon} size={20} />}
+                    <h4 style={{ margin: 0 }}>{decision.question}</h4>
+                </div>
                 {decision.conflict ? (
                     <span className="status-conflict"><WarningIcon /> Conflict</span>
                 ) : decision.answer ? (
@@ -60,10 +64,17 @@ const DecisionCard = ({ decision, index, onUpdateDecision, pillarId, isActive })
                     </div>
                 ) : (
                     <div className="pending-content-wrapper">
-                        {standardConfig ? (
+                        {(decision.options || standardConfig?.options) ? (
                             <div className="standard-config-ui">
-                                {standardConfig.options.map(opt => (
-                                    <ConfigOption key={opt.id} option={opt} onClick={(val) => onUpdateDecision(pillarId, decision.id, val)} />
+                                {(decision.options || standardConfig.options).map(opt => (
+                                    <ConfigOption 
+                                        key={opt.id} 
+                                        option={{
+                                            ...opt,
+                                            icon: typeof opt.icon === 'string' ? <DynamicIcon name={opt.icon} /> : opt.icon
+                                        }} 
+                                        onClick={(val) => onUpdateDecision(pillarId, decision.id, val)} 
+                                    />
                                 ))}
                             </div>
                         ) : (
@@ -152,7 +163,10 @@ export default function PillarWorkspace({ pillar, onBack, onUpdateDecision, acti
         <div className="pillar-workspace glass-panel">
             <div className="workspace-nav">
                 <button className="btn-secondary" onClick={onBack}>Back</button>
-                <h2>{pillar.title}</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {pillar.icon && <DynamicIcon name={pillar.icon} size={28} />}
+                    <h2 style={{ margin: 0 }}>{pillar.title}</h2>
+                </div>
             </div>
             <div className="decision-container">
                 <p className="pillar-description">{pillar.description}</p>

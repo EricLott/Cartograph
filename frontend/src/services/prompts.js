@@ -15,6 +15,7 @@ Format MUST match exactly:
     "id": "pillar_id_string",
     "title": "Pillar Title",
     "description": "Short explanation of this pillar.",
+    "icon": "iconify:name", // MANDATORY: Use generalized Iconify names (e.g. "mdi:server" for Infrastructure, "mdi:shield" for Security). DO NOT use vendor-specific icons like "logos:aws".
     "subcategories": [],
     "decisions": []
   }
@@ -61,7 +62,16 @@ Format MUST match exactly:
     }
   ],
   "decisions": [
-    // Decisions that belong directly to the root pillar
+    {
+      "id": "decision_id_string",
+      "question": "The architectural question?",
+      "context": "Contextual advice.",
+      "answer": null,
+      "icon": "vsc:question", // Optional: Iconify name
+      "options": [ // Optional: Pre-defined JIT options
+        { "id": "opt1", "label": "Option A", "icon": "logos:option-a" }
+      ]
+    }
   ]
 }
 `;

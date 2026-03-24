@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import DynamicIcon from './common/DynamicIcon';
 
 const ChevronRight = () => (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -62,10 +63,14 @@ const PillarNode = ({ node, activePillarId, onSelectPillar, depth = 0 }) => {
                     onClick={() => onSelectPillar(node)}
                     style={{
                         flexGrow: 1,
-                        transition: 'all 0.2s'
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
                     }}
                 >
-                    {node.title}
+                    {node.icon && <DynamicIcon name={node.icon} size={14} />}
+                    <span style={{ flex: 1, textAlign: 'left' }}>{node.title}</span>
                 </button>
             </div>
             {isExpanded && hasChildren && (

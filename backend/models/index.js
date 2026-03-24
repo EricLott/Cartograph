@@ -9,6 +9,7 @@ const Pillar = sequelize.define('Pillar', {
     pillarId: { type: DataTypes.STRING },
     title: { type: DataTypes.STRING, allowNull: false },
     description: { type: DataTypes.TEXT },
+    icon: { type: DataTypes.STRING },
 });
 
 const Decision = sequelize.define('Decision', {
@@ -23,7 +24,8 @@ const Decision = sequelize.define('Decision', {
     embedding: { type: DataTypes.TEXT, allowNull: true },
     clusterX: { type: DataTypes.FLOAT, allowNull: true },
     clusterY: { type: DataTypes.FLOAT, allowNull: true },
-    clusterLabel: { type: DataTypes.STRING, allowNull: true }
+    clusterLabel: { type: DataTypes.STRING, allowNull: true },
+    icon: { type: DataTypes.STRING, allowNull: true }
 });
 
 const DecisionRelationship = sequelize.define('DecisionRelationship', {

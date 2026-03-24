@@ -62,6 +62,18 @@ const validateDecisionNode = (node, path, contextLabel) => {
     assertNonEmptyString(node.question, `${path}.question`, contextLabel);
     assertNonEmptyString(node.context, `${path}.context`, contextLabel);
     assertNullableString(node.answer, `${path}.answer`, contextLabel);
+    assertNullableString(node.icon, `${path}.icon`, contextLabel);
+    
+    if (node.options) {
+        assertArray(node.options, `${path}.options`, contextLabel);
+        node.options.forEach((opt, i) => {
+            const optPath = `${path}.options[${i}]`;
+            assertPlainObject(opt, optPath, contextLabel);
+            assertNonEmptyString(opt.id, `${optPath}.id`, contextLabel);
+            assertNonEmptyString(opt.label, `${optPath}.label`, contextLabel);
+            assertNullableString(opt.icon, `${optPath}.icon`, contextLabel);
+        });
+    }
     
     if (node.links) {
         assertArray(node.links, `${path}.links`, contextLabel);
@@ -79,6 +91,7 @@ export const validateCategoryNode = (node, path, contextLabel) => {
     assertNonEmptyString(node.id, `${path}.id`, contextLabel);
     assertNonEmptyString(node.title, `${path}.title`, contextLabel);
     assertNonEmptyString(node.description, `${path}.description`, contextLabel);
+    assertNullableString(node.icon, `${path}.icon`, contextLabel);
 
     assertArray(node.subcategories, `${path}.subcategories`, contextLabel);
     node.subcategories.forEach((subcategory, index) =>

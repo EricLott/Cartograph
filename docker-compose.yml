@@ -7,7 +7,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_API_URL=http://localhost:3000
+      - VITE_PROXY_TARGET=http://backend:3000
     depends_on:
       - backend
 
@@ -41,6 +41,9 @@ services:
       - DB_PASSWORD=cartograph_pass
       - DB_NAME=cartograph_db
       - DB_PORT=3306
+      - OPENAI_API_KEY
+      - GEMINI_API_KEY
+      - ANTHROPIC_API_KEY
     depends_on:
       mysql:
         condition: service_healthy

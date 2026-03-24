@@ -19,9 +19,11 @@ const getProjectTree = async (projectId) => {
                 id: p.pillarId,
                 title: p.title,
                 description: p.description,
+                icon: p.icon,
                 decisions: p.Decisions.map(d => ({
                     id: d.decisionId,
                     question: d.question,
+                    icon: d.icon,
                     context: d.context,
                     answer: d.answer,
                     conflict: d.conflict,
@@ -77,6 +79,7 @@ const saveProjectState = async (idea, pillars, projectId, isAgent = false) => {
                     await pillar.update({
                         title: p.title,
                         description: p.description,
+                        icon: p.icon,
                         parentId: parentDatabaseId
                     }, { transaction: t });
                 } else {
@@ -84,6 +87,7 @@ const saveProjectState = async (idea, pillars, projectId, isAgent = false) => {
                         pillarId: p.id,
                         title: p.title,
                         description: p.description,
+                        icon: p.icon,
                         ProjectId: project.id,
                         parentId: parentDatabaseId
                     }, { transaction: t });
@@ -101,6 +105,7 @@ const saveProjectState = async (idea, pillars, projectId, isAgent = false) => {
                         if (decision) {
                             await decision.update({
                                 question: d.question,
+                                icon: d.icon,
                                 context: d.context,
                                 answer: d.answer,
                                 conflict: d.conflict,
@@ -112,6 +117,7 @@ const saveProjectState = async (idea, pillars, projectId, isAgent = false) => {
                             decision = await Decision.create({
                                 decisionId: d.id,
                                 question: d.question,
+                                icon: d.icon,
                                 context: d.context,
                                 answer: d.answer,
                                 conflict: d.conflict,
