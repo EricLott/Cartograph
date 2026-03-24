@@ -36,6 +36,9 @@ function App() {
     handleSelectProject,
     handleSendMessage,
     handleUpdateDecision,
+    handleAddFeature,
+    handleDeleteFeature,
+    handleEditFeature,
     handleExport
   } = useAppLogic();
 
