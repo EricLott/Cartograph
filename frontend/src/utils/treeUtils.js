@@ -39,3 +39,27 @@ const cleanerUpdater = (decision, targetId, updater) => {
     }
     return decision;
 };
+
+export const addDecisionToPillar = (nodes, pillarId, newDecision) => {
+    return nodes.map(node => {
+        if (node.id === pillarId) {
+            return { ...node, decisions: [...(node.decisions || []), newDecision] };
+        }
+        if (node.subcategories && node.subcategories.length > 0) {
+            return { ...node, subcategories: addDecisionToPillar(node.subcategories, pillarId, newDecision) };
+        }
+        return node;
+    });
+};
+
+export const deleteDecisionFromPillar = (nodes, pillarId, decisionId) => {
+    return nodes.map(node => {
+        if (node.id === pillarId) {
+            return { ...node, decisions: (node.decisions || []).filter(d => d.id !== decisionId) };
+        }
+        if (node.subcategories && node.subcategories.length > 0) {
+            return { ...node, subcategories: deleteDecisionFromPillar(node.subcategories, pillarId, decisionId) };
+        }
+        return node;
+    });
+};

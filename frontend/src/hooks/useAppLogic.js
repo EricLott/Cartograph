@@ -45,7 +45,7 @@ export function useAppLogic() {
 
   const { handleNewProject, handleSelectProject } = useProjectManagement(state, setters);
   const { handleSendMessage } = useChatLogic(state, setters);
-  const { handleUpdateDecision } = usePillarLogic(state, setters);
+  const { handleUpdateDecision, handleAddFeature, handleDeleteFeature, handleEditFeature } = usePillarLogic(state, setters);
 
   // 3. Proactive Validation (Derived observations)
   const agentFeedback = useMemo(() => {
@@ -82,7 +82,7 @@ export function useAppLogic() {
     setActivePillarId, setActiveDecisionId, setErrorMessage, setIsProjectsOpen,
     setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig,
     handleNewProject, handleSelectProject,
-    handleSendMessage, handleUpdateDecision, handleExport,
+    handleSendMessage, handleUpdateDecision, handleAddFeature, handleDeleteFeature, handleEditFeature, handleExport,
     activePillar
   };
 }

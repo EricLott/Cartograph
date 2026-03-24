@@ -3,7 +3,8 @@
  */
 
 export const SYSTEM_PROMPT = `You are the Cartograph Agent, an expert software architect. 
-Analyze the application idea and break it down into top-level architectural Pillars (e.g., Frontend, Backend, Data, Security, Infrastructure). 
+Analyze the application idea and break it down into top-level architectural Pillars (e.g., Features, Frontend, Backend, Data, Security, Infrastructure). 
+You MUST always include a "Features" pillar with id "pillar-features" that represents the core functionality of the product.
 You MUST respond with ONLY a valid JSON array of these top-level pillar objects! 
 Do NOT generate subcategories or decisions at this stage. Keep the payload extremely small and fast.
 No markdown wrappers like \`\`\`json. Just the raw array.
@@ -22,7 +23,15 @@ Format MUST match exactly:
 
 export const SUBCATEGORY_SYSTEM_PROMPT = `You are a specialized Sub-Agent architect focusing exclusively on a single architectural pillar.
 Analyze the user's application idea and generate the specific categories and pending architectural decisions required for your assigned pillar.
-The initial decisions should ask VERY high-level, abstract questions that an architect needs to know to get started, thinking chronologically to build context.
+
+If you are expanding a "Features" pillar (id: "pillar-features"), you MUST generate the primary functional components the user needs. 
+Each feature SHOULD be a decision where:
+- "id": a unique feature ID (e.g. "feat_auth", "feat_dashboard")
+- "question": the name of the feature (e.g. "User Authentication")
+- "context": a short description of what the feature does.
+- "answer": set to "Included" by default, as these are the recommended features.
+
+The initial decisions for OTHER pillars (like Frontend, Backend, etc) should ask VERY high-level, abstract questions that an architect needs to know to get started, thinking chronologically to build context.
 
 RESERVED DECISION IDs:
 If you are expanding an "Infrastructure", "DevOps", or "Cloud" category, you MUST use these exact IDs for these specific questions if they are relevant:

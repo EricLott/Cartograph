@@ -63,7 +63,7 @@ export const generatePillarsFromIdea = async (ideaDescription, config) => {
 
 export const generateCategoriesForPillar = async (ideaDescription, pillar, config) => {
     const { provider, keys } = config;
-    if (provider === 'mock') return mockExpandPillar();
+    if (provider === 'mock') return mockExpandPillar(ideaDescription, pillar);
 
     const prompt = `Application Idea:\n${ideaDescription}\n\nAssigned Pillar to expand:\n${pillar.title}\n${pillar.description}`;
     
@@ -149,21 +149,33 @@ export const processChatTurn = async (chatHistory, currentPillars, config) => {
 // --- Mocks ---
 
 const mockGenerate = async () => [
+    { id: 'pillar-features', title: 'Features', description: 'Core functional requirements and product features.', subcategories: [], decisions: [] },
     { id: 'pillar-frontend', title: 'Frontend & UI', description: 'The user-facing application interface.', subcategories: [], decisions: [] },
     { id: 'pillar-infra', title: 'Infrastructure', description: 'Hosting, deployment, and cloud strategy.', subcategories: [], decisions: [] }
 ];
 
-const mockExpandPillar = async () => ({
-    subcategories: [{ 
-        id: 'cat-fe-state', title: 'State Management', description: 'How client state is managed.', subcategories: [], 
-        decisions: [{ id: 'd-fe-state', question: 'Global state or local?', context: 'Impacts perf', answer: null }] 
-    }],
-    decisions: [
-        { id: 'infra_hosting', question: 'Where is this going to live?', context: 'Cloud provider choice', answer: null },
-        { id: 'infra_containerization', question: 'Do you want it containerized?', context: 'Deployment model', answer: null },
-        { id: 'infra_iac', question: 'How to handle infrastructure-as-code?', context: 'Management strategy', answer: null }
-    ]
-});
+const mockExpandPillar = async (idea, pillar) => {
+    if (pillar.id === 'pillar-features') {
+        return {
+            subcategories: [],
+            decisions: [
+                { id: 'feat_auth', question: 'User Authentication', context: 'Allow users to sign up and log in.', answer: 'Included' },
+                { id: 'feat_crud', question: 'Core CRUD Operations', context: 'Manage the main data entities.', answer: 'Included' }
+            ]
+        };
+    }
+    return {
+        subcategories: [{ 
+            id: 'cat-fe-state', title: 'State Management', description: 'How client state is managed.', subcategories: [], 
+            decisions: [{ id: 'd-fe-state', question: 'Global state or local?', context: 'Impacts perf', answer: null }] 
+        }],
+        decisions: [
+            { id: 'infra_hosting', question: 'Where is this going to live?', context: 'Cloud provider choice', answer: null },
+            { id: 'infra_containerization', question: 'Do you want it containerized?', context: 'Deployment model', answer: null },
+            { id: 'infra_iac', question: 'How to handle infrastructure-as-code?', context: 'Management strategy', answer: null }
+        ]
+    };
+};
 
 const mockChatTurn = async () => ({
     reply: "Got it, evaluating your decision...",

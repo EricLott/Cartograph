@@ -148,6 +148,9 @@ function App() {
                 pillar={activePillar}
                 activeDecisionId={activeDecisionId}
                 onUpdateDecision={handleUpdateDecision}
+                onAddFeature={handleAddFeature}
+                onDeleteFeature={handleDeleteFeature}
+                onEditFeature={handleEditFeature}
                 onBack={() => {
                   setActivePillarId(null);
                   setActiveDecisionId(null);
