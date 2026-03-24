@@ -6,7 +6,8 @@ import PillarWorkspace from './components/PillarWorkspace';
 import SettingsModal from './components/SettingsModal';
 import ProjectsPanel from './components/ProjectsPanel';
 import GraphView from './components/GraphView';
-import { VscFileSubmodule, VscGraph, VscBell, VscClose, VscChevronDown, VscChevronUp } from 'react-icons/vsc';
+import ProjectOverview from './components/ProjectOverview';
+import { VscFileSubmodule, VscGraph, VscBook, VscBell, VscClose, VscChevronDown, VscChevronUp } from 'react-icons/vsc';
 import { useAppLogic } from './hooks/useAppLogic';
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
     activePillar,
     agentFeedback,
     projectId,
+    projectOverview,
     errorMessage,
     setErrorMessage,
     isProjectsOpen,
@@ -103,6 +105,20 @@ function App() {
             >
               <VscGraph /> Graph
             </button>
+            <button
+              className={`btn-secondary ${viewMode === 'overview' ? 'active' : ''}`}
+              style={{
+                padding: '0.25rem 0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                borderColor: viewMode === 'overview' ? '#f59e0b' : 'rgba(255,255,255,0.1)'
+              }}
+              onClick={() => setViewMode('overview')}
+              title="Project Overview"
+            >
+              <VscBook /> Overview
+            </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <h3 style={{ margin: 0 }}>Architecture Blueprint</h3>
@@ -152,6 +168,8 @@ function App() {
                   setViewMode('pillar');
                 }} 
               />
+            ) : viewMode === 'overview' ? (
+              <ProjectOverview markdown={projectOverview} />
             ) : activePillar ? (
               <PillarWorkspace
                 pillar={activePillar}

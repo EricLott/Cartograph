@@ -83,8 +83,8 @@ router.post('/save-state', async (req, res) => {
             return res.status(400).json({ error: 'pillars must be an array.' });
         }
 
-        const resultId = await saveProjectState(idea, pillars, projectId, isAgent, chatHistory);
-        res.json({ success: true, projectId: resultId });
+        const result = await saveProjectState(idea, pillars, projectId, isAgent, chatHistory);
+        res.json({ success: true, projectId: result.projectId, projectOverview: result.projectOverview });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

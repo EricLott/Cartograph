@@ -17,6 +17,7 @@ export function useAppLogic() {
   const [activePillarId, setActivePillarId] = useState(null);
   const [activeDecisionId, setActiveDecisionId] = useState(null);
   const [projectId, setProjectId] = useState(null);
+  const [projectOverview, setProjectOverview] = useState('');
   const [errorMessage, setErrorMessage] = useState(null);
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
   const [viewMode, setViewMode] = useState('pillar');
@@ -31,12 +32,13 @@ export function useAppLogic() {
   const setters = {
     setMessages, setIsWaiting, setPillars, setActivePillarId, setActiveDecisionId,
     setProjectId, setErrorMessage, setIsProjectsOpen,
+    setProjectOverview,
     setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig
   };
 
   const state = {
     messages, isWaiting, pillars, activePillarId, activeDecisionId,
-    projectId, errorMessage, isProjectsOpen,
+    projectId, projectOverview, errorMessage, isProjectsOpen,
     viewMode, isSettingsOpen, isNotificationsOpen, llmConfig
   };
 
@@ -109,7 +111,7 @@ export function useAppLogic() {
     ...state,
     agentFeedback,
     setActivePillarId, setActiveDecisionId, setErrorMessage, setIsProjectsOpen,
-    setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig,
+    setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig, setProjectOverview,
     handleNewProject, handleSelectProject,
     handleSendMessage, handleUpdateDecision, handleAddFeature, handleDeleteFeature, handleEditFeature, handleExport,
     activePillar, handleSaveLlmConfig

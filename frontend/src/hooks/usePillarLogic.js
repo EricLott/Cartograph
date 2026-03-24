@@ -3,7 +3,7 @@ import { saveStateToBackend } from '../services/apiService';
 
 export function usePillarLogic(state, setters) {
   const { pillars, messages, projectId } = state;
-  const { setPillars, setProjectId, setErrorMessage, setAgentFeedback } = setters;
+  const { setPillars, setProjectId, setProjectOverview, setErrorMessage, setAgentFeedback } = setters;
 
   const handleUpdatePillars = async (nextPillars) => {
     setPillars(nextPillars);
@@ -12,6 +12,7 @@ export function usePillarLogic(state, setters) {
       if (ideaMsg) {
         const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId, false, messages);
         if (resultData?.projectId) setProjectId(resultData.projectId);
+        if (typeof resultData?.projectOverview === 'string') setProjectOverview(resultData.projectOverview);
       }
     } catch {
       setErrorMessage("Failed to save changes.");

@@ -21,6 +21,82 @@ const normalizeChatHistory = (chatHistory) => {
         });
 };
 
+const collectDecisionStats = (pillarNodes) => {
+    let total = 0;
+    let resolved = 0;
+    let conflicted = 0;
+    let featureCount = 0;
+
+    const walk = (nodes) => {
+        (nodes || []).forEach((node) => {
+            (node.decisions || []).forEach((decision) => {
+                total += 1;
+                if (decision.answer) resolved += 1;
+                if (decision.conflict) conflicted += 1;
+                if (String(decision.id || '').startsWith('feat_')) featureCount += 1;
+            });
+            walk(node.subcategories || []);
+        });
+    };
+
+    walk(pillarNodes || []);
+    return { total, resolved, conflicted, featureCount };
+};
+
+const buildProjectOverviewMarkdown = (idea, pillars, chatHistory, projectId = 'local-draft') => {
+    const stats = collectDecisionStats(pillars);
+    const recentMessages = normalizeChatHistory(chatHistory).slice(-8);
+
+    let md = `# Project Overview\n\n`;
+    md += `- Project ID: ${projectId}\n`;
+    md += `- Last Updated: ${new Date().toISOString()}\n`;
+    md += `- Pillars: ${(pillars || []).length}\n`;
+    md += `- Decisions: ${stats.total} (${stats.resolved} resolved, ${stats.total - stats.resolved} pending)\n`;
+    md += `- Features: ${stats.featureCount}\n`;
+    md += `- Conflicts: ${stats.conflicted}\n\n`;
+
+    md += `## Product Idea\n\n${idea}\n\n`;
+    md += `## Architecture Snapshot\n\n`;
+
+    const writeNode = (node, depth = 0) => {
+        const heading = '#'.repeat(Math.min(6, depth + 3));
+        md += `${heading} ${node.title}\n\n`;
+        if (node.description) md += `${node.description}\n\n`;
+
+        const decisions = node.decisions || [];
+        if (decisions.length > 0) {
+            decisions.forEach((decision) => {
+                const status = decision.conflict ? 'Conflict' : (decision.answer ? 'Resolved' : 'Pending');
+                md += `- [${status}] **${decision.question || decision.id}**\n`;
+                if (decision.context) md += `  - Context: ${decision.context}\n`;
+                if (decision.answer) md += `  - Answer: ${decision.answer}\n`;
+                if (decision.priority) md += `  - Priority: ${decision.priority}\n`;
+                if (Array.isArray(decision.dependencies) && decision.dependencies.length > 0) {
+                    md += `  - Dependencies: ${decision.dependencies.join(', ')}\n`;
+                }
+                if (decision.conflict) md += `  - Conflict: ${decision.conflict}\n`;
+            });
+            md += `\n`;
+        }
+
+        (node.subcategories || []).forEach((child) => writeNode(child, depth + 1));
+    };
+
+    (pillars || []).forEach((pillar) => writeNode(pillar, 0));
+
+    md += `## Recent Conversation\n\n`;
+    if (recentMessages.length === 0) {
+        md += `No conversation history yet.\n`;
+    } else {
+        recentMessages.forEach((msg) => {
+            const role = msg.role === 'agent' ? 'Agent' : 'User';
+            md += `- **${role}:** ${msg.content}\n`;
+        });
+    }
+
+    return md;
+};
+
 const buildDecisionPersistenceShape = (decisionInput = {}) => {
     const acceptanceCriteria = decisionInput.acceptance_criteria ?? decisionInput.acceptanceCriteria;
     const technicalContext = decisionInput.technical_context ?? decisionInput.technicalContext;
@@ -110,6 +186,7 @@ const getProjectTree = async (projectId) => {
         projectId: project.id,
         idea: project.idea,
         chatHistory: Array.isArray(project.chatHistory) ? project.chatHistory : [],
+        projectOverview: typeof project.overviewMarkdown === 'string' ? project.overviewMarkdown : '',
         pillars: buildPillarTree(null),
         createdAt: project.createdAt
     };
@@ -201,6 +278,14 @@ const saveProjectState = async (idea, pillars, projectId, isAgent = false, chatH
 
         await upsertPillars(pillars);
 
+        const projectOverview = buildProjectOverviewMarkdown(
+            idea,
+            pillars,
+            normalizedChatHistory,
+            project.id
+        );
+        await project.update({ overviewMarkdown: projectOverview }, { transaction: t });
+
         // Cleanup: remove decisions that are no longer in the provided tree
         await Decision.destroy({
             where: {
@@ -226,7 +311,7 @@ const saveProjectState = async (idea, pillars, projectId, isAgent = false, chatH
             ProjectId: project.id
         }, { transaction: t });
 
-        return project.id;
+        return { projectId: project.id, projectOverview };
     });
 };
 

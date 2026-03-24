@@ -186,6 +186,7 @@ export function useChatLogic(state, setters) {
     setPillars,
     setIsWaiting,
     setProjectId,
+    setProjectOverview,
     setErrorMessage,
     setActivePillarId,
     setActiveDecisionId,
@@ -243,6 +244,7 @@ export function useChatLogic(state, setters) {
     const finalMessages = [...newMessages, extractingMessage, completionMessage];
     const resultData = await saveStateToBackend(content, finalPillars, null, true, finalMessages);
     if (resultData?.projectId) setProjectId(resultData.projectId);
+    if (typeof resultData?.projectOverview === 'string') setProjectOverview(resultData.projectOverview);
   };
 
   const handleSubsequentTurn = async (newMessages) => {
@@ -316,6 +318,7 @@ export function useChatLogic(state, setters) {
     if (ideaMsg) {
       const resultData = await saveStateToBackend(ideaMsg.content, nextPillars, projectId, true, nextMessages);
       if (resultData?.projectId) setProjectId(resultData.projectId);
+      if (typeof resultData?.projectOverview === 'string') setProjectOverview(resultData.projectOverview);
     }
   };
 
