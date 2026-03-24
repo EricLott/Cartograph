@@ -49,7 +49,7 @@ Most autonomous agent execution fails because inputs are fragmented, ambiguous, 
 Clone the repository and spin up the containerized environment:
 ```powershell
 # Clone the repository
-git clone https://github.com/EricLott/Cartograph.git
+git clone https://github.com/CartographAgents/Cartograph.git
 cd Cartograph
 
 # Start the full stack (Frontend, Backend, Database)
