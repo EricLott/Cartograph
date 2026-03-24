@@ -2,12 +2,12 @@
 id: task-041
 title: Add Semantic Cluster View to Frontend
 type: task
-status: pull_requested
+status: completed
 priority: P1
 owner: Eric Lott
 claim_owner: Eric Lott
-claim_status: claimed
-claim_expires_at: "2026-03-25T21:04:47.834Z"
+claim_status: released
+claim_expires_at: null
 sla_due_at: 2026-03-28
 depends_on:
   - task-040
