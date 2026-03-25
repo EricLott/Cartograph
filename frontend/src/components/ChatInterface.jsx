@@ -94,8 +94,14 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
 
             if (/^\d+\.\s+/.test(trimmed)) {
                 const items = [];
-                while (i < lines.length && /^\d+\.\s+/.test(lines[i].trim())) {
-                    items.push(lines[i].trim().replace(/^\d+\.\s+/, ''));
+                while (i < lines.length) {
+                    const current = lines[i].trim();
+                    if (!current) {
+                        i += 1;
+                        continue;
+                    }
+                    if (!/^\d+\.\s+/.test(current)) break;
+                    items.push(current.replace(/^\d+\.\s+/, ''));
                     i += 1;
                 }
                 blocks.push(
@@ -110,8 +116,14 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
 
             if (/^[-*]\s+/.test(trimmed)) {
                 const items = [];
-                while (i < lines.length && /^[-*]\s+/.test(lines[i].trim())) {
-                    items.push(lines[i].trim().replace(/^[-*]\s+/, ''));
+                while (i < lines.length) {
+                    const current = lines[i].trim();
+                    if (!current) {
+                        i += 1;
+                        continue;
+                    }
+                    if (!/^[-*]\s+/.test(current)) break;
+                    items.push(current.replace(/^[-*]\s+/, ''));
                     i += 1;
                 }
                 blocks.push(
