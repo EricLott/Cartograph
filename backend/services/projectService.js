@@ -17,6 +17,13 @@ const normalizeChatHistory = (chatHistory) => {
             if (msg.artifact && typeof msg.artifact === 'object') {
                 cleaned.artifact = msg.artifact;
             }
+            if (typeof msg.agentId === 'string') cleaned.agentId = msg.agentId;
+            if (typeof msg.agentLabel === 'string') cleaned.agentLabel = msg.agentLabel;
+            if (typeof msg.targetAgentId === 'string') cleaned.targetAgentId = msg.targetAgentId;
+            if (typeof msg.targetAgentLabel === 'string') cleaned.targetAgentLabel = msg.targetAgentLabel;
+            if (typeof msg.kind === 'string') cleaned.kind = msg.kind;
+            if (typeof msg.status === 'string') cleaned.status = msg.status;
+            if (typeof msg._id === 'string') cleaned._id = msg._id;
             return cleaned;
         });
 };
@@ -89,7 +96,9 @@ const buildProjectOverviewMarkdown = (idea, pillars, chatHistory, projectId = 'l
         md += `No conversation history yet.\n`;
     } else {
         recentMessages.forEach((msg) => {
-            const role = msg.role === 'agent' ? 'Agent' : 'User';
+            const role = msg.role === 'agent'
+                ? (msg.agentLabel || 'Agent')
+                : (msg.targetAgentLabel ? `User -> ${msg.targetAgentLabel}` : 'User');
             md += `- **${role}:** ${msg.content}\n`;
         });
     }
@@ -187,12 +196,13 @@ const getProjectTree = async (projectId) => {
         idea: project.idea,
         chatHistory: Array.isArray(project.chatHistory) ? project.chatHistory : [],
         projectOverview: typeof project.overviewMarkdown === 'string' ? project.overviewMarkdown : '',
+        v2State: project.v2State && typeof project.v2State === 'object' ? project.v2State : {},
         pillars: buildPillarTree(null),
         createdAt: project.createdAt
     };
 };
 
-const saveProjectState = async (idea, pillars, projectId, isAgent = false, chatHistory = []) => {
+const saveProjectState = async (idea, pillars, projectId, isAgent = false, chatHistory = [], v2State = null) => {
     return await sequelize.transaction(async (t) => {
         let project;
         let action = 'CREATE_PROJECT';
@@ -200,13 +210,24 @@ const saveProjectState = async (idea, pillars, projectId, isAgent = false, chatH
         if (projectId) {
             project = await Project.findByPk(projectId, { transaction: t });
             if (project) {
-                await project.update({ idea, chatHistory: normalizedChatHistory }, { transaction: t });
+                const updateShape = {
+                    idea,
+                    chatHistory: normalizedChatHistory
+                };
+                if (v2State && typeof v2State === 'object') {
+                    updateShape.v2State = v2State;
+                }
+                await project.update(updateShape, { transaction: t });
                 action = 'UPDATE_PROJECT';
             }
         }
 
         if (!project) {
-            project = await Project.create({ idea, chatHistory: normalizedChatHistory }, { transaction: t });
+            project = await Project.create({
+                idea,
+                chatHistory: normalizedChatHistory,
+                v2State: v2State && typeof v2State === 'object' ? v2State : {}
+            }, { transaction: t });
         }
 
         const seenPillarIds = new Set();
@@ -311,7 +332,11 @@ const saveProjectState = async (idea, pillars, projectId, isAgent = false, chatH
             ProjectId: project.id
         }, { transaction: t });
 
-        return { projectId: project.id, projectOverview };
+        return {
+            projectId: project.id,
+            projectOverview,
+            v2State: project.v2State && typeof project.v2State === 'object' ? project.v2State : {}
+        };
     });
 };
 

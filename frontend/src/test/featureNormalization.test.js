@@ -4,7 +4,6 @@ import { normalizeFeatureDecision } from '../utils/featureNormalization';
 describe('featureNormalization', () => {
     it('fills missing feature fields with defaults', () => {
         const normalized = normalizeFeatureDecision({
-            id: 'pay_stripe',
             question: 'Should Stripe be integrated?',
             context: 'Add recurring subscription payments.'
         });

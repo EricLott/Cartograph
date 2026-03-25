@@ -8,15 +8,20 @@ import { findNodeById } from '../utils/treeUtils';
 import { fetchAppSettings, saveAppSettings } from '../services/apiService';
 
 const DEFAULT_MODELS = {
-  openai: { interactions: 'gpt-4o', suggestions: 'gpt-4o-mini', conflicts: 'gpt-4o' },
-  anthropic: { interactions: 'claude-3-5-sonnet-20240620', suggestions: 'claude-3-5-sonnet-20240620', conflicts: 'claude-3-5-sonnet-20240620' },
-  gemini: { interactions: 'gemini-1.5-pro', suggestions: 'gemini-1.5-flash', conflicts: 'gemini-1.5-pro' }
+  openai: { interactions: 'gpt-4o', planner: 'gpt-4o', suggestions: 'gpt-4o-mini', conflicts: 'gpt-4o' },
+  anthropic: { interactions: 'claude-3-5-sonnet-20240620', planner: 'claude-3-5-sonnet-20240620', suggestions: 'claude-3-5-sonnet-20240620', conflicts: 'claude-3-5-sonnet-20240620' },
+  gemini: { interactions: 'gemini-1.5-pro', planner: 'gemini-1.5-pro', suggestions: 'gemini-1.5-flash', conflicts: 'gemini-1.5-pro' }
 };
 
 export function useAppLogic() {
   // 1. Core State
   const [messages, setMessages] = useState([
-    { role: 'agent', content: "Hello! I'm your Cartograph Agent. Describe the application you want to build, and I'll generate the architectural pillars for us to work through." }
+    {
+      role: 'agent',
+      agentId: 'coordinator',
+      agentLabel: 'Cartograph Coordinator',
+      content: "Hello! I'm your Cartograph team chat. Mention @pm for requirements discovery or @architect for design updates."
+    }
   ]);
   const [isWaiting, setIsWaiting] = useState(false);
   const [pillars, setPillars] = useState([]);
@@ -24,6 +29,7 @@ export function useAppLogic() {
   const [activeDecisionId, setActiveDecisionId] = useState(null);
   const [projectId, setProjectId] = useState(null);
   const [projectOverview, setProjectOverview] = useState('');
+  const [v2State, setV2State] = useState({});
   const [errorMessage, setErrorMessage] = useState(null);
   const [isProjectsOpen, setIsProjectsOpen] = useState(false);
   const [viewMode, setViewMode] = useState('pillar');
@@ -39,13 +45,13 @@ export function useAppLogic() {
   const setters = {
     setMessages, setIsWaiting, setPillars, setActivePillarId, setActiveDecisionId,
     setProjectId, setErrorMessage, setIsProjectsOpen,
-    setProjectOverview,
+    setProjectOverview, setV2State,
     setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig
   };
 
   const state = {
     messages, isWaiting, pillars, activePillarId, activeDecisionId,
-    projectId, projectOverview, errorMessage, isProjectsOpen,
+    projectId, projectOverview, v2State, errorMessage, isProjectsOpen,
     viewMode, isSettingsOpen, isNotificationsOpen, llmConfig
   };
 
@@ -81,14 +87,14 @@ export function useAppLogic() {
   const handleExport = async (force = false) => {
     setErrorMessage(null);
     try {
-      await generateBlueprintZip(pillars, { projectId, version: '0.1.0' }, force);
+      await generateBlueprintZip(pillars, { projectId, version: '0.1.0' }, force, v2State);
     } catch (err) {
       if (err.isWarning) {
         // Show the warning as a confirm dialog
         if (window.confirm(err.message)) {
           // Retry with force
           try {
-            await generateBlueprintZip(pillars, { projectId, version: '0.1.0' }, true);
+            await generateBlueprintZip(pillars, { projectId, version: '0.1.0' }, true, v2State);
           } catch (retryErr) {
             setErrorMessage(retryErr.message);
           }
@@ -120,7 +126,7 @@ export function useAppLogic() {
     ...state,
     agentFeedback,
     setActivePillarId, setActiveDecisionId, setErrorMessage, setIsProjectsOpen,
-    setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig, setProjectOverview,
+    setViewMode, setIsSettingsOpen, setIsNotificationsOpen, setLlmConfig, setProjectOverview, setV2State,
     handleNewProject, handleSelectProject,
     handleSendMessage, handleUpdateDecision, handleAddFeature, handleDeleteFeature, handleEditFeature, handleExport,
     activePillar, handleSaveLlmConfig

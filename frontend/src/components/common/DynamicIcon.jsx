@@ -23,38 +23,36 @@ const DynamicIcon = ({
   style = {} 
 }) => {
   const [iconData, setIconData] = useState(iconCache.get(name) || null);
-  const [loading, setLoading] = useState(!iconData);
+  const [loading, setLoading] = useState(Boolean(name) && !iconData);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let mounted = true;
 
     if (!name) {
-      setIconData(null);
-      setLoading(false);
-      setFailed(false);
       return () => {
         mounted = false;
       };
     }
 
-    const candidates = getIconCandidates(name);
-    const cachedCandidate = candidates.find((candidate) => iconCache.has(candidate));
-
-    if (cachedCandidate) {
-      const cachedData = iconCache.get(cachedCandidate);
-      iconCache.set(name, cachedData);
-      setIconData(cachedData);
-      setLoading(false);
-      setFailed(false);
-      return;
-    }
-
-    setIconData(null);
-    setLoading(true);
-    setFailed(false);
-
     const loadFirstAvailable = async () => {
+      const candidates = getIconCandidates(name);
+      const cachedCandidate = candidates.find((candidate) => iconCache.has(candidate));
+      if (cachedCandidate) {
+        const cachedData = iconCache.get(cachedCandidate);
+        iconCache.set(name, cachedData);
+        if (!mounted) return;
+        setIconData(cachedData);
+        setLoading(false);
+        setFailed(false);
+        return;
+      }
+
+      if (!mounted) return;
+      setIconData(null);
+      setLoading(true);
+      setFailed(false);
+
       for (const candidate of candidates) {
         try {
           const data = await loadIcon(candidate);
@@ -94,6 +92,15 @@ const DynamicIcon = ({
     borderRadius: '4px',
     ...style
   };
+
+  if (!name) {
+    return (
+      <span
+        className={`icon-loading ${className}`}
+        style={placeholderStyle}
+      />
+    );
+  }
 
   if (failed) {
     return (

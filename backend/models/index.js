@@ -5,6 +5,7 @@ const Project = sequelize.define('Project', {
     idea: { type: DataTypes.TEXT, allowNull: false },
     chatHistory: { type: DataTypes.JSON, allowNull: false, defaultValue: [] },
     overviewMarkdown: { type: DataTypes.TEXT, allowNull: false, defaultValue: '' },
+    v2State: { type: DataTypes.JSON, allowNull: false, defaultValue: {} },
     archived: { type: DataTypes.BOOLEAN, defaultValue: false }
 });
 

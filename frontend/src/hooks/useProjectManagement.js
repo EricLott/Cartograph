@@ -12,9 +12,15 @@ export function useProjectManagement(state, setters) {
     setErrorMessage,
     setIsProjectsOpen,
     setProjectId,
-    setProjectOverview
+    setProjectOverview,
+    setV2State
   } = setters;
-  const fallbackWelcome = { role: 'agent', content: "Hello! I'm your Cartograph Agent. Describe the application you want to build, and I'll generate the architectural pillars for us to work through." };
+  const fallbackWelcome = {
+    role: 'agent',
+    agentId: 'coordinator',
+    agentLabel: 'Cartograph Coordinator',
+    content: "Hello! I'm your Cartograph team chat. Mention @pm for requirements discovery or @architect for design updates."
+  };
 
   useEffect(() => {
     async function hydrate() {
@@ -25,12 +31,18 @@ export function useProjectManagement(state, setters) {
           setProjectId(data.projectId);
           setPillars(data.pillars || []);
           setProjectOverview(typeof data.projectOverview === 'string' ? data.projectOverview : '');
+          setV2State(data.v2State && typeof data.v2State === 'object' ? data.v2State : {});
           const restoredMessages = Array.isArray(data.chatHistory) && data.chatHistory.length > 0
             ? data.chatHistory
             : [
               fallbackWelcome,
               { role: 'user', content: data.idea },
-              { role: 'agent', content: "I've restored your latest session. The architectural framework is fully staged! Which area would you like to discuss first?" }
+              {
+                role: 'agent',
+                agentId: 'coordinator',
+                agentLabel: 'Cartograph Coordinator',
+                content: "I've restored your latest session. Mention @architect to continue solution design or @pm to refine requirements."
+              }
             ];
           setMessages(restoredMessages);
         }
@@ -41,18 +53,24 @@ export function useProjectManagement(state, setters) {
       }
     }
     hydrate();
-  }, [setIsWaiting, setMessages, setPillars, setProjectId, setProjectOverview]); // Only once on mount (setters are stable)
+  }, [setIsWaiting, setMessages, setPillars, setProjectId, setProjectOverview, setV2State]); // Only once on mount (setters are stable)
 
   const handleNewProject = () => {
     setProjectId(null);
     setPillars([]);
     setProjectOverview('');
+    setV2State({});
     setActivePillarId(null);
     setActiveDecisionId(null);
     setViewMode('pillar');
     setIsProjectsOpen(false);
     setMessages([
-      { role: 'agent', content: "New session started! Describe the application you want to build." }
+      {
+        role: 'agent',
+        agentId: 'coordinator',
+        agentLabel: 'Cartograph Coordinator',
+        content: "New session started! Describe the application you want to build. You can mention @pm or @architect anytime."
+      }
     ]);
   };
 
@@ -65,13 +83,19 @@ export function useProjectManagement(state, setters) {
         setProjectId(data.projectId);
         setPillars(data.pillars || []);
         setProjectOverview(typeof data.projectOverview === 'string' ? data.projectOverview : '');
+        setV2State(data.v2State && typeof data.v2State === 'object' ? data.v2State : {});
         setActivePillarId(null);
         const restoredMessages = Array.isArray(data.chatHistory) && data.chatHistory.length > 0
           ? data.chatHistory
           : [
-            { role: 'agent', content: "I've restored your session." },
+            { role: 'agent', agentId: 'coordinator', agentLabel: 'Cartograph Coordinator', content: "I've restored your session." },
             { role: 'user', content: data.idea },
-            { role: 'agent', content: "Restored from your project history. What would you like to refine?" }
+            {
+              role: 'agent',
+              agentId: 'coordinator',
+              agentLabel: 'Cartograph Coordinator',
+              content: "Restored from your project history. What would you like to refine?"
+            }
           ];
         setMessages(restoredMessages);
       }

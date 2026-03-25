@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import DynamicIcon from './common/DynamicIcon';
 import { buildFeatureHierarchy } from '../utils/featureNormalization';
 
@@ -73,6 +73,118 @@ const toBriefTitle = (question = '') => {
     return toTitleCase(`${compact}${words.length > 3 ? '...' : ''}`);
 };
 
+const hasWorkItemHierarchy = (decisions = []) => {
+    return (decisions || []).some((decision) => !!decision?.work_item_type);
+};
+
+const normalizeStringArray = (value) => (
+    Array.isArray(value)
+        ? value.map((item) => String(item || '').trim()).filter(Boolean)
+        : []
+);
+
+const DetectedEcosystemPanel = ({ domainDiscovery }) => {
+    const summary = String(domainDiscovery?.domain_summary || '').trim();
+    const platformSignals = normalizeStringArray(domainDiscovery?.platform_signals).slice(0, 6);
+    const lensTitles = normalizeStringArray((domainDiscovery?.lenses || []).map((lens) => lens?.title)).slice(0, 6);
+    const primitives = normalizeStringArray(domainDiscovery?.domain_primitives).slice(0, 8);
+    const assumptions = normalizeStringArray(domainDiscovery?.assumptions).slice(0, 2);
+    const sourceCitations = Array.isArray(domainDiscovery?.source_citations)
+        ? domainDiscovery.source_citations
+            .filter((source) => source && typeof source === 'object')
+            .map((source) => ({
+                title: String(source.title || source.url || '').trim(),
+                url: String(source.url || '').trim()
+            }))
+            .filter((source) => source.title || source.url)
+            .slice(0, 3)
+        : [];
+    const hasDiscoveryData = !!(summary || platformSignals.length || lensTitles.length || primitives.length || assumptions.length || sourceCitations.length);
+
+    if (!hasDiscoveryData) return null;
+
+    return (
+        <section className="detected-ecosystem-panel" aria-label="Detected Ecosystem">
+            <div className="detected-ecosystem-title-row">
+                <h3>Detected Ecosystem</h3>
+                {lensTitles.length > 0 && <span className="detected-ecosystem-count">{lensTitles.length} lenses</span>}
+            </div>
+            {summary && (
+                <p className="detected-ecosystem-summary" title={summary}>
+                    {summary}
+                </p>
+            )}
+            {platformSignals.length > 0 && (
+                <div className="detected-ecosystem-group">
+                    <span className="detected-ecosystem-label">Signals</span>
+                    <div className="detected-ecosystem-chips">
+                        {platformSignals.map((signal) => (
+                            <span key={signal} className="detected-ecosystem-chip">{signal}</span>
+                        ))}
+                    </div>
+                </div>
+            )}
+            {lensTitles.length > 0 && (
+                <div className="detected-ecosystem-group">
+                    <span className="detected-ecosystem-label">Lenses</span>
+                    <div className="detected-ecosystem-chips">
+                        {lensTitles.map((lens) => (
+                            <span key={lens} className="detected-ecosystem-chip lens">{lens}</span>
+                        ))}
+                    </div>
+                </div>
+            )}
+            {primitives.length > 0 && (
+                <div className="detected-ecosystem-group">
+                    <span className="detected-ecosystem-label">Primitives</span>
+                    <div className="detected-ecosystem-chips">
+                        {primitives.map((primitive) => (
+                            <span key={primitive} className="detected-ecosystem-chip primitive">{primitive}</span>
+                        ))}
+                    </div>
+                </div>
+            )}
+            {assumptions.length > 0 && (
+                <div className="detected-ecosystem-group">
+                    <span className="detected-ecosystem-label">Assumption</span>
+                    <p className="detected-ecosystem-assumption" title={assumptions[0]}>
+                        {assumptions[0]}
+                    </p>
+                </div>
+            )}
+            {sourceCitations.length > 0 && (
+                <div className="detected-ecosystem-group">
+                    <span className="detected-ecosystem-label">Sources</span>
+                    <div className="detected-ecosystem-sources">
+                        {sourceCitations.map((source, idx) => (
+                            source.url ? (
+                                <a
+                                    key={`${source.url}|${source.title}|${idx}`}
+                                    href={source.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="detected-ecosystem-source-link"
+                                    title={source.url || source.title}
+                                >
+                                    {source.title || source.url}
+                                </a>
+                            ) : (
+                                <span
+                                    key={`${source.title}|no-url|${idx}`}
+                                    className="detected-ecosystem-source-link muted"
+                                    title={source.title}
+                                >
+                                    {source.title}
+                                </span>
+                            )
+                        ))}
+                    </div>
+                </div>
+            )}
+        </section>
+    );
+};
+
 const DecisionLink = ({ decision, label, activeDecisionId, onSelectDecision, nodeId, className = '' }) => {
     const isDecisionActive = activeDecisionId === decision.id;
     return (
@@ -145,15 +257,11 @@ const FeatureHierarchySidebar = ({ decisions, activeDecisionId, onSelectDecision
 };
 
 const PillarNode = ({ node, activePillarId, activeDecisionId, onSelectPillar, onSelectDecision, depth = 0 }) => {
-    const [isExpanded, setIsExpanded] = useState(depth === 0);
+    const [isExpanded, setIsExpanded] = useState(depth === 0 || activePillarId === node.id);
     const hasSubcategories = node.subcategories && node.subcategories.length > 0;
     const hasDecisionChildren = node.decisions && node.decisions.length > 0;
     const hasChildren = hasSubcategories || hasDecisionChildren;
     const isActive = activePillarId === node.id;
-
-    useEffect(() => {
-        if (isActive) setIsExpanded(true);
-    }, [isActive]);
 
     return (
         <div className={`pillar-node-container depth-${depth}`} style={{ marginLeft: `${depth * 10}px`, marginTop: depth === 0 ? '0.35rem' : '0.22rem' }}>
@@ -199,7 +307,7 @@ const PillarNode = ({ node, activePillarId, activeDecisionId, onSelectPillar, on
                     ))}
                     {hasDecisionChildren && (
                         <div className={`sidebar-decision-section ${depth > 0 ? 'nested' : ''}`}>
-                            {node.id === 'pillar-features' ? (
+                            {hasWorkItemHierarchy(node.decisions || []) ? (
                                 <FeatureHierarchySidebar
                                     decisions={node.decisions || []}
                                     activeDecisionId={activeDecisionId}
@@ -226,13 +334,14 @@ const PillarNode = ({ node, activePillarId, activeDecisionId, onSelectPillar, on
     );
 };
 
-export default function Sidebar({ pillars, activePillarId, activeDecisionId, onSelectPillar, onSelectDecision, onOpenSettings }) {
+export default function Sidebar({ pillars, activePillarId, activeDecisionId, onSelectPillar, onSelectDecision, onOpenSettings, domainDiscovery }) {
     return (
         <aside className="sidebar glass-panel" style={{ border: '1px solid var(--glass-border)', boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column' }}>
             <div className="sidebar-header" style={{ padding: '1.5rem', borderBottom: '1px solid var(--border-color)' }}>
                 <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-primary)' }}>Cartograph</h2>
             </div>
             <div className="sidebar-content" style={{ flex: 1, overflowY: 'auto' }}>
+                <DetectedEcosystemPanel domainDiscovery={domainDiscovery} />
                 {pillars && pillars.length > 0 ? (
                     <nav className="pillar-nav">
                         {pillars.map(p => (
@@ -362,6 +471,119 @@ export default function Sidebar({ pillars, activePillarId, activeDecisionId, onS
                 }
                 .sidebar-decision-row.task-row {
                     margin-left: 10px;
+                }
+                .detected-ecosystem-panel {
+                    border: 1px solid rgba(59, 130, 246, 0.28);
+                    background: linear-gradient(180deg, rgba(239, 246, 255, 0.92), rgba(255, 255, 255, 0.92));
+                    border-radius: 10px;
+                    padding: 0.7rem 0.75rem;
+                    margin: 0 0 0.9rem 0;
+                    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+                }
+                .detected-ecosystem-title-row {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 0.5rem;
+                    margin-bottom: 0.35rem;
+                }
+                .detected-ecosystem-title-row h3 {
+                    margin: 0;
+                    font-size: 0.78rem;
+                    font-weight: 800;
+                    letter-spacing: 0.06em;
+                    text-transform: uppercase;
+                    color: #1e3a8a;
+                }
+                .detected-ecosystem-count {
+                    font-size: 0.7rem;
+                    font-weight: 700;
+                    color: #1d4ed8;
+                    background: rgba(59, 130, 246, 0.13);
+                    border: 1px solid rgba(59, 130, 246, 0.24);
+                    border-radius: 999px;
+                    padding: 0.12rem 0.42rem;
+                    white-space: nowrap;
+                }
+                .detected-ecosystem-summary {
+                    margin: 0 0 0.48rem 0;
+                    font-size: 0.79rem;
+                    line-height: 1.35;
+                    color: #334155;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 3;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+                .detected-ecosystem-group {
+                    display: grid;
+                    grid-template-columns: auto 1fr;
+                    align-items: flex-start;
+                    gap: 0.45rem;
+                    margin-top: 0.35rem;
+                }
+                .detected-ecosystem-label {
+                    font-size: 0.67rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.05em;
+                    color: #64748b;
+                    padding-top: 0.12rem;
+                }
+                .detected-ecosystem-chips {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 0.28rem;
+                }
+                .detected-ecosystem-chip {
+                    font-size: 0.72rem;
+                    line-height: 1.1;
+                    color: #1f2937;
+                    background: rgba(148, 163, 184, 0.15);
+                    border: 1px solid rgba(148, 163, 184, 0.28);
+                    padding: 0.16rem 0.38rem;
+                    border-radius: 999px;
+                }
+                .detected-ecosystem-chip.lens {
+                    background: rgba(59, 130, 246, 0.1);
+                    border-color: rgba(59, 130, 246, 0.22);
+                    color: #1d4ed8;
+                }
+                .detected-ecosystem-chip.primitive {
+                    background: rgba(16, 185, 129, 0.1);
+                    border-color: rgba(16, 185, 129, 0.24);
+                    color: #047857;
+                }
+                .detected-ecosystem-assumption {
+                    margin: 0;
+                    font-size: 0.75rem;
+                    color: #475569;
+                    line-height: 1.3;
+                    display: -webkit-box;
+                    -webkit-line-clamp: 2;
+                    -webkit-box-orient: vertical;
+                    overflow: hidden;
+                }
+                .detected-ecosystem-sources {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 0.2rem;
+                }
+                .detected-ecosystem-source-link {
+                    font-size: 0.74rem;
+                    color: #1d4ed8;
+                    text-decoration: none;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+                .detected-ecosystem-source-link:hover {
+                    text-decoration: underline;
+                }
+                .detected-ecosystem-source-link.muted {
+                    color: #64748b;
+                    cursor: default;
+                    text-decoration: none;
                 }
             `}</style>
         </aside>

@@ -11,6 +11,7 @@ import DecisionFocusView from './components/DecisionFocusView';
 import { VscFileSubmodule, VscGraph, VscBook, VscBell, VscClose, VscChevronDown, VscChevronUp } from 'react-icons/vsc';
 import { useAppLogic } from './hooks/useAppLogic';
 import { findNodeById } from './utils/treeUtils';
+import { listAgentMentions } from './agents/agentRegistry';
 
 const parseRouteFromPath = (pathname = '/') => {
   const parts = String(pathname).split('/').filter(Boolean);
@@ -66,6 +67,7 @@ const findPillarContainingDecision = (nodes = [], decisionId) => {
 };
 
 function App() {
+  const mentionHint = React.useMemo(() => listAgentMentions(), []);
   const [chatFocusTrigger, setChatFocusTrigger] = React.useState(0);
   const isApplyingRouteRef = React.useRef(false);
   const hasAppliedInitialRouteRef = React.useRef(false);
@@ -82,6 +84,7 @@ function App() {
     agentFeedback,
     projectId,
     projectOverview,
+    v2State,
     errorMessage,
     setErrorMessage,
     isProjectsOpen,
@@ -216,6 +219,7 @@ function App() {
 
       <Sidebar
         pillars={pillars}
+        domainDiscovery={v2State?.domain_discovery || null}
         activePillarId={activePillarId}
         activeDecisionId={activeDecisionId}
         onSelectPillar={(node) => setActivePillarId(node.id)}
@@ -385,6 +389,7 @@ function App() {
               onSendMessage={handleSendMessage}
               isWaiting={isWaiting}
               focusTrigger={chatFocusTrigger}
+              mentionHint={mentionHint}
             />
           </div>
         </div>

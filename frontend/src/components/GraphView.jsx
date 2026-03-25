@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo, useEffect } from 'react';
-import ReactFlow, { 
-  Background, 
-  Controls, 
-  MiniMap, 
-  Handle, 
+import ReactFlow, {
+  Background,
+  Controls,
+  MiniMap,
+  Handle,
   Position,
   useNodesState,
   useEdgesState,
@@ -13,18 +13,21 @@ import 'reactflow/dist/style.css';
 import { buildGraphFromPillars, getLayoutedElements } from '../utils/graphUtils';
 import { fetchProjectSemanticLinks } from '../services/apiService';
 
+const WORK_ITEM_TYPES = new Set(['epic', 'feature', 'task', 'spike', 'bug']);
+
 const DecisionNode = ({ data }) => {
   const isResolved = !!data.answer;
   const isConflict = !!data.conflict;
-  const isFeature = data.kind === 'feature';
-  
+  const kind = String(data.kind || '').toLowerCase();
+  const isExecutionItem = WORK_ITEM_TYPES.has(kind);
+
   const nodeStyle = {
     padding: '10px 15px',
     borderRadius: '8px',
     background: isConflict
       ? 'rgba(239, 68, 68, 0.2)'
-      : (isFeature ? 'rgba(16, 185, 129, 0.2)' : (isResolved ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.1)')),
-    border: `2px solid ${isConflict ? '#ef4444' : (isFeature ? '#10b981' : (isResolved ? '#3b82f6' : 'rgba(255, 255, 255, 0.3)'))}`,
+      : (isExecutionItem ? 'rgba(16, 185, 129, 0.2)' : (isResolved ? 'rgba(59, 130, 246, 0.2)' : 'rgba(255, 255, 255, 0.1)')),
+    border: `2px solid ${isConflict ? '#ef4444' : (isExecutionItem ? '#10b981' : (isResolved ? '#3b82f6' : 'rgba(255, 255, 255, 0.3)'))}`,
     color: '#fff',
     fontSize: '12px',
     fontWeight: '500',
@@ -32,7 +35,7 @@ const DecisionNode = ({ data }) => {
     textAlign: 'center',
     boxShadow: isConflict ? '0 0 20px rgba(239, 68, 68, 0.5)' : 'none',
     transition: 'all 0.2s ease-in-out',
-    backdropFilter: 'blur(10px)',
+    backdropFilter: 'blur(10px)'
   };
 
   return (
@@ -42,9 +45,9 @@ const DecisionNode = ({ data }) => {
         {data.pillarTitle}
       </div>
       <div style={{ wordBreak: 'break-word', color: '#fff' }}>{data.label}</div>
-      {isFeature && !isConflict && (
+      {isExecutionItem && !isConflict && (
         <div style={{ marginTop: '6px', fontSize: '10px', color: '#10b981', fontWeight: 'bold' }}>
-          FEATURE {data.priority ? `· ${data.priority}` : ''}
+          {kind.toUpperCase()} {data.priority ? `· ${data.priority}` : ''}
         </div>
       )}
       {isConflict && (
@@ -59,14 +62,13 @@ const DecisionNode = ({ data }) => {
 
 const GraphView = ({ pillars, projectId, onSelectDecision }) => {
   const nodeTypes = useMemo(() => ({
-    decision: DecisionNode,
+    decision: DecisionNode
   }), []);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   useEffect(() => {
-    console.log('GraphView: pillars updated', pillars?.length);
     if (!pillars || pillars.length === 0) return;
 
     let cancelled = false;
@@ -142,10 +144,10 @@ const GraphView = ({ pillars, projectId, onSelectDecision }) => {
       >
         <Background color="#444" gap={20} variant="dots" />
         <Controls />
-        <MiniMap 
+        <MiniMap
             nodeColor={(node) => {
                 if (node.data.conflict) return '#ef4444';
-                if (node.data.kind === 'feature') return '#10b981';
+                if (WORK_ITEM_TYPES.has(String(node.data.kind || '').toLowerCase())) return '#10b981';
                 if (node.data.answer) return '#3b82f6';
                 return '#666';
             }}

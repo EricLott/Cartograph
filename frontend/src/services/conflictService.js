@@ -1,4 +1,4 @@
-import { analyzeArchitectureConsistency } from './agentService';
+import { detectConflictsV2 as detectConflictsV2Api } from './apiService';
 
 const hasResolvedAnswer = (value) => typeof value === 'string' && value.trim().length > 0;
 
@@ -13,11 +13,21 @@ const flattenDecisions = (nodes = [], bucket = []) => {
 };
 
 const normalizeConflict = (conflict = {}) => {
-    const description = String(conflict.description || '').trim();
+    const description = String(conflict.description || conflict.reason || '').trim();
     const decisionIds = Array.isArray(conflict.decisionIds)
         ? [...new Set(conflict.decisionIds.map((id) => String(id || '').trim()).filter(Boolean))]
+        : (Array.isArray(conflict.decision_ids)
+            ? [...new Set(conflict.decision_ids.map((id) => String(id || '').trim()).filter(Boolean))]
+            : []);
+    const resolutionCandidates = Array.isArray(conflict.resolution_candidates)
+        ? [...new Set(conflict.resolution_candidates.map((item) => String(item || '').trim()).filter(Boolean))]
         : [];
-    return { description, decisionIds };
+    return {
+        description,
+        decisionIds,
+        resolutionCandidates,
+        resolvedAtStateHash: conflict.resolved_at_state_hash || null
+    };
 };
 
 const dedupeConflicts = (conflicts = []) => {
@@ -34,21 +44,9 @@ const dedupeConflicts = (conflicts = []) => {
     return deduped;
 };
 
-const isHighSignalConflict = (description = '') => {
-    const text = String(description || '').toLowerCase();
-    return !(
-        text.includes('remain unresolved')
-        || text.includes('unspecified')
-        || text.includes('still deciding')
-        || text.includes('pending decision')
-        || text.includes('not specified')
-    );
-};
-
-const filterToResolvedContradictions = (conflicts, resolvedDecisionById) => {
+const filterToResolvedContradictions = (conflicts = [], resolvedDecisionById = new Map()) => {
     return (conflicts || []).filter((conflict) => {
         if (!conflict.description || conflict.decisionIds.length < 2) return false;
-        if (!isHighSignalConflict(conflict.description)) return false;
         return conflict.decisionIds.every((id) => resolvedDecisionById.has(id));
     });
 };
@@ -69,7 +67,7 @@ export const stripConflictFieldsForConsistency = (nodes = []) => {
     return clearAllDecisionConflicts(nodes);
 };
 
-export const detectActiveConflicts = async (pillars, llmConfig) => {
+export const detectActiveConflicts = async (pillars, llmConfig, projectState = null) => {
     const normalizedState = stripConflictFieldsForConsistency(pillars);
     const allDecisions = flattenDecisions(normalizedState);
     const resolvedDecisionById = new Map(
@@ -80,7 +78,11 @@ export const detectActiveConflicts = async (pillars, llmConfig) => {
 
     if (resolvedDecisionById.size < 2) return [];
 
-    const consistency = await analyzeArchitectureConsistency(normalizedState, llmConfig).catch(() => ({ conflicts: [] }));
+    const stateForDetection = projectState && typeof projectState === 'object'
+        ? { ...projectState, pillars: normalizedState }
+        : { pillars: normalizedState };
+
+    const consistency = await detectConflictsV2Api(stateForDetection, llmConfig).catch(() => ({ conflicts: [] }));
     const normalized = dedupeConflicts(consistency?.conflicts || []);
     return filterToResolvedContradictions(normalized, resolvedDecisionById);
 };

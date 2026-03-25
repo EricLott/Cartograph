@@ -23,5 +23,6 @@ describe('ChatInterface markdown rendering', () => {
         expect(screen.getByRole('list')).toBeInTheDocument();
         const link = screen.getByRole('link', { name: 'docs' });
         expect(link).toHaveAttribute('href', 'https://example.com');
+        expect(screen.getByText('Agent')).toBeInTheDocument();
     });
 });

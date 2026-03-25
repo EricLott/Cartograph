@@ -14,7 +14,7 @@ export const flattenDecisionNodes = (pillars) => {
                     pillarTitle: owningPillar.title,
                     topLevelTitle: owningPillar.title,
                     breadcrumb: nextLineage.join(' > '),
-                    isFeature: String(decision.id || '').startsWith('feat_')
+                    isFeature: !!decision.work_item_type || String(decision.id || '').startsWith('feat_')
                 });
             });
             walk(node.subcategories || [], owningPillar, nextLineage);

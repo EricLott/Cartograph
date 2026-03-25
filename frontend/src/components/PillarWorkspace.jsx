@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ConfigOption, CheckIcon, PendingIcon, WarningIcon } from './PillarComponents';
-import { STANDARD_DECISIONS } from '../constants/architecture';
 import DynamicIcon from './common/DynamicIcon';
 import { VscAdd, VscTrash, VscEdit, VscCheck, VscClose, VscNote, VscPass, VscSettingsGear, VscListOrdered, VscReferences } from 'react-icons/vsc';
 import { FEATURE_WORK_ITEM_TYPES, buildFeatureHierarchy, normalizeFeatureDecision } from '../utils/featureNormalization';
@@ -24,7 +23,6 @@ const SubcategoriesList = ({ subcategories }) => {
 };
 
 const DecisionCard = ({ decision, index, onUpdateDecision, pillarId, isActive }) => {
-    const standardConfig = STANDARD_DECISIONS[decision.id];
     const cardRef = React.useRef(null);
 
     React.useEffect(() => {
@@ -66,9 +64,9 @@ const DecisionCard = ({ decision, index, onUpdateDecision, pillarId, isActive })
                     </div>
                 ) : (
                     <div className="pending-content-wrapper">
-                        {(decision.options || standardConfig?.options) ? (
+                        {(decision.options && decision.options.length > 0) ? (
                             <div className="standard-config-ui">
-                                {(decision.options || standardConfig.options).map(opt => (
+                                {decision.options.map(opt => (
                                     <ConfigOption 
                                         key={opt.id} 
                                         option={{
@@ -370,34 +368,42 @@ export default function PillarWorkspace({
         parent_id: ''
     });
 
-    if (!pillar) return null;
-
-    const isFeatures = pillar.id === 'pillar-features';
+    const currentPillar = pillar || {
+        id: '',
+        title: '',
+        description: '',
+        icon: null,
+        decisions: [],
+        subcategories: []
+    };
+    const isFeatures = (currentPillar.decisions || []).some((decision) => !!decision?.work_item_type);
     const relatedByFeatureId = React.useMemo(() => {
         if (!isFeatures) return {};
         const map = {};
-        (pillar.decisions || []).forEach((decision) => {
+        (currentPillar.decisions || []).forEach((decision) => {
             map[decision.id] = getRelatedDecisionsForTarget(allPillars, decision.id, { maxResults: 5 });
         });
         return map;
-    }, [isFeatures, pillar.decisions, allPillars]);
+    }, [isFeatures, currentPillar.decisions, allPillars]);
 
     const featureParentOptions = React.useMemo(() => {
         if (!isFeatures) return [];
-        const normalized = (pillar.decisions || []).map((d) => normalizeFeatureDecision(d));
+        const normalized = (currentPillar.decisions || []).map((d) => normalizeFeatureDecision(d));
         const epics = normalized.filter((d) => d.work_item_type === 'epic').map((d) => ({ id: d.id, label: `Epic: ${d.question}` }));
         const features = normalized.filter((d) => d.work_item_type === 'feature').map((d) => ({ id: d.id, label: `Feature: ${d.question}` }));
         return [...epics, ...features];
-    }, [isFeatures, pillar.decisions]);
+    }, [isFeatures, currentPillar.decisions]);
 
     const featureHierarchy = React.useMemo(() => {
         if (!isFeatures) return [];
-        return buildFeatureHierarchy(pillar.decisions || []);
-    }, [isFeatures, pillar.decisions]);
+        return buildFeatureHierarchy(currentPillar.decisions || []);
+    }, [isFeatures, currentPillar.decisions]);
+
+    if (!pillar) return null;
 
     const handleAdd = () => {
         if (!newFeature.question) return;
-        onAddFeature(pillar.id, { 
+        onAddFeature(currentPillar.id, { 
             question: newFeature.question, 
             context: newFeature.context,
             acceptance_criteria: newFeature.acceptance_criteria.split('\n').filter(l => l.trim()),
@@ -425,17 +431,17 @@ export default function PillarWorkspace({
             <div className="workspace-nav">
                 <button className="btn-secondary" onClick={onBack}>Back</button>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {pillar.icon && <DynamicIcon name={pillar.icon} size={28} />}
-                    <h2 style={{ margin: 0 }}>{pillar.title}</h2>
+                    {currentPillar.icon && <DynamicIcon name={currentPillar.icon} size={28} />}
+                    <h2 style={{ margin: 0 }}>{currentPillar.title}</h2>
                 </div>
             </div>
             <div className="decision-container">
-                <p className="pillar-description">{pillar.description}</p>
-                <SubcategoriesList subcategories={pillar.subcategories} />
+                <p className="pillar-description">{currentPillar.description}</p>
+                <SubcategoriesList subcategories={currentPillar.subcategories} />
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                     <h3 className="section-title" style={{ margin: 0 }}>
-                        {isFeatures ? 'Proposed Features' : 'Key Architectural Decisions'}
+                        {isFeatures ? 'Execution Work Items' : 'Key Architectural Decisions'}
                     </h3>
                     {isFeatures && (
                         <button className="btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={() => setShowAddForm(true)}>
@@ -555,7 +561,7 @@ export default function PillarWorkspace({
                                     <FeatureCard
                                         key={epicNode.epic.id}
                                         feature={normalizeFeatureDecision(epicNode.epic)}
-                                        pillarId={pillar.id}
+                                        pillarId={currentPillar.id}
                                         onEdit={onEditFeature}
                                         onDelete={onDeleteFeature}
                                         relatedDecisions={relatedByFeatureId[epicNode.epic.id] || []}
@@ -572,7 +578,7 @@ export default function PillarWorkspace({
                                         <FeatureCard
                                             key={featureNode.feature.id}
                                             feature={normalizeFeatureDecision(featureNode.feature)}
-                                            pillarId={pillar.id}
+                                            pillarId={currentPillar.id}
                                             onEdit={onEditFeature}
                                             onDelete={onDeleteFeature}
                                             relatedDecisions={relatedByFeatureId[featureNode.feature.id] || []}
@@ -587,7 +593,7 @@ export default function PillarWorkspace({
                                         <FeatureCard
                                             key={task.id}
                                             feature={normalizeFeatureDecision(task)}
-                                            pillarId={pillar.id}
+                                            pillarId={currentPillar.id}
                                             onEdit={onEditFeature}
                                             onDelete={onDeleteFeature}
                                             relatedDecisions={relatedByFeatureId[task.id] || []}
@@ -602,13 +608,13 @@ export default function PillarWorkspace({
                             return cards;
                         })
                     ) : (
-                        pillar.decisions?.map((d, i) => (
+                        currentPillar.decisions?.map((d, i) => (
                             <DecisionCard
                                 key={d.id}
                                 decision={d}
                                 index={i}
                                 onUpdateDecision={onUpdateDecision}
-                                pillarId={pillar.id}
+                                pillarId={currentPillar.id}
                                 isActive={d.id === activeDecisionId}
                             />
                         ))

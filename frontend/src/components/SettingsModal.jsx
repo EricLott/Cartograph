@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 
 const DEFAULT_MODELS = {
-    openai: { interactions: 'gpt-4o', suggestions: 'gpt-4o-mini', conflicts: 'gpt-4o' },
-    anthropic: { interactions: 'claude-3-5-sonnet-20240620', suggestions: 'claude-3-5-sonnet-20240620', conflicts: 'claude-3-5-sonnet-20240620' },
-    gemini: { interactions: 'gemini-1.5-pro', suggestions: 'gemini-1.5-flash', conflicts: 'gemini-1.5-pro' }
+    openai: { interactions: 'gpt-4o', planner: 'gpt-4o', suggestions: 'gpt-4o-mini', conflicts: 'gpt-4o' },
+    anthropic: { interactions: 'claude-3-5-sonnet-20240620', planner: 'claude-3-5-sonnet-20240620', suggestions: 'claude-3-5-sonnet-20240620', conflicts: 'claude-3-5-sonnet-20240620' },
+    gemini: { interactions: 'gemini-1.5-pro', planner: 'gemini-1.5-pro', suggestions: 'gemini-1.5-flash', conflicts: 'gemini-1.5-pro' }
 };
 
 const mergeModels = (current = {}) => ({
@@ -77,6 +77,20 @@ export default function SettingsModal({ onClose, onSave, currentConfig }) {
                                     setModels({
                                         ...models,
                                         [provider]: { ...(models[provider] || {}), interactions: e.target.value }
+                                    })
+                                }
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label>Planner V2 Model ({provider})</label>
+                            <input
+                                type="text"
+                                placeholder={DEFAULT_MODELS[provider]?.planner || ''}
+                                value={models[provider]?.planner || ''}
+                                onChange={e =>
+                                    setModels({
+                                        ...models,
+                                        [provider]: { ...(models[provider] || {}), planner: e.target.value }
                                     })
                                 }
                             />

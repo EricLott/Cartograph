@@ -25,6 +25,71 @@ const extractProviderErrorDetail = (data) => {
     return '';
 };
 
+const extractOutputTextFromResponsesApi = (data) => {
+    if (typeof data?.output_text === 'string' && data.output_text.trim()) {
+        return data.output_text.trim();
+    }
+    const chunks = [];
+    const outputItems = Array.isArray(data?.output) ? data.output : [];
+    outputItems.forEach((item) => {
+        if (item?.type === 'output_text' && typeof item.text === 'string') {
+            chunks.push(item.text);
+            return;
+        }
+        if (item?.type === 'message' && Array.isArray(item.content)) {
+            item.content.forEach((part) => {
+                if (part?.type === 'output_text' && typeof part.text === 'string') {
+                    chunks.push(part.text);
+                } else if (typeof part?.text === 'string') {
+                    chunks.push(part.text);
+                }
+            });
+        }
+    });
+    return chunks.join('\n').trim();
+};
+
+const extractWebSourcesFromResponsesApi = (data) => {
+    const found = [];
+
+    const pushSource = (source = {}) => {
+        const url = typeof source.url === 'string' ? source.url.trim() : '';
+        const title = typeof source.title === 'string' ? source.title.trim() : '';
+        const publisher = typeof source.publisher === 'string' ? source.publisher.trim() : '';
+        if (!url && !title) return;
+        found.push({
+            title: title || url,
+            url,
+            publisher
+        });
+    };
+
+    const scanValue = (value) => {
+        if (!value || typeof value !== 'object') return;
+        if (Array.isArray(value)) {
+            value.forEach(scanValue);
+            return;
+        }
+        if (Array.isArray(value.sources)) {
+            value.sources.forEach(pushSource);
+        }
+        Object.values(value).forEach(scanValue);
+    };
+
+    scanValue(data?.output);
+    scanValue(data);
+
+    const deduped = [];
+    const seen = new Set();
+    found.forEach((source) => {
+        const key = `${source.url}|${source.title}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        deduped.push(source);
+    });
+    return deduped.slice(0, 12);
+};
+
 const handleProviderResponse = async (response, providerName, attempt, maxAttempts) => {
     const data = await readJsonSafely(response);
     if (response.ok) return data;
@@ -39,12 +104,12 @@ const handleProviderResponse = async (response, providerName, attempt, maxAttemp
     );
 };
 
-const callProviderApi = async ({ providerName, url, requestInit }) => {
+const callProviderApi = async ({ providerName, url, requestInit, timeoutMs = PROVIDER_REQUEST_TIMEOUT_MS }) => {
     const maxAttempts = PROVIDER_MAX_RETRIES + 1;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), PROVIDER_REQUEST_TIMEOUT_MS);
+        const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
         const startTime = performance.now();
 
         try {
@@ -150,6 +215,58 @@ const getGeminiCompletion = async (keys, payload) => {
     return { completion, usage, latency_ms };
 };
 
+const getOpenAIGroundedCompletion = async (keys, payload = {}) => {
+    const model = payload?.model || 'gpt-5';
+    const tools = Array.isArray(payload?.tools) && payload.tools.length > 0
+        ? payload.tools
+        : [{ type: 'web_search' }];
+    const include = Array.isArray(payload?.include) && payload.include.length > 0
+        ? payload.include
+        : ['web_search_call.action.sources'];
+    const toolChoice = payload?.tool_choice || 'auto';
+    const instructions = typeof payload?.instructions === 'string' ? payload.instructions : '';
+    const input = payload?.input;
+    const reasoning = payload?.reasoning || { effort: 'low' };
+    const timeoutMs = typeof payload?.timeoutMs === 'number' ? payload.timeoutMs : 120000;
+    const maxToolCalls = Number.isInteger(payload?.max_tool_calls) ? payload.max_tool_calls : 6;
+
+    const { data, latency_ms } = await callProviderApi({
+        providerName: 'OpenAI',
+        url: 'https://api.openai.com/v1/responses',
+        timeoutMs,
+        requestInit: {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${keys.openai}`
+            },
+            body: JSON.stringify({
+                model,
+                instructions,
+                input,
+                tools,
+                include,
+                tool_choice: toolChoice,
+                reasoning,
+                max_tool_calls: maxToolCalls
+            })
+        }
+    });
+
+    if (data?.error) throw new Error(data.error.message || 'OpenAI grounded request returned an error.');
+    const completion = extractOutputTextFromResponsesApi(data);
+    if (!completion) throw new Error('OpenAI grounded response was missing content.');
+
+    const usage = {
+        prompt_tokens: data?.usage?.input_tokens || data?.usage?.prompt_tokens || 0,
+        completion_tokens: data?.usage?.output_tokens || data?.usage?.completion_tokens || 0,
+        total_tokens: data?.usage?.total_tokens || 0
+    };
+    const sources = extractWebSourcesFromResponsesApi(data);
+
+    return { completion, usage, latency_ms, sources };
+};
+
 const requestProviderCompletion = async ({ provider, payload, clientKeys = {} }) => {
     // Keys from environment override client keys
     const keys = {
@@ -175,6 +292,32 @@ const requestProviderCompletion = async ({ provider, payload, clientKeys = {} })
         return result;
     } catch (err) {
         console.error(`[LLM Proxy] ${provider} ERROR:`, err.message);
+        throw err;
+    }
+};
+
+const requestProviderGroundedCompletion = async ({ provider, payload, clientKeys = {} }) => {
+    const keys = {
+        openai: process.env.OPENAI_API_KEY || clientKeys.openai,
+        anthropic: process.env.ANTHROPIC_API_KEY || clientKeys.anthropic,
+        gemini: process.env.GEMINI_API_KEY || clientKeys.gemini
+    };
+
+    if (!keys[provider]) {
+        throw new Error(`Missing API key for ${provider}. Please configure it in the backend environment or frontend settings.`);
+    }
+
+    if (provider !== 'openai') {
+        const fallback = await requestProviderCompletion({ provider, payload, clientKeys });
+        return { ...fallback, sources: [] };
+    }
+
+    try {
+        const result = await getOpenAIGroundedCompletion(keys, payload);
+        console.log(`[LLM Grounded Proxy] ${provider} SUCCESS: ${result.usage.total_tokens} tokens, ${result.latency_ms}ms, ${result.sources.length} sources`);
+        return result;
+    } catch (err) {
+        console.error(`[LLM Grounded Proxy] ${provider} ERROR:`, err.message);
         throw err;
     }
 };
@@ -261,5 +404,6 @@ const requestProviderEmbedding = async ({ provider, text, clientKeys = {} }) => 
 
 module.exports = {
     requestProviderCompletion,
+    requestProviderGroundedCompletion,
     requestProviderEmbedding
 };

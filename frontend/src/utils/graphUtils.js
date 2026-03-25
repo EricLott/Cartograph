@@ -73,7 +73,8 @@ export const buildGraphFromPillars = (pillars) => {
     pillarNodes.forEach(pillar => {
       if (pillar.decisions) {
         pillar.decisions.forEach(decision => {
-          const isFeature = String(decision.id || '').startsWith('feat_');
+          const workType = String(decision.work_item_type || '').toLowerCase();
+          const isExecutionItem = ['epic', 'feature', 'task', 'spike', 'bug'].includes(workType);
           nodes.push({
             id: decision.id,
             type: 'decision',
@@ -81,7 +82,7 @@ export const buildGraphFromPillars = (pillars) => {
               label: decision.question, 
               answer: decision.answer, 
               conflict: decision.conflict,
-              kind: isFeature ? 'feature' : 'decision',
+              kind: isExecutionItem ? workType : 'decision',
               priority: decision.priority || null,
               pillarId: pillar.id,
               pillarTitle: pillar.title

@@ -7,7 +7,7 @@ const SendIcon = () => (
     </svg>
 );
 
-export default function ChatInterface({ messages, onSendMessage, isWaiting, focusTrigger = 0 }) {
+export default function ChatInterface({ messages, onSendMessage, isWaiting, focusTrigger = 0, mentionHint = '' }) {
     const [input, setInput] = useState('');
     const bottomRef = useRef(null);
     const inputRef = useRef(null);
@@ -224,12 +224,19 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
         );
     };
 
+    const getMessageSpeaker = (msg) => {
+        if (msg.role === 'user') {
+            return msg.targetAgentLabel ? `You -> ${msg.targetAgentLabel}` : 'You';
+        }
+        return msg.agentLabel || 'Agent';
+    };
+
     return (
         <div className="chat-container glass-panel" style={{ boxShadow: 'var(--shadow-xl)' }}>
             <div className="chat-history">
                 {messages.map((msg, idx) => {
                     const isThinkingMessage = msg.role === 'agent' && msg.kind === 'thinking';
-                    const isWorkingThinking = isThinkingMessage && msg.status !== 'completed';
+                    const isWorkingThinking = isThinkingMessage && msg.status === 'working';
                     const isCompletedThinking = isThinkingMessage && msg.status === 'completed';
                     return (
                     <div key={idx} className={`message ${msg.role === 'agent' ? 'agent-message' : 'user-message'}`} style={{ animation: 'messageSlideIn 0.3s ease-out forwards' }}>
@@ -241,6 +248,9 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
                             )}
                         </div>
                         <div className={`bubble ${isWorkingThinking ? 'thinking-bubble' : ''} ${isCompletedThinking ? 'thinking-completed-bubble' : ''}`}>
+                            <div className="message-speaker">
+                                {getMessageSpeaker(msg)}
+                            </div>
                             {isWorkingThinking && (
                                 <div className="thinking-caption">
                                     <span className="thinking-dot"></span>
@@ -274,7 +284,7 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
                     ref={inputRef}
                     value={input}
                     onChange={e => setInput(e.target.value)}
-                    placeholder="Describe your architecture requirements..."
+                    placeholder="Describe your architecture requirements... (use @pm or @architect)"
                     rows="2"
                     onKeyDown={e => {
                         if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
@@ -289,6 +299,11 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
                     <SendIcon /> Send
                 </button>
             </div>
+            {mentionHint && (
+                <div className="mention-hint">
+                    Mention agents: {mentionHint}
+                </div>
+            )}
             <style>{`
                 @keyframes messageSlideIn {
                     from { opacity: 0; transform: translateY(10px); }
@@ -398,6 +413,20 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
                 }
                 .thinking-dot:nth-child(3) {
                     animation-delay: 0.3s;
+                }
+                .message-speaker {
+                    font-size: 0.72rem;
+                    text-transform: uppercase;
+                    letter-spacing: 0.04em;
+                    font-weight: 700;
+                    margin-bottom: 0.35rem;
+                    color: rgba(30, 58, 138, 0.9);
+                }
+                .mention-hint {
+                    font-size: 0.75rem;
+                    color: var(--text-secondary);
+                    opacity: 0.9;
+                    padding: 0 0.2rem 0.45rem;
                 }
             `}</style>
         </div>
