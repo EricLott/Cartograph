@@ -3,19 +3,7 @@ import { saveStateToBackend } from '../services/apiService';
 import { addDecisionToPillar, findNodeById, updateNodeDecisions } from '../utils/treeUtils';
 import { normalizeFeatureDecision } from '../utils/featureNormalization';
 import { resolveDecisionInsertion } from '../utils/chatMutationRouting';
-
-const normalizeText = (value = '') => value.toLowerCase();
-
-const findFirstNode = (nodes, predicate) => {
-  for (const node of nodes) {
-    if (predicate(node)) return node;
-    if (node.subcategories?.length) {
-      const found = findFirstNode(node.subcategories, predicate);
-      if (found) return found;
-    }
-  }
-  return null;
-};
+import { detectActiveConflicts, clearAllDecisionConflicts } from '../services/conflictService';
 
 const decisionMatches = (decision, matcher) => {
   if (!decision) return false;
@@ -53,61 +41,6 @@ const findDecisionLocation = (pillars, decisionId) => {
   return null;
 };
 
-const userRequestedNavigation = (text = '') => {
-  return /\b(open|link|documentation|docs|navigate|take me|go to|show me)\b/i.test(text);
-};
-
-const applyRealtimeStripeFallback = (pillars, message) => {
-  const normalized = normalizeText(message);
-  if (!/\bstripe\b/.test(normalized)) return pillars;
-
-  const mentionsSubscriptions = /\bsubscription|subscriptions|billing|recurring\b/.test(normalized);
-  const mentionsWebhooks = /\bwebhook|webhooks|event endpoint|event endpoints\b/.test(normalized);
-
-  let next = pillars;
-
-  const featuresNode = findFirstNode(next, (node) => normalizeText(node.title).includes('feature'));
-  if (featuresNode && (mentionsSubscriptions || mentionsWebhooks)) {
-    next = upsertDecisionOnNode(
-      next,
-      featuresNode.id,
-      normalizeFeatureDecision({
-        id: 'feat_stripe_subscriptions',
-        question: 'Stripe subscription payments',
-        context: 'Support recurring subscriptions via Stripe Checkout/Billing and synchronize status to user accounts.',
-        answer: 'Included',
-        acceptance_criteria: [
-          'Customers can start, manage, and cancel Stripe subscriptions.',
-          'Subscription status is synchronized and reflected in product access controls.'
-        ],
-        technical_context: 'Implement Stripe Checkout/Billing flows and webhook-driven state reconciliation.',
-        priority: 'P1'
-      }),
-      { pattern: /stripe.*subscription|subscription.*stripe|stripe.*billing/ }
-    );
-  }
-
-  const apiNode = findFirstNode(
-    next,
-    (node) => normalizeText(node.title).includes('api') || normalizeText(node.id).includes('api')
-  );
-  if (apiNode && (mentionsWebhooks || mentionsSubscriptions)) {
-    next = upsertDecisionOnNode(
-      next,
-      apiNode.id,
-      {
-        id: 'api_stripe_webhooks',
-        question: 'Stripe webhook endpoint suite',
-        context: 'Implement webhook endpoints for subscription lifecycle events (checkout/session completion, invoice, and subscription status changes).',
-        answer: 'Required'
-      },
-      { pattern: /stripe.*webhook|webhook.*stripe|subscription.*event/ }
-    );
-  }
-
-  return next;
-};
-
 const sanitizeAgentReply = (reply, { updatedDecisionsCount = 0 } = {}) => {
   if (typeof reply !== 'string' || !reply.trim()) return 'Captured. Proceeding to the next architectural step.';
   let nextReply = reply.trim();
@@ -137,60 +70,54 @@ const sanitizeAgentReply = (reply, { updatedDecisionsCount = 0 } = {}) => {
   return nextReply;
 };
 
-const KNOWN_DATASTORES = [
-  { key: 'firestore', label: 'Firestore', pattern: /\bfirestore\b/i },
-  { key: 'cosmosdb', label: 'CosmosDB', pattern: /\bcosmos\s?db\b/i },
-  { key: 'mysql', label: 'MySQL', pattern: /\bmysql\b/i },
-  { key: 'postgres', label: 'PostgreSQL', pattern: /\bpostgres(?:ql)?\b/i },
-  { key: 'mongodb', label: 'MongoDB', pattern: /\bmongo(?:db)?\b/i },
-  { key: 'dynamodb', label: 'DynamoDB', pattern: /\bdynamodb\b/i }
-];
-
-const findStoresInText = (text = '') => {
-  return KNOWN_DATASTORES
-    .filter((store) => store.pattern.test(text))
-    .map((store) => ({ key: store.key, label: store.label }));
-};
-
-const collectResolvedDatastoreDecisions = (nodes, bucket = []) => {
+const collectExistingConflictDescriptions = (nodes = [], bucket = new Set()) => {
   (nodes || []).forEach((node) => {
     (node.decisions || []).forEach((decision) => {
-      const answerText = `${decision.answer || ''} ${decision.question || ''} ${decision.context || ''}`;
-      const stores = findStoresInText(answerText);
-      if (stores.length > 0 && decision.answer) {
-        bucket.push({ decisionId: decision.id, stores });
-      }
+      const reasons = Array.isArray(decision.conflict_reasons)
+        ? decision.conflict_reasons
+        : (decision.conflict ? [decision.conflict] : []);
+      reasons
+        .map((reason) => String(reason || '').trim())
+        .filter(Boolean)
+        .forEach((reason) => bucket.add(reason));
     });
-    if (node.subcategories?.length) collectResolvedDatastoreDecisions(node.subcategories, bucket);
+    if (node.subcategories?.length) collectExistingConflictDescriptions(node.subcategories, bucket);
   });
   return bucket;
 };
 
-const buildDatastoreConflict = (pillars, latestUserMessage) => {
-  const proposedStores = findStoresInText(latestUserMessage);
-  if (proposedStores.length === 0) return null;
-
-  const resolved = collectResolvedDatastoreDecisions(pillars);
-  if (resolved.length === 0) return null;
-
-  const existingKeys = new Set(resolved.flatMap((r) => r.stores.map((s) => s.key)));
-  const proposedNew = proposedStores.filter((s) => !existingKeys.has(s.key));
-  if (proposedNew.length === 0) return null;
-
-  const existingLabels = [...new Set(resolved.flatMap((r) => r.stores.map((s) => s.label)))];
-  const proposedLabels = [...new Set(proposedNew.map((s) => s.label))];
-  const decisionIds = [...new Set(resolved.map((r) => r.decisionId))];
-
-  return {
-    description: `Potential datastore divergence: existing decisions use ${existingLabels.join(', ')}, while the new proposal introduces ${proposedLabels.join(', ')}. Consider consolidating data stores or explicitly separating bounded contexts.`,
-    decisionIds
-  };
+const summarizeConflictsForReply = (conflicts = [], max = 3) => {
+  return (conflicts || [])
+    .slice(0, max)
+    .map((conflict) => `- ${conflict.description}`)
+    .join('\n');
 };
 
 const compactIdeaEcho = (text = '', maxLen = 220) => {
   const compact = String(text || '').replace(/\s+/g, ' ').trim();
   if (!compact) return '';
   return compact.length > maxLen ? `${compact.slice(0, maxLen - 3)}...` : compact;
+};
+
+const countNestedSubcategories = (subcategories = []) => {
+  return (subcategories || []).reduce((total, category) => {
+    return total + 1 + countNestedSubcategories(category.subcategories || []);
+  }, 0);
+};
+
+const countNestedDecisions = (subcategories = []) => {
+  return (subcategories || []).reduce((total, category) => {
+    return total + (category.decisions || []).length + countNestedDecisions(category.subcategories || []);
+  }, 0);
+};
+
+const summarizeExpansion = (subData = {}) => {
+  const subcategories = subData.subcategories || [];
+  const rootDecisions = subData.decisions || [];
+  return {
+    categoryCount: countNestedSubcategories(subcategories),
+    decisionCount: rootDecisions.length + countNestedDecisions(subcategories)
+  };
 };
 
 const buildInitialProgressMessage = (idea) => {
@@ -202,15 +129,26 @@ const buildInitialProgressMessage = (idea) => {
   ].filter(Boolean).join('\n');
 };
 
-const buildInitialCompletionMessage = (pillars = []) => {
+const buildInitialCompletionMessage = (pillars = [], runSummary = {}) => {
   const titles = (pillars || []).map((p) => p?.title).filter(Boolean);
   const listed = titles.length > 0 ? titles.slice(0, 6).join(', ') : 'core architecture pillars';
+  const expansionCount = Array.isArray(runSummary.expansions) ? runSummary.expansions.length : 0;
+  const callCount = (runSummary.callCount || 0) + expansionCount;
+  const totalCategories = (runSummary.expansions || []).reduce((sum, item) => sum + (item.categoryCount || 0), 0);
+  const totalDecisions = (runSummary.expansions || []).reduce((sum, item) => sum + (item.decisionCount || 0), 0);
+  const durationSeconds = typeof runSummary.durationMs === 'number' ? (runSummary.durationMs / 1000).toFixed(1) : null;
+  const expansionLines = (runSummary.expansions || [])
+    .map((item) => `- ${item.title}: ${item.categoryCount} categories, ${item.decisionCount} decisions (${item.status}).`);
   return [
     `All set. I generated ${titles.length || 'the'} pillar${titles.length === 1 ? '' : 's'}: ${listed}.`,
+    callCount > 0 ? `Execution summary: ${callCount} model call${callCount === 1 ? '' : 's'} completed${durationSeconds ? ` in ${durationSeconds}s` : ''}.` : '',
+    (totalCategories + totalDecisions) > 0 ? `Discovered ${totalCategories} categories and ${totalDecisions} decisions across all pillars.` : '',
+    expansionLines.length > 0 ? 'What each deep-dive call produced:' : '',
+    ...expansionLines,
     'Suggested next step:',
     '- Start with the Features pillar to validate scope and sequencing.',
     '- Then resolve the highest-impact pending decision in Focus view.'
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 };
 
 export function useChatLogic(state, setters) {
@@ -249,33 +187,93 @@ export function useChatLogic(state, setters) {
   };
 
   const handleInitialIdea = async (content, newMessages) => {
+    const runStartedAt = Date.now();
     const generatedPillars = await generatePillarsFromIdea(content, llmConfig);
     const extractingMessage = { role: 'agent', content: buildInitialProgressMessage(content) };
+    const initialAgentMessages = [extractingMessage];
+    const appendInitialAgentMessage = (message) => {
+      const withId = {
+        ...message,
+        _id: message._id || `init-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      };
+      initialAgentMessages.push(withId);
+      setMessages(msgs => [...msgs, withId]);
+      return withId._id;
+    };
+    const patchInitialAgentMessage = (messageId, patch) => {
+      setMessages((msgs) => msgs.map((msg) => (msg._id === messageId ? { ...msg, ...patch } : msg)));
+      const idx = initialAgentMessages.findIndex((msg) => msg._id === messageId);
+      if (idx >= 0) {
+        initialAgentMessages[idx] = { ...initialAgentMessages[idx], ...patch };
+      }
+    };
+
     setMessages([...newMessages, extractingMessage]);
     setPillars(generatedPillars);
     setIsWaiting(false);
 
+    const planMessageId = appendInitialAgentMessage({
+      role: 'agent',
+      kind: 'thinking',
+      status: 'working',
+      content: `Working plan: 1 global pillar map call + ${generatedPillars.length} pillar deep-dive calls.`
+    });
+
     const results = await Promise.all(generatedPillars.map(async (pillar) => {
+      const progressMessageId = appendInitialAgentMessage({
+        role: 'agent',
+        kind: 'thinking',
+        status: 'working',
+        content: `Analyzing "${pillar.title}" to map subcategories and high-impact decisions...`
+      });
+      const startedAt = Date.now();
       try {
         const subData = await generateCategoriesForPillar(content, pillar, llmConfig);
+        const stats = summarizeExpansion(subData);
+        const durationMs = Date.now() - startedAt;
         setPillars(current => current.map(p => {
           if (p.id === pillar.id) {
             return { ...p, subcategories: subData.subcategories || [], decisions: subData.decisions || [] };
           }
           return p;
         }));
-        return subData;
+        patchInitialAgentMessage(progressMessageId, {
+          status: 'completed',
+          content: `Completed "${pillar.title}": ${stats.categoryCount} categories and ${stats.decisionCount} decisions identified (${(durationMs / 1000).toFixed(1)}s).`
+        });
+        return { ...subData, __stats: stats, __status: 'ok' };
       } catch {
-        return { subcategories: [], decisions: [] };
+        patchInitialAgentMessage(progressMessageId, {
+          status: 'completed',
+          content: `Completed "${pillar.title}" with fallback defaults (0 categories, 0 decisions).`
+        });
+        return { subcategories: [], decisions: [], __stats: { categoryCount: 0, decisionCount: 0 }, __status: 'fallback' };
       }
     }));
 
-    const completionMessage = { role: 'agent', content: buildInitialCompletionMessage(generatedPillars) };
-    setMessages(msgs => [...msgs, completionMessage]);
+    patchInitialAgentMessage(planMessageId, {
+      status: 'completed',
+      content: `Completed run plan: 1 global pillar map call + ${generatedPillars.length} pillar deep-dive calls.`
+    });
+
+    const completionMessage = {
+      role: 'agent',
+      content: buildInitialCompletionMessage(generatedPillars, {
+        callCount: 1,
+        durationMs: Date.now() - runStartedAt,
+        expansions: generatedPillars.map((pillar, idx) => ({
+          title: pillar.title,
+          categoryCount: results[idx]?.__stats?.categoryCount || 0,
+          decisionCount: results[idx]?.__stats?.decisionCount || 0,
+          status: results[idx]?.__status === 'fallback' ? 'fallback' : 'ok'
+        }))
+      })
+    };
+    appendInitialAgentMessage(completionMessage);
     const finalPillars = generatedPillars.map((p, idx) => ({
       ...p, subcategories: results[idx].subcategories || [], decisions: results[idx].decisions || []
     }));
-    const finalMessages = [...newMessages, extractingMessage, completionMessage];
+    const finalMessages = [...newMessages, ...initialAgentMessages];
     const resultData = await saveStateToBackend(content, finalPillars, null, true, finalMessages);
     if (resultData?.projectId) setProjectId(resultData.projectId);
     if (typeof resultData?.projectOverview === 'string') setProjectOverview(resultData.projectOverview);
@@ -283,10 +281,10 @@ export function useChatLogic(state, setters) {
 
   const handleSubsequentTurn = async (newMessages) => {
     const result = await processChatTurn(newMessages, pillars, llmConfig);
-    const latestUserMessage = newMessages[newMessages.length - 1]?.content || '';
     let nextPillars = [...pillars];
     let attemptedInsertions = 0;
     let appliedInsertions = 0;
+    const priorConflictDescriptions = collectExistingConflictDescriptions(pillars);
     if (result.newCategories?.length > 0) nextPillars = [...nextPillars, ...result.newCategories];
     if (result.newDecisions?.length > 0) {
       result.newDecisions.forEach((insertion) => {
@@ -302,19 +300,38 @@ export function useChatLogic(state, setters) {
     if (result.updatedDecisions?.length > 0) {
       nextPillars = updateNodeDecisions(nextPillars, result.updatedDecisions, (d, update) => ({ ...d, answer: update.answer }));
     }
-    const heuristicConflict = buildDatastoreConflict(nextPillars, latestUserMessage);
-    const allConflicts = [...(result.conflicts || []), ...(heuristicConflict ? [heuristicConflict] : [])];
-    if (allConflicts.length > 0) {
-      allConflicts.forEach(conflict => {
-        nextPillars = updateNodeDecisions(nextPillars, conflict.decisionIds, (d) => ({ ...d, conflict: conflict.description }));
+    const allConflicts = await detectActiveConflicts(nextPillars, llmConfig);
+    const newlyIntroducedConflicts = allConflicts.filter(
+      (conflict) => !priorConflictDescriptions.has(String(conflict.description || '').trim())
+    );
+    // Rebuild conflict state from scratch each turn so resolved conflicts disappear cleanly.
+    nextPillars = clearAllDecisionConflicts(nextPillars);
+    allConflicts.forEach(conflict => {
+      nextPillars = updateNodeDecisions(nextPillars, conflict.decisionIds, (d) => {
+        const priorReasons = Array.isArray(d.conflict_reasons)
+          ? d.conflict_reasons
+          : (d.conflict ? [d.conflict] : []);
+        const mergedReasons = [...new Set([...priorReasons, conflict.description])];
+        return {
+          ...d,
+          conflict: mergedReasons[0] || conflict.description,
+          conflict_reasons: mergedReasons
+        };
       });
-    }
+    });
 
-    nextPillars = applyRealtimeStripeFallback(nextPillars, latestUserMessage);
-
-    const baseReply = heuristicConflict
-      ? `${result.reply}\n\nI also see a potential datastore divergence versus earlier decisions. We can keep multiple stores, but we should explicitly justify the boundary to avoid unnecessary complexity.`
-      : result.reply;
+    const introducedByThisTurn = (result.updatedDecisions?.length || 0) > 0 || appliedInsertions > 0;
+    const shouldPushBack = introducedByThisTurn && newlyIntroducedConflicts.length > 0;
+    const baseReply = shouldPushBack
+      ? [
+          'I need to push back before we lock this in.',
+          `This introduces ${newlyIntroducedConflicts.length} project conflict${newlyIntroducedConflicts.length === 1 ? '' : 's'}:`,
+          summarizeConflictsForReply(newlyIntroducedConflicts),
+          'Recommended next step: choose an option aligned with current architecture, or explicitly document this as an intentional exception.'
+        ].join('\n')
+      : (allConflicts.length > 0
+        ? `${result.reply}\n\nI also detected cross-decision conflicts from a full-project consistency scan. If these are intentional, we should document the rationale explicitly.`
+        : result.reply);
 
     const insertionWarning =
       attemptedInsertions > 0 && appliedInsertions === 0
@@ -330,7 +347,6 @@ export function useChatLogic(state, setters) {
     setMessages(nextMessages);
 
     if (Array.isArray(result.uiActions) && result.uiActions.length > 0) {
-      const canOpenExternal = userRequestedNavigation(latestUserMessage);
       let openedExternal = false;
 
       result.uiActions.forEach((action) => {
@@ -352,7 +368,7 @@ export function useChatLogic(state, setters) {
           return;
         }
 
-        if (action.type === 'open_url' && action.url && !openedExternal && canOpenExternal) {
+        if (action.type === 'open_url' && action.url && !openedExternal) {
           if (/^https?:\/\//i.test(action.url) && typeof window !== 'undefined' && typeof window.open === 'function') {
             window.open(action.url, '_blank', 'noopener,noreferrer');
             openedExternal = true;

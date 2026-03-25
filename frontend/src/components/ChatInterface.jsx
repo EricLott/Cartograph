@@ -227,7 +227,11 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
     return (
         <div className="chat-container glass-panel" style={{ boxShadow: 'var(--shadow-xl)' }}>
             <div className="chat-history">
-                {messages.map((msg, idx) => (
+                {messages.map((msg, idx) => {
+                    const isThinkingMessage = msg.role === 'agent' && msg.kind === 'thinking';
+                    const isWorkingThinking = isThinkingMessage && msg.status !== 'completed';
+                    const isCompletedThinking = isThinkingMessage && msg.status === 'completed';
+                    return (
                     <div key={idx} className={`message ${msg.role === 'agent' ? 'agent-message' : 'user-message'}`} style={{ animation: 'messageSlideIn 0.3s ease-out forwards' }}>
                         <div className="avatar">
                             {msg.role === 'agent' ? (
@@ -236,12 +240,21 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                             )}
                         </div>
-                        <div className="bubble">
+                        <div className={`bubble ${isWorkingThinking ? 'thinking-bubble' : ''} ${isCompletedThinking ? 'thinking-completed-bubble' : ''}`}>
+                            {isWorkingThinking && (
+                                <div className="thinking-caption">
+                                    <span className="thinking-dot"></span>
+                                    <span className="thinking-dot"></span>
+                                    <span className="thinking-dot"></span>
+                                    <span>Working</span>
+                                </div>
+                            )}
                             <div>{renderMessageContent(msg.content)}</div>
                             {renderArtifact(msg.artifact, idx)}
                         </div>
                     </div>
-                ))}
+                    );
+                })}
                 {isWaiting && (
                     <div className="message agent-message" style={{ animation: 'messageSlideIn 0.3s ease-out forwards' }}>
                         <div className="avatar">
@@ -353,6 +366,38 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
                 }
                 .bubble li > p {
                     margin: 0;
+                }
+                .thinking-bubble {
+                    border: 1px dashed rgba(59, 130, 246, 0.45);
+                    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.02));
+                }
+                .thinking-completed-bubble {
+                    border: 1px solid rgba(16, 185, 129, 0.32);
+                    background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02));
+                }
+                .thinking-caption {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 0.3rem;
+                    font-size: 0.72rem;
+                    font-weight: 700;
+                    letter-spacing: 0.03em;
+                    text-transform: uppercase;
+                    color: rgba(37, 99, 235, 0.95);
+                    margin-bottom: 0.35rem;
+                }
+                .thinking-dot {
+                    width: 5px;
+                    height: 5px;
+                    border-radius: 50%;
+                    background: currentColor;
+                    animation: pulse 1.2s infinite ease-in-out;
+                }
+                .thinking-dot:nth-child(2) {
+                    animation-delay: 0.15s;
+                }
+                .thinking-dot:nth-child(3) {
+                    animation-delay: 0.3s;
                 }
             `}</style>
         </div>

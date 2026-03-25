@@ -230,6 +230,21 @@ export const validateChatTurnOutput = (output, contextLabel) => {
     return output;
 };
 
+export const validateConsistencyOutput = (output, contextLabel) => {
+    assertPlainObject(output, 'root', contextLabel);
+    assertArray(output.conflicts, 'root.conflicts', contextLabel);
+    output.conflicts.forEach((conflict, index) => {
+        const path = `root.conflicts[${index}]`;
+        assertPlainObject(conflict, path, contextLabel);
+        assertNonEmptyString(conflict.description, `${path}.description`, contextLabel);
+        assertArray(conflict.decisionIds, `${path}.decisionIds`, contextLabel);
+        conflict.decisionIds.forEach((id, idIndex) =>
+            assertNonEmptyString(id, `${path}.decisionIds[${idIndex}]`, contextLabel)
+        );
+    });
+    return output;
+};
+
 export const parseAndValidateProviderOutput = (text, contextLabel, validator) => {
     const parsed = parseJsonOutput(text, contextLabel);
     return validator(parsed, contextLabel);

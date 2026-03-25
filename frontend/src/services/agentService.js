@@ -2,12 +2,14 @@
 import { 
     SYSTEM_PROMPT, 
     SUBCATEGORY_SYSTEM_PROMPT, 
-    CHAT_SYSTEM_PROMPT 
+    CHAT_SYSTEM_PROMPT,
+    CONSISTENCY_SYSTEM_PROMPT
 } from './prompts';
 import { 
     validatePillarArrayOutput, 
     validateCategoryExpansionOutput, 
     validateChatTurnOutput,
+    validateConsistencyOutput,
     parseAndValidateProviderOutput 
 } from './agentValidator';
 
@@ -144,6 +146,37 @@ export const processChatTurn = async (chatHistory, currentPillars, config) => {
 
     const completion = await requestProviderCompletion({ provider, payload, keys });
     return parseAndValidateProviderOutput(completion, 'Chat turn processing', validateChatTurnOutput);
+};
+
+export const analyzeArchitectureConsistency = async (currentPillars, config) => {
+    const { provider, keys } = config;
+    if (provider === 'mock') return { conflicts: [] };
+
+    const prompt = `Current Architecture State:\n${JSON.stringify(currentPillars, null, 2)}\n\nIdentify cross-decision conflicts and return JSON only.`;
+
+    let payload;
+    if (provider === 'openai') {
+        payload = {
+            model: 'gpt-4o',
+            messages: [{ role: 'system', content: CONSISTENCY_SYSTEM_PROMPT }, { role: 'user', content: prompt }]
+        };
+    } else if (provider === 'anthropic') {
+        payload = {
+            model: 'claude-3-5-sonnet-20240620',
+            max_tokens: 3000,
+            system: CONSISTENCY_SYSTEM_PROMPT,
+            messages: [{ role: 'user', content: prompt }]
+        };
+    } else if (provider === 'gemini') {
+        payload = {
+            systemInstruction: { parts: [{ text: CONSISTENCY_SYSTEM_PROMPT }] },
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: 'application/json' }
+        };
+    }
+
+    const completion = await requestProviderCompletion({ provider, payload, keys });
+    return parseAndValidateProviderOutput(completion, 'Consistency scan', validateConsistencyOutput);
 };
 
 // --- Mocks ---

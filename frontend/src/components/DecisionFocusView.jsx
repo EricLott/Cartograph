@@ -80,6 +80,14 @@ export default function DecisionFocusView({
 
     const decision = target?.decision || {};
     const isConflict = !!decision.conflict;
+    const conflictReasons = React.useMemo(() => {
+        const reasons = Array.isArray(decision.conflict_reasons)
+            ? decision.conflict_reasons
+            : (decision.conflict ? [decision.conflict] : []);
+        return reasons
+            .map((reason) => String(reason || '').trim())
+            .filter(Boolean);
+    }, [decision.conflict, decision.conflict_reasons]);
     const isResolved = !!decision.answer && !isConflict;
     const shouldShowSuggestions = !decision.answer;
     const statusLabel = isConflict ? 'Conflict' : (isResolved ? 'Resolved' : 'Pending');
@@ -235,6 +243,28 @@ export default function DecisionFocusView({
                         <p style={{ marginTop: '0.65rem', marginBottom: 0 }}>
                             <strong>Current Answer:</strong> {decision.answer}
                         </p>
+                    )}
+                    {conflictReasons.length > 0 && (
+                        <div
+                            style={{
+                                marginTop: '0.7rem',
+                                border: '1px solid rgba(239,68,68,0.35)',
+                                borderRadius: '8px',
+                                background: 'rgba(254,226,226,0.72)',
+                                padding: '0.55rem 0.65rem'
+                            }}
+                        >
+                            <p style={{ margin: '0 0 0.35rem 0', fontWeight: 700, color: '#991b1b' }}>
+                                Conflict Reason{conflictReasons.length === 1 ? '' : 's'}
+                            </p>
+                            <ul style={{ margin: 0, paddingLeft: '1rem', color: '#7f1d1d' }}>
+                                {conflictReasons.map((reason, idx) => (
+                                    <li key={`${reason}-${idx}`} style={{ marginBottom: '0.25rem' }}>
+                                        {reason}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     )}
                 </div>
 
