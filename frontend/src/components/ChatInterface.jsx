@@ -334,6 +334,26 @@ export default function ChatInterface({ messages, onSendMessage, isWaiting, focu
                 .artifact-fact-value {
                     opacity: 0.95;
                 }
+                .bubble p {
+                    margin: 0.25rem 0 0.5rem;
+                    line-height: 1.55;
+                }
+                .bubble p:last-child {
+                    margin-bottom: 0;
+                }
+                .bubble ol,
+                .bubble ul {
+                    margin: 0.35rem 0 0.65rem;
+                    padding-left: 1.5rem;
+                }
+                .bubble li {
+                    margin: 0.2rem 0;
+                    padding-left: 0.15rem;
+                    line-height: 1.55;
+                }
+                .bubble li > p {
+                    margin: 0;
+                }
             `}</style>
         </div>
     );
