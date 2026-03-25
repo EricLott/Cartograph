@@ -67,3 +67,11 @@ export const saveAppSettings = async (settings) => {
     if (!response.ok) throw new Error(`Failed to save app settings (Status ${response.status})`);
     return await response.json();
 };
+
+export const fetchDecisionSemanticNeighbors = async (projectId, decisionId, limit = 8) => {
+    if (!projectId || !decisionId) return { decisionId, neighbors: [] };
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const response = await fetch(`${apiUrl}/api/projects/${projectId}/decisions/${decisionId}/semantic?limit=${limit}`);
+    if (!response.ok) throw new Error(`Failed to fetch semantic neighbors (Status ${response.status})`);
+    return await response.json();
+};

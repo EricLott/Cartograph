@@ -44,9 +44,9 @@ describe('decisionRelations', () => {
         expect(ids).toContain('api_auth');
     });
 
-    it('includes semantic related decisions', () => {
-        const related = getRelatedDecisionsForTarget(pillars, 'feat_customer_api', { similarityThreshold: 0.15 });
+    it('does not infer lexical similarity-only relations', () => {
+        const related = getRelatedDecisionsForTarget(pillars, 'feat_customer_api');
         const ids = related.map((r) => r.decisionId);
-        expect(ids).toContain('api_docs');
+        expect(ids).not.toContain('api_docs');
     });
 });

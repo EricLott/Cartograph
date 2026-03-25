@@ -1,58 +1,6 @@
 import { MarkerType, Position } from 'reactflow';
 import dagre from 'dagre';
 
-const STOP_WORDS = new Set([
-  'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'for', 'from', 'how', 'in', 'is', 'it', 'of', 'on', 'or',
-  'that', 'the', 'this', 'to', 'we', 'with', 'you', 'your'
-]);
-
-const tokenize = (text = '') => {
-  return String(text)
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter((token) => token && !STOP_WORDS.has(token) && token.length > 1);
-};
-
-const buildTfVector = (tokens) => {
-  const vector = new Map();
-  tokens.forEach((token) => {
-    vector.set(token, (vector.get(token) || 0) + 1);
-  });
-  return vector;
-};
-
-const cosineSimilarity = (a, b) => {
-  if (!a.size || !b.size) return 0;
-  const keys = new Set([...a.keys(), ...b.keys()]);
-  let dot = 0;
-  let magA = 0;
-  let magB = 0;
-  keys.forEach((key) => {
-    const av = a.get(key) || 0;
-    const bv = b.get(key) || 0;
-    dot += av * bv;
-    magA += av * av;
-    magB += bv * bv;
-  });
-  if (magA === 0 || magB === 0) return 0;
-  return dot / (Math.sqrt(magA) * Math.sqrt(magB));
-};
-
-const flattenText = (decision) => {
-  const criteria = Array.isArray(decision.acceptance_criteria) ? decision.acceptance_criteria.join(' ') : '';
-  const deps = Array.isArray(decision.dependencies) ? decision.dependencies.join(' ') : '';
-  return [
-    decision.question,
-    decision.context,
-    decision.answer,
-    decision.technical_context,
-    criteria,
-    deps,
-    decision.priority
-  ].filter(Boolean).join(' ');
-};
-
 const makeEdge = ({ id, source, target, label, color, dashed = false, animated = false }) => ({
   id,
   source,
@@ -223,50 +171,6 @@ export const buildGraphFromPillars = (pillars) => {
       }
     }
   });
-
-  // Vectorize decisions/features and create "related" edges based on cosine similarity.
-  const vectors = decisions.map((decision) => ({
-    id: decision.id,
-    vec: buildTfVector(tokenize(flattenText(decision)))
-  }));
-  const similarityThreshold = 0.36;
-  const candidateEdges = [];
-  for (let i = 0; i < vectors.length; i += 1) {
-    for (let j = i + 1; j < vectors.length; j += 1) {
-      const sim = cosineSimilarity(vectors[i].vec, vectors[j].vec);
-      if (sim >= similarityThreshold) {
-        candidateEdges.push({
-          source: vectors[i].id,
-          target: vectors[j].id,
-          score: sim
-        });
-      }
-    }
-  }
-  // Keep graph readable: at most top 2 semantic edges per node.
-  const perNodeCount = new Map();
-  candidateEdges
-    .sort((a, b) => b.score - a.score)
-    .forEach(({ source, target, score }) => {
-      const sourceCount = perNodeCount.get(source) || 0;
-      const targetCount = perNodeCount.get(target) || 0;
-      if (sourceCount >= 2 || targetCount >= 2) return;
-      const id = `e-${source}-${target}-related`;
-      if (edgeIds.has(id)) return;
-      edgeIds.add(id);
-      perNodeCount.set(source, sourceCount + 1);
-      perNodeCount.set(target, targetCount + 1);
-      edges.push(
-        makeEdge({
-          id,
-          source,
-          target,
-          label: `related ${Math.round(score * 100)}%`,
-          color: '#8b5cf6',
-          dashed: true
-        })
-      );
-    });
 
   return { nodes, edges };
 };

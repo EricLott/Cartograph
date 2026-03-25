@@ -8,6 +8,7 @@ const {
     getDecisionGraph 
 } = require('../services/projectService');
 const { getProjectClusters } = require('../services/clusteringService');
+const { getDecisionSemanticNeighbors } = require('../services/semanticService');
 
 // Get all projects
 router.get('/projects', async (req, res) => {
@@ -156,6 +157,18 @@ router.get('/projects/:id/clusters', async (req, res) => {
         const clusters = await getProjectClusters(req.params.id);
         if (!clusters) return res.status(404).json({ error: 'Project not found' });
         res.json(clusters);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Get semantic neighbors for a decision (embedding-based similarity)
+router.get('/projects/:id/decisions/:decisionId/semantic', async (req, res) => {
+    try {
+        const limit = Number(req.query.limit || 8);
+        const result = await getDecisionSemanticNeighbors(req.params.id, req.params.decisionId, limit);
+        if (!result) return res.status(404).json({ error: 'Project not found' });
+        res.json(result);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

@@ -194,6 +194,8 @@ function App() {
               <DecisionFocusView
                 pillars={pillars}
                 decisionId={activeDecisionId}
+                projectId={projectId}
+                onApplyDecision={handleUpdateDecision}
                 onExitFocus={() => setViewMode('pillar')}
                 onJumpToDecision={(pillarId, decisionId) => {
                   setActivePillarId(pillarId);

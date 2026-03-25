@@ -1,18 +1,6 @@
 import { flattenDecisionNodes, getRelatedDecisionsForTarget } from './decisionRelations';
 
 const ruleMatches = (text, patterns) => patterns.some((pattern) => pattern.test(text));
-const tokenize = (text = '') =>
-    String(text)
-        .toLowerCase()
-        .replace(/[^a-z0-9\s]/g, ' ')
-        .split(/\s+/)
-        .filter((token) => token && token.length > 2);
-
-const sharedTerms = (leftText, rightText, limit = 4) => {
-    const left = new Set(tokenize(leftText));
-    const right = new Set(tokenize(rightText));
-    return [...left].filter((token) => right.has(token)).slice(0, limit);
-};
 
 const BEST_PRACTICE_RULES = [
     {
@@ -60,7 +48,6 @@ const BEST_PRACTICE_RULES = [
 export const getDecisionInsightBundle = (pillars, decisionId) => {
     const records = flattenDecisionNodes(pillars);
     const target = records.find((record) => record.id === decisionId) || null;
-    const recordById = new Map(records.map((record) => [record.id, record]));
     if (!target) {
         return {
             target: null,
@@ -81,23 +68,14 @@ export const getDecisionInsightBundle = (pillars, decisionId) => {
         'Add tests/validation points that prove this choice behaves as intended.'
     ];
 
-    const related = getRelatedDecisionsForTarget(pillars, decisionId, { maxResults: 12, similarityThreshold: 0.2 });
+    const related = getRelatedDecisionsForTarget(pillars, decisionId, { maxResults: 12 });
     const impacts = related
         .map((item) => {
-            const matchRecord = recordById.get(item.decisionId);
             const relationLabel = item.relationTypes.includes('conflicts')
                 ? 'Potential conflict'
                 : item.relationTypes.includes('depends_on') || item.relationTypes.includes('required_by')
                     ? 'Dependency impact'
-                    : item.relationTypes.includes('related')
-                        ? 'Semantic coupling'
-                        : 'Cross-cutting impact';
-            const overlap = matchRecord
-                ? sharedTerms(
-                    `${target.decision.question || ''} ${target.decision.context || ''} ${target.decision.technical_context || ''}`,
-                    `${matchRecord.decision.question || ''} ${matchRecord.decision.context || ''} ${matchRecord.decision.technical_context || ''}`
-                )
-                : [];
+                    : 'Cross-cutting impact';
 
             let why = '';
             if (item.relationTypes.includes('conflicts')) {
@@ -106,10 +84,6 @@ export const getDecisionInsightBundle = (pillars, decisionId) => {
                 why = 'This target depends directly on the linked decision for successful delivery.';
             } else if (item.relationTypes.includes('required_by')) {
                 why = 'The linked decision depends on this target, so changes here can cascade.';
-            } else if (item.relationTypes.includes('related')) {
-                why = overlap.length > 0
-                    ? `They share architectural concepts (${overlap.join(', ')}), indicating semantic overlap.`
-                    : 'They discuss similar architectural scope and should be reviewed together.';
             } else {
                 why = 'This decision can influence the same functional or technical surface.';
             }
@@ -117,20 +91,15 @@ export const getDecisionInsightBundle = (pillars, decisionId) => {
             return {
                 ...item,
                 relationLabel,
-                sharedTerms: overlap,
                 why
             };
         })
         .sort((a, b) => b.score - a.score);
 
-    const semanticMatches = impacts
-        .filter((item) => item.relationTypes.includes('related'))
-        .slice(0, 6);
-
     return {
         target,
         bestPractices: bestPractices.length > 0 ? bestPractices : fallbackPractices,
         impacts,
-        semanticMatches
+        semanticMatches: []
     };
 };
