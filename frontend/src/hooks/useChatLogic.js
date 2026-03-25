@@ -2,6 +2,7 @@ import { generatePillarsFromIdea, processChatTurn, generateCategoriesForPillar }
 import { saveStateToBackend } from '../services/apiService';
 import { addDecisionToPillar, findNodeById, updateNodeDecisions } from '../utils/treeUtils';
 import { normalizeFeatureDecision } from '../utils/featureNormalization';
+import { resolveDecisionInsertion } from '../utils/chatMutationRouting';
 
 const normalizeText = (value = '') => value.toLowerCase();
 
@@ -284,11 +285,18 @@ export function useChatLogic(state, setters) {
     const result = await processChatTurn(newMessages, pillars, llmConfig);
     const latestUserMessage = newMessages[newMessages.length - 1]?.content || '';
     let nextPillars = [...pillars];
+    let attemptedInsertions = 0;
+    let appliedInsertions = 0;
     if (result.newCategories?.length > 0) nextPillars = [...nextPillars, ...result.newCategories];
     if (result.newDecisions?.length > 0) {
       result.newDecisions.forEach((insertion) => {
         if (!insertion?.targetId || !insertion?.decision) return;
-        nextPillars = upsertDecisionOnNode(nextPillars, insertion.targetId, insertion.decision);
+        attemptedInsertions += 1;
+        const resolvedInsertion = resolveDecisionInsertion(nextPillars, insertion);
+        if (!resolvedInsertion) return;
+        const before = nextPillars;
+        nextPillars = upsertDecisionOnNode(nextPillars, resolvedInsertion.targetId, resolvedInsertion.decision);
+        if (nextPillars !== before) appliedInsertions += 1;
       });
     }
     if (result.updatedDecisions?.length > 0) {
@@ -308,7 +316,13 @@ export function useChatLogic(state, setters) {
       ? `${result.reply}\n\nI also see a potential datastore divergence versus earlier decisions. We can keep multiple stores, but we should explicitly justify the boundary to avoid unnecessary complexity.`
       : result.reply;
 
-    const finalReply = sanitizeAgentReply(baseReply, { updatedDecisionsCount: result.updatedDecisions?.length || 0 });
+    const insertionWarning =
+      attemptedInsertions > 0 && appliedInsertions === 0
+        ? '\n\nI could not safely place one or more new items into the current tree, so I did not apply those additions yet.'
+        : '';
+    const finalReply = sanitizeAgentReply(`${baseReply}${insertionWarning}`, {
+      updatedDecisionsCount: result.updatedDecisions?.length || 0
+    });
 
     setPillars(nextPillars);
     const responseMessage = { role: 'agent', content: finalReply, artifact: result.artifact || null };
