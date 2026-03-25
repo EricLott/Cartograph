@@ -29,6 +29,26 @@ const parseInlineOptions = (question = '') => {
 };
 
 const buildSuggestions = (decision, semanticMatches = []) => {
+    const targetText = `${decision.question || ''} ${decision.context || ''}`.toLowerCase();
+    const domainPatterns = {
+        auth: /\bauth|authentication|authorization|oauth|jwt|token|api key|rbac|session\b/i,
+        data: /\bdata|database|storage|schema|sql|nosql|warehouse|etl|backup|retention\b/i,
+        security: /\bsecurity|encryption|privacy|gdpr|compliance|secret|vault|access control\b/i,
+        api: /\bapi|endpoint|rest|graphql|gateway|webhook|contract\b/i,
+        ui: /\bui|ux|frontend|responsive|accessibility|design system\b/i
+    };
+    const targetDomains = Object.entries(domainPatterns)
+        .filter(([, pattern]) => pattern.test(targetText))
+        .map(([key]) => key);
+
+    const domainScore = (text) => {
+        if (targetDomains.length === 0) return 0;
+        const hay = String(text || '').toLowerCase();
+        return targetDomains.reduce((count, domain) => (
+            domainPatterns[domain].test(hay) ? count + 1 : count
+        ), 0);
+    };
+
     const suggestions = [];
     const seen = new Set();
     const add = (label, source, reason) => {
@@ -49,6 +69,15 @@ const buildSuggestions = (decision, semanticMatches = []) => {
     });
     semanticMatches
         .filter((m) => m?.answer)
+        .map((m) => ({
+            ...m,
+            _domainScore: domainScore(`${m.question || ''} ${m.answer || ''} ${m.breadcrumb || ''}`)
+        }))
+        .filter((m) => m._domainScore > 0 || (m.score || 0) >= 0.75)
+        .sort((a, b) => {
+            if (b._domainScore !== a._domainScore) return b._domainScore - a._domainScore;
+            return (b.score || 0) - (a.score || 0);
+        })
         .slice(0, 4)
         .forEach((m) => {
             add(m.answer, 'Similar resolved decision', `Used in "${m.question}".`);
@@ -76,6 +105,7 @@ export default function DecisionFocusView({
     const [showWhy, setShowWhy] = React.useState(false);
     const [embeddingSemanticMatches, setEmbeddingSemanticMatches] = React.useState([]);
     const [pendingSuggestion, setPendingSuggestion] = React.useState(null);
+    const allDecisions = React.useMemo(() => flattenAllDecisions(pillars), [pillars]);
 
     React.useEffect(() => {
         let cancelled = false;
@@ -107,7 +137,6 @@ export default function DecisionFocusView({
     }
 
     const decision = target.decision;
-    const allDecisions = React.useMemo(() => flattenAllDecisions(pillars), [pillars]);
     const isConflict = !!decision.conflict;
     const isResolved = !!decision.answer && !isConflict;
     const statusLabel = isConflict ? 'Conflict' : (isResolved ? 'Resolved' : 'Pending');
@@ -299,7 +328,9 @@ export default function DecisionFocusView({
                                     <strong>{suggestion.label}</strong>
                                     <span style={{ fontSize: '0.72rem', opacity: 0.8 }}>{suggestion.source}</span>
                                 </div>
-                                <div style={{ fontSize: '0.8rem', opacity: 0.78, marginTop: '0.2rem' }}>{suggestion.reason}</div>
+                                <div style={{ fontSize: '0.8rem', opacity: 0.78, marginTop: '0.2rem' }}>
+                                    {suggestion.reason}
+                                </div>
                             </button>
                         ))}
                     </div>

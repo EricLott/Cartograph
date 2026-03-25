@@ -10,9 +10,64 @@ import ProjectOverview from './components/ProjectOverview';
 import DecisionFocusView from './components/DecisionFocusView';
 import { VscFileSubmodule, VscGraph, VscBook, VscBell, VscClose, VscChevronDown, VscChevronUp } from 'react-icons/vsc';
 import { useAppLogic } from './hooks/useAppLogic';
+import { findNodeById } from './utils/treeUtils';
+
+const parseRouteFromPath = (pathname = '/') => {
+  const parts = String(pathname).split('/').filter(Boolean);
+  if (parts.length < 2 || parts[0] !== 'projects') {
+    return { projectId: null, viewMode: 'pillar', pillarId: null, decisionId: null };
+  }
+
+  const projectId = parts[1];
+  const section = parts[2] || 'details';
+
+  if (section === 'graph') {
+    return { projectId, viewMode: 'graph', pillarId: null, decisionId: null };
+  }
+  if (section === 'overview') {
+    return { projectId, viewMode: 'overview', pillarId: null, decisionId: null };
+  }
+  if (section === 'focus') {
+    if (parts.length >= 5) {
+      return { projectId, viewMode: 'decision', pillarId: parts[3], decisionId: parts[4] };
+    }
+    return { projectId, viewMode: 'decision', pillarId: null, decisionId: parts[3] || null };
+  }
+  if (section === 'details') {
+    return { projectId, viewMode: 'pillar', pillarId: parts[3] || null, decisionId: null };
+  }
+
+  return { projectId, viewMode: 'pillar', pillarId: null, decisionId: null };
+};
+
+const buildPathFromState = ({ projectId, viewMode, activePillarId, activeDecisionId }) => {
+  if (!projectId) return '/';
+  if (viewMode === 'graph') return `/projects/${projectId}/graph`;
+  if (viewMode === 'overview') return `/projects/${projectId}/overview`;
+  if (viewMode === 'decision' && activeDecisionId) {
+    return activePillarId
+      ? `/projects/${projectId}/focus/${activePillarId}/${activeDecisionId}`
+      : `/projects/${projectId}/focus/${activeDecisionId}`;
+  }
+  if (activePillarId) return `/projects/${projectId}/details/${activePillarId}`;
+  return `/projects/${projectId}/details`;
+};
+
+const findPillarContainingDecision = (nodes = [], decisionId) => {
+  for (const node of nodes || []) {
+    if ((node.decisions || []).some((d) => d.id === decisionId)) {
+      return node.id;
+    }
+    const nested = findPillarContainingDecision(node.subcategories || [], decisionId);
+    if (nested) return node.id;
+  }
+  return null;
+};
 
 function App() {
   const [chatFocusTrigger, setChatFocusTrigger] = React.useState(0);
+  const isApplyingRouteRef = React.useRef(false);
+  const hasAppliedInitialRouteRef = React.useRef(false);
   const {
     messages,
     isWaiting,
@@ -46,6 +101,90 @@ function App() {
     handleExport,
     handleSaveLlmConfig
   } = useAppLogic();
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const applyRoute = async () => {
+      const route = parseRouteFromPath(window.location.pathname);
+      if (!route.projectId) {
+        hasAppliedInitialRouteRef.current = true;
+        return;
+      }
+
+      isApplyingRouteRef.current = true;
+      try {
+        if (route.projectId !== projectId) {
+          await handleSelectProject(route.projectId);
+          return;
+        }
+
+        if (route.viewMode === 'graph' || route.viewMode === 'overview') {
+          setViewMode(route.viewMode);
+          setActiveDecisionId(null);
+          if (route.pillarId) setActivePillarId(route.pillarId);
+          hasAppliedInitialRouteRef.current = true;
+          return;
+        }
+
+        if (route.viewMode === 'decision' && route.decisionId) {
+          const resolvedPillarId = route.pillarId && findNodeById(pillars, route.pillarId)
+            ? route.pillarId
+            : findPillarContainingDecision(pillars, route.decisionId);
+
+          if (resolvedPillarId) setActivePillarId(resolvedPillarId);
+          setActiveDecisionId(route.decisionId);
+          setViewMode('decision');
+          hasAppliedInitialRouteRef.current = true;
+          return;
+        }
+
+        setViewMode('pillar');
+        setActiveDecisionId(null);
+        if (route.pillarId && findNodeById(pillars, route.pillarId)) {
+          setActivePillarId(route.pillarId);
+        }
+        hasAppliedInitialRouteRef.current = true;
+      } finally {
+        setTimeout(() => {
+          isApplyingRouteRef.current = false;
+        }, 0);
+      }
+    };
+
+    applyRoute();
+
+    const handlePopState = () => {
+      applyRoute();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [
+    projectId,
+    pillars,
+    handleSelectProject,
+    setActiveDecisionId,
+    setActivePillarId,
+    setViewMode
+  ]);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!hasAppliedInitialRouteRef.current) return;
+    if (isApplyingRouteRef.current) return;
+
+    const nextPath = buildPathFromState({
+      projectId,
+      viewMode,
+      activePillarId,
+      activeDecisionId
+    });
+
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, '', nextPath);
+    }
+  }, [projectId, viewMode, activePillarId, activeDecisionId]);
 
   return (
     <div className="app-layout">
