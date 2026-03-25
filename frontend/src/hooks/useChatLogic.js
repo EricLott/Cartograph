@@ -186,6 +186,32 @@ const buildDatastoreConflict = (pillars, latestUserMessage) => {
   };
 };
 
+const compactIdeaEcho = (text = '', maxLen = 220) => {
+  const compact = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!compact) return '';
+  return compact.length > maxLen ? `${compact.slice(0, maxLen - 3)}...` : compact;
+};
+
+const buildInitialProgressMessage = (idea) => {
+  const echo = compactIdeaEcho(idea);
+  return [
+    'Great brief. Here is my understanding:',
+    echo ? `- ${echo}` : '',
+    'I am now generating your architecture pillars and first-pass decision map.'
+  ].filter(Boolean).join('\n');
+};
+
+const buildInitialCompletionMessage = (pillars = []) => {
+  const titles = (pillars || []).map((p) => p?.title).filter(Boolean);
+  const listed = titles.length > 0 ? titles.slice(0, 6).join(', ') : 'core architecture pillars';
+  return [
+    `All set. I generated ${titles.length || 'the'} pillar${titles.length === 1 ? '' : 's'}: ${listed}.`,
+    'Suggested next step:',
+    '- Start with the Features pillar to validate scope and sequencing.',
+    '- Then resolve the highest-impact pending decision in Focus view.'
+  ].join('\n');
+};
+
 export function useChatLogic(state, setters) {
   const { messages, pillars, projectId, llmConfig } = state;
   const {
@@ -223,7 +249,7 @@ export function useChatLogic(state, setters) {
 
   const handleInitialIdea = async (content, newMessages) => {
     const generatedPillars = await generatePillarsFromIdea(content, llmConfig);
-    const extractingMessage = { role: 'agent', content: "Extracting pillars..." };
+    const extractingMessage = { role: 'agent', content: buildInitialProgressMessage(content) };
     setMessages([...newMessages, extractingMessage]);
     setPillars(generatedPillars);
     setIsWaiting(false);
@@ -243,7 +269,7 @@ export function useChatLogic(state, setters) {
       }
     }));
 
-    const completionMessage = { role: 'agent', content: "All set!" };
+    const completionMessage = { role: 'agent', content: buildInitialCompletionMessage(generatedPillars) };
     setMessages(msgs => [...msgs, completionMessage]);
     const finalPillars = generatedPillars.map((p, idx) => ({
       ...p, subcategories: results[idx].subcategories || [], decisions: results[idx].decisions || []
